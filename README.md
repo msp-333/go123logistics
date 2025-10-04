@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # GO123 Logistics (Next.js App Router + TS + Tailwind + React Query + Zod)
 
 Static site modeled after the provided designs: Home, About, Shipping Guide (with SCAC search), Contact, and Ocean Freight.
@@ -66,3 +67,7 @@ In **Repository Settings → Pages**, choose `Deploy from a branch` and select t
 - Since GitHub Pages is static, the **Contact form** stores the last submission in `localStorage` and shows a success message (no server required). You can wire it to a form backend (e.g., Formspree) if desired.
 - The SCAC search uses a local static dataset: `public/data/scac.json`. Update it as needed.
 - If you publish to a custom domain or the root of a user/org page, you can omit `NEXT_PUBLIC_BASE_PATH`.
+=======
+# go123logistics
+Logistics website built with Next.js (App Router), TypeScript, Tailwind, React Query, and Zod — Business Use
+>>>>>>> 642f78ed779df2cc1f46ea925913b5b88517a56b
