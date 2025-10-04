@@ -1,0 +1,74 @@
+[
+  {
+    "carrier": "Atlantic Container Line (ACL)",
+    "code": "ACLU"
+  },
+  {
+    "carrier": "Alianza",
+    "code": "ANRM"
+  },
+  {
+    "carrier": "Alaska Marine Lines (AML)",
+    "code": "AKMR"
+  },
+  {
+    "carrier": "Australia National Line (ANL)",
+    "code": "ANNU"
+  },
+  {
+    "carrier": "American President Lines (APL)",
+    "code": "APLU"
+  },
+  {
+    "carrier": "Arkas Container Transport S.A. (Arkas)",
+    "code": "ARUU"
+  },
+  {
+    "carrier": "CMA CGM",
+    "code": "CMDU"
+  },
+  {
+    "carrier": "COSCO Shipping Lines",
+    "code": "COSU"
+  },
+  {
+    "carrier": "Evergreen Marine",
+    "code": "EGLV"
+  },
+  {
+    "carrier": "Hapag-Lloyd",
+    "code": "HLCU"
+  },
+  {
+    "carrier": "Hyundai Merchant Marine",
+    "code": "HDMU"
+  },
+  {
+    "carrier": "Maersk Line",
+    "code": "MAEU"
+  },
+  {
+    "carrier": "Mediterranean Shipping Company (MSC)",
+    "code": "MSCU"
+  },
+  {
+    "carrier": "Ocean Network Express (ONE)",
+    "code": "ONEY"
+  },
+  {
+    "carrier": "Yang Ming Marine Transport",
+    "code": "YMLU"
+  },
+  {
+    "carrier": "ZIM Integrated Shipping",
+    "code": "ZIMU"
+  },
+  {
+    "carrier": "Union Pacific Railroad",
+    "code": "UP"
+  },
+  {
+    "carrier": "Burlington Northern Santa Fe",
+    "code": "BNSF"
+  }
+]
