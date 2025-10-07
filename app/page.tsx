@@ -1,8 +1,14 @@
+
 import Hero from "@/components/Hero";
-import { publicPath } from "@/lib/publicPath";
 import Link from "next/link";
 
-const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const assetPrefix =
+  process.env.NEXT_PUBLIC_BASE_PATH ||
+  (typeof window !== "undefined" && (globalThis as any).__NEXT_DATA__?.assetPrefix) ||
+  "";
+
+const publicSrc = (p: string) =>
+  `${assetPrefix}${p.startsWith("/") ? p : `/${p}`}`;
 
 /* ---------- Data ---------- */
 const steps = [
@@ -27,7 +33,7 @@ const steps = [
 const posts = [
   {
     title: "LTL vs FTL: What’s Right for Your Shipment?",
-    image: `${base}/images/blog-1.png`,
+    image: publicSrc("/images/blog-1.png"),
     href: "/blog/ltl-vs-ftl",
     date: "2025-01-12",
     excerpt:
@@ -35,7 +41,7 @@ const posts = [
   },
   {
     title: "SCAC Codes: A Quick Guide for Shippers",
-    image: `${base}/images/blog-2.png`,
+    image: publicSrc("/images/blog-2.png"),
     href: "/blog/scac-codes-guide",
     date: "2025-01-05",
     excerpt:
@@ -43,7 +49,7 @@ const posts = [
   },
   {
     title: "How to Prevent Damage in Long-Haul Freight",
-    image: `${base}/images/blog-3.png`,
+    image: publicSrc("/images/blog-3.png"),
     href: "/blog/prevent-freight-damage",
     date: "2024-12-18",
     excerpt:
@@ -94,7 +100,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-50 to-slate-50" />
         <div className="container relative grid items-center gap-10 py-16 md:grid-cols-2">
           <img
-            src={`${base}/images/logistics-dashboard.png`}
+            src={publicSrc("/images/logistics-dashboard.png")}
             alt="Operations dashboard"
             className="rounded-2xl border border-slate-100 shadow-soft"
           />
@@ -141,7 +147,6 @@ export default function HomePage() {
                 href={p.href}
                 className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft transition-shadow duration-200 hover:shadow-md"
               >
-                {/* Plain image, no overlay */}
                 <img src={p.image} alt={p.title} className="h-44 w-full object-cover" />
                 <div className="p-5">
                   <div className="text-xs text-slate-500">
@@ -176,16 +181,14 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Right-side image (transparent PNG recommended) */}
           <div className="relative h-44 md:h-full">
             <img
-              src={`${base}/images/cta-truck.png`}
+              src={publicSrc("/images/cta-truck.png")}
               alt="Truck"
               className="absolute bottom-0 right-0 h-full w-auto object-contain"
             />
           </div>
 
-          {/* emerald underline accent */}
           <div className="absolute inset-x-0 bottom-0 h-1 bg-emerald-600" />
         </div>
       </section>
