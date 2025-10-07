@@ -1,37 +1,53 @@
 // app/page.tsx
 import Image from "next/image";
-import Hero from "@/components/Hero";
 import Link from "next/link";
+import Hero from "@/components/Hero";
+import { publicPath } from "@/lib/publicPath";
 
 /* ---------- Data ---------- */
 const steps = [
-  { title: "Submit Your Request", desc: "Tell us what you need delivered, where it's going, and when it's needed. Use our online form or contact our team directly." },
-  { title: "Get a Quote & Confirm", desc: "We'll provide a fast, transparent quote. Once confirmed, we'll schedule your shipment right away." },
+  {
+    title: "Submit Your Request",
+    desc:
+      "Tell us what you need delivered, where it's going, and when it's needed. Use our online form or contact our team directly.",
+  },
+  {
+    title: "Get a Quote & Confirm",
+    desc:
+      "We'll provide a fast, transparent quote. Once confirmed, we'll schedule your shipment right away.",
+  },
   { title: "Track Your Shipment", desc: "Stay updated from pickup to delivery." },
-  { title: "Receive On-Time Delivery", desc: "Your package arrives safely, securely, and right on schedule — every time." },
+  {
+    title: "Receive On-Time Delivery",
+    desc:
+      "Your package arrives safely, securely, and right on schedule — every time.",
+  },
 ];
 
 const posts = [
   {
     title: "LTL vs FTL: What’s Right for Your Shipment?",
-    image: "/images/blog-1.png",
+    image: publicPath("/images/blog-1.png"),
     href: "/blog/ltl-vs-ftl",
     date: "2025-01-12",
-    excerpt: "Understand costs, timelines, and handling so you can choose with confidence.",
+    excerpt:
+      "Understand costs, timelines, and handling so you can choose with confidence.",
   },
   {
     title: "SCAC Codes: A Quick Guide for Shippers",
-    image: "/images/blog-2.png",
+    image: publicPath("/images/blog-2.png"),
     href: "/blog/scac-codes-guide",
     date: "2025-01-05",
-    excerpt: "What SCAC codes are, why they matter, and how to look them up fast.",
+    excerpt:
+      "What SCAC codes are, why they matter, and how to look them up fast.",
   },
   {
     title: "How to Prevent Damage in Long-Haul Freight",
-    image: "/images/blog-3.png",
+    image: publicPath("/images/blog-3.png"),
     href: "/blog/prevent-freight-damage",
     date: "2024-12-18",
-    excerpt: "Packing tips, pallet strategy, and chain-of-custody practices that work.",
+    excerpt:
+      "Packing tips, pallet strategy, and chain-of-custody practices that work.",
   },
 ];
 
@@ -79,7 +95,7 @@ export default function HomePage() {
         <div className="container relative grid items-center gap-10 py-16 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
             <Image
-              src="/images/logistics-dashboard.png"
+              src={publicPath("/images/logistics-dashboard.png")}
               alt="Operations dashboard"
               width={1200}
               height={700}
@@ -95,6 +111,7 @@ export default function HomePage() {
               <li>No-surprise pricing with clear documentation.</li>
               <li>End-to-end chain-of-custody, from pickup to delivery.</li>
             </ul>
+
             <Link
               href="/shipping-guide#quote"
               className="mt-6 inline-flex items-center rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white shadow-soft hover:bg-emerald-700"
@@ -113,7 +130,10 @@ export default function HomePage() {
               <Kicker>Insights</Kicker>
               <Title id="blog-title" align="left">From the Logbook</Title>
             </div>
-            <Link href="/blog" className="text-sm font-semibold text-emerald-700 hover:underline">
+            <Link
+              href="/blog"
+              className="text-sm font-semibold text-emerald-700 hover:underline"
+            >
               View all posts →
             </Link>
           </div>
@@ -144,7 +164,9 @@ export default function HomePage() {
                   </div>
                   <h3 className="mt-1 font-semibold">{p.title}</h3>
                   <p className="mt-2 text-sm text-slate-600">{p.excerpt}</p>
-                  <span className="mt-3 inline-block font-medium text-emerald-700">Read more →</span>
+                  <span className="mt-3 inline-block font-medium text-emerald-700">
+                    Read more →
+                  </span>
                 </div>
               </Link>
             ))}
@@ -166,7 +188,7 @@ export default function HomePage() {
           </div>
           <div className="relative h-44 md:h-full">
             <Image
-              src="/images/cta-truck.png"
+              src={publicPath("/images/cta-truck.png")}
               alt="Truck"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -184,7 +206,11 @@ export default function HomePage() {
 
 /* ---------- Small UI helpers ---------- */
 function Kicker({ children }: { children: React.ReactNode }) {
-  return <p className="text-emerald-700 font-medium tracking-wide uppercase text-xs">{children}</p>;
+  return (
+    <p className="text-emerald-700 font-medium tracking-wide uppercase text-xs">
+      {children}
+    </p>
+  );
 }
 
 function Title({
@@ -197,13 +223,25 @@ function Title({
   id?: string;
 }) {
   return (
-    <h2 id={id} className={["mt-1 text-2xl font-bold", align === "center" ? "text-center" : ""].join(" ")}>
+    <h2
+      id={id}
+      className={[
+        "mt-1 text-2xl font-bold",
+        align === "center" ? "text-center" : "",
+      ].join(" ")}
+    >
       {children}
     </h2>
   );
 }
 
-function Strip({ children, alt = false }: { children: React.ReactNode; alt?: boolean }) {
+function Strip({
+  children,
+  alt = false,
+}: {
+  children: React.ReactNode;
+  alt?: boolean;
+}) {
   return (
     <div className={alt ? "bg-emerald-50/40" : "bg-white"}>
       <div className="border-y border-slate-100">{children}</div>
