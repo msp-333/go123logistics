@@ -1,20 +1,25 @@
-import { publicPath } from "@/lib/publicPath";
-import Image from "next/image";
+// components/Hero.tsx
+import { publicPath } from '@/lib/publicPath';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <img
-        src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/images/hero.png`}
-        alt="Logistics hero"
-        width={1600}
-        height={900}
-        className="w-full h-[420px] object-cover"
-      />
+      <div className="relative h-[420px] w-full">
+        <img
+          src={publicPath('/images/hero.png')}
+          alt="Logistics hero"
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
 
-      {/* Black gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+      {/* overlay should not block clicks */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"
+      />
 
       <div className="container">
         <div className="absolute top-24 max-w-2xl">

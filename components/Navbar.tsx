@@ -62,13 +62,12 @@ export default function Navbar() {
       <div className="container py-4 md:py-5 min-h-[64px] flex items-center justify-between">
         {/* Logo only */}
         <Link href="/" aria-label="Home" className="inline-flex items-center">
-          <Image
+          <img
             src={LOGO_SRC}
             alt="Company logo"
             width={420}
             height={120}
             className="h-12 sm:h-14 md:h-[72px] w-auto object-contain"
-            priority
           />
         </Link>
 
