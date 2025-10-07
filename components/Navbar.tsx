@@ -16,14 +16,13 @@ export default function Navbar() {
   // --- Active path (handles GitHub Pages basePath) ---
   const rawPath = usePathname() || '/';
   const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
-  const pathname = base && rawPath.startsWith(base) ? rawPath.slice(base.length) || '/' : rawPath;
+  const pathname =
+    base && rawPath.startsWith(base) ? rawPath.slice(base.length) || '/' : rawPath;
 
   const isActive = (paths: string | string[]) => {
     const list = Array.isArray(paths) ? paths : [paths];
     return list.some((p) =>
-      p === '/'
-        ? pathname === '/'
-        : pathname === p || pathname.startsWith(`${p}/`)
+      p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)
     );
   };
 
@@ -76,10 +75,7 @@ export default function Navbar() {
             href="/"
             onClick={onNavigate}
             aria-current={isActive('/') ? 'page' : undefined}
-            className={clsx(
-              'px-1 hover:text-emerald-600',
-              isActive('/') && 'text-emerald-700 font-semibold'
-            )}
+            className={clsx('px-1 hover:text-emerald-600', isActive('/') && 'text-emerald-700 font-semibold')}
           >
             Home
           </Link>
@@ -88,12 +84,19 @@ export default function Navbar() {
             href="/about"
             onClick={onNavigate}
             aria-current={isActive('/about') ? 'page' : undefined}
-            className={clsx(
-              'px-1 hover:text-emerald-600',
-              isActive('/about') && 'text-emerald-700 font-semibold'
-            )}
+            className={clsx('px-1 hover:text-emerald-600', isActive('/about') && 'text-emerald-700 font-semibold')}
           >
             About Us
+          </Link>
+
+          {/* NEW: Blog */}
+          <Link
+            href="/blog"
+            onClick={onNavigate}
+            aria-current={isActive('/blog') ? 'page' : undefined}
+            className={clsx('px-1 hover:text-emerald-600', isActive('/blog') && 'text-emerald-700 font-semibold')}
+          >
+            Blog
           </Link>
 
           {/* Services dropdown — CLICK to open */}
@@ -111,11 +114,7 @@ export default function Navbar() {
               aria-controls="services-menu"
             >
               Services
-              <svg
-                className={clsx('h-4 w-4 transition-transform', open && 'rotate-180')}
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
+              <svg className={clsx('h-4 w-4 transition-transform', open && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>

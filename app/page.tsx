@@ -26,7 +26,7 @@ const steps = [
 const posts = [
   {
     title: "LTL vs FTL: What’s Right for Your Shipment?",
-    image: `${base}/images/blog-1.jpg`,
+    image: `${base}/images/blog-1.png`,
     href: "/blog/ltl-vs-ftl",
     date: "2025-01-12",
     excerpt:
@@ -34,7 +34,7 @@ const posts = [
   },
   {
     title: "SCAC Codes: A Quick Guide for Shippers",
-    image: `${base}/images/blog-2.jpg`,
+    image: `${base}/images/blog-2.png`,
     href: "/blog/scac-codes-guide",
     date: "2025-01-05",
     excerpt:
@@ -42,7 +42,7 @@ const posts = [
   },
   {
     title: "How to Prevent Damage in Long-Haul Freight",
-    image: `${base}/images/blog-3.jpg`,
+    image: `${base}/images/blog-3.png`,
     href: "/blog/prevent-freight-damage",
     date: "2024-12-18",
     excerpt:
@@ -93,7 +93,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-50 to-slate-50" />
         <div className="container relative grid items-center gap-10 py-16 md:grid-cols-2">
           <img
-            src={`${base}/images/dashboard.png`}
+            src={`${base}/images/logistics-dashboard.png`}
             alt="Operations dashboard"
             className="rounded-2xl border border-slate-100 shadow-soft"
           />
