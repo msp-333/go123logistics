@@ -1,7 +1,7 @@
 // app/about/page.tsx
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import { publicPath } from "@/lib/publicPath";
 
 export const metadata: Metadata = {
   title: "About Us — GO123 Logistics",
@@ -9,7 +9,6 @@ export const metadata: Metadata = {
     "Logistics done right: clear pricing, proactive updates, and protected freight from quote to proof-of-delivery.",
 };
 
-const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const shell = "mx-auto max-w-6xl px-4 sm:px-6";
 const card = "rounded-2xl border border-slate-100 bg-white shadow-soft";
 
@@ -32,7 +31,7 @@ export default function AboutPage() {
 
   return (
     <article className="py-10 sm:py-12 lg:py-14">
-      {/* ---------- HERO (transparent emerald, compact, balanced) ---------- */}
+      {/* ---------- HERO ---------- */}
       <section className={shell} aria-labelledby="about-hero">
         <div
           className={[
@@ -41,7 +40,7 @@ export default function AboutPage() {
             "bg-gradient-to-r from-emerald-50/70 to-emerald-50/30 backdrop-blur-[2px]",
           ].join(" ")}
         >
-          {/* Text — centered on mobile, left on md+ for natural scan */}
+          {/* Text */}
           <div className="md:col-span-7 lg:col-span-7 text-center md:text-left">
             <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
               About Us
@@ -58,7 +57,7 @@ export default function AboutPage() {
               from quote to proof-of-delivery.
             </p>
 
-            {/* Distinction chips — compact, scannable */}
+            {/* Chips */}
             <ul className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
               {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
                 <li
@@ -84,15 +83,13 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Visual (right) — restrained height for a tidy hero */}
+          {/* Visual (right) */}
           <div className="md:col-span-5 lg:col-span-5 relative h-40 sm:h-52 md:h-[220px] lg:h-[240px] rounded-xl overflow-hidden mt-5 md:mt-0">
-            <Image
-              src={`${base}/images/aboutus-1.png`}
+            <img
+              src={publicPath("/images/aboutus-1.png")}
               alt="Secure freight loaded inside a trailer"
-              fill
-              sizes="(max-width: 768px) 100vw, 40vw"
-              className="object-cover"
-              priority
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-tr from-black/25 via-transparent to-transparent pointer-events-none" />
           </div>
@@ -101,7 +98,7 @@ export default function AboutPage() {
 
       <SectionDivider />
 
-      {/* ---------- OUR STORY (centered heading; readable left body in centered column) ---------- */}
+      {/* ---------- OUR STORY ---------- */}
       <section className={shell} aria-labelledby="story-title">
         <h2 id="story-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
           Our story
@@ -127,36 +124,33 @@ export default function AboutPage() {
 
       <SectionDivider />
 
-      {/* ---------- HOW WE WORK (centered heading; friendly card rhythm) ---------- */}
-     <section className={shell} aria-labelledby="work-title">
-  <h2 id="work-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
-    How we work
-  </h2>
+      {/* ---------- HOW WE WORK ---------- */}
+      <section className={shell} aria-labelledby="work-title">
+        <h2 id="work-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
+          How we work
+        </h2>
 
-  <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-    {steps.map((s, i) => (
-      <li key={i} className={`${card} p-5 md:p-6`}>
-        {/* Title row: badge + title, LEFT aligned */}
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums"
-            aria-hidden="true"
-          >
-            {i + 1}
-          </span>
-          <h3 className="text-base md:text-lg font-semibold text-slate-900">{s.t}</h3>
-        </div>
-
-        {/* Body copy, LEFT aligned */}
-        <p className="mt-2 text-slate-600 text-[15px] leading-6">{s.d}</p>
-      </li>
-    ))}
-  </ol>
-</section>
+        <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+          {steps.map((s, i) => (
+            <li key={i} className={`${card} p-5 md:p-6`}>
+              <div className="flex items-center gap-3">
+                <span
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <h3 className="text-base md:text-lg font-semibold text-slate-900">{s.t}</h3>
+              </div>
+              <p className="mt-2 text-slate-600 text-[15px] leading-6">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <SectionDivider />
 
-      {/* ---------- VALUES (centered heading + cards) ---------- */}
+      {/* ---------- VALUES ---------- */}
       <section className={shell} aria-labelledby="values-title">
         <h2 id="values-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
           Values we live by
@@ -175,7 +169,7 @@ export default function AboutPage() {
 
       <SectionDivider />
 
-      {/* ---------- CTA (balanced two-column; mobile-friendly center) ---------- */}
+      {/* ---------- CTA ---------- */}
       <section className={shell} aria-labelledby="cta-title">
         <div className="rounded-3xl border border-emerald-100 p-6 md:p-8 shadow-soft bg-gradient-to-r from-emerald-50 via-emerald-50/70 to-teal-50">
           <div className="grid md:grid-cols-5 items-center gap-6">
@@ -202,7 +196,7 @@ export default function AboutPage() {
   );
 }
 
-/* ---------- tiny helper for consistent, light dividers ---------- */
+/* ---------- small divider helper ---------- */
 function SectionDivider() {
   return (
     <div className="my-9">
