@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from "next/image";
 import { publicPath } from "@/lib/publicPath";
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
