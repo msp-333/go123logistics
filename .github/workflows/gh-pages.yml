@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]   # change to "master" if that's your default branch
 
 permissions:
   contents: write
@@ -21,13 +21,15 @@ jobs:
 
       - run: npm ci
 
+      # Set base path for images/assets on GitHub Pages (repo path)
       - name: Set production env for build
         run: echo "NEXT_PUBLIC_BASE_PATH=/go123logistics" >> .env.production
 
       - name: Build (static export to /out)
         run: npm run build
 
-      - name: Disable Jekyll (so /_next isn’t ignored)
+      # Prevent GitHub Pages/Jekyll from ignoring /_next and other underscored dirs
+      - name: Disable Jekyll
         run: touch out/.nojekyll
 
       - name: Deploy
