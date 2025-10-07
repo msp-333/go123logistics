@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { posts } from "@/content/posts";
+import Image from "next/image";
 import { publicPath } from "@/lib/publicPath";
 
 export const metadata = {

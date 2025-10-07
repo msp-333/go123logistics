@@ -1,6 +1,7 @@
 // app/blog/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import { publicPath } from "@/lib/publicPath";
+import Image from "next/image";
 import Link from "next/link";
 import { posts } from "@/content/posts";
 
