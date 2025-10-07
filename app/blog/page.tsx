@@ -13,18 +13,14 @@ export default function BlogIndex() {
 
   return (
     <section className="container py-12">
-      {/* Page header */}
       <header className="max-w-2xl">
-        <p className="text-xs tracking-widest text-emerald-700 font-semibold">
-          LOGBOOK
-        </p>
+        <p className="text-xs tracking-widest text-emerald-700 font-semibold">LOGBOOK</p>
         <h1 className="text-3xl font-extrabold mt-1">Insights for Confident Shipping</h1>
         <p className="mt-2 text-slate-600">
           Practical articles based on real freight scenarios—international, LTL, TL, and more.
         </p>
       </header>
 
-      {/* Featured post */}
       {featured && (
         <Link
           href={`/blog/${featured.slug}`}
@@ -32,10 +28,10 @@ export default function BlogIndex() {
         >
           <div className="relative h-56 md:h-auto">
             <img
-              src={featured.image}
+              src={publicPath(featured.image)}
               alt={featured.title}
-              className="object-cover"
-              sizes="(min-width: 768px) 50vw, 100vw"
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
             />
           </div>
           <div className="p-6 md:p-8">
@@ -67,7 +63,6 @@ export default function BlogIndex() {
         </Link>
       )}
 
-      {/* Grid of the rest */}
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         {rest.map((p) => (
           <Link
@@ -77,10 +72,10 @@ export default function BlogIndex() {
           >
             <div className="relative h-44">
               <img
-                src={p.image}
+                src={publicPath(p.image)}
                 alt={p.title}
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 33vw"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
               />
             </div>
             <div className="p-5">
