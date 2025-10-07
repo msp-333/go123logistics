@@ -1,14 +1,18 @@
-// lib/publicPath.ts
-/**
- * Prefix an asset path so it works on localhost and on GitHub Pages.
- * If you also set basePath/assetPrefix in next.config, this still works.
- */
-export const publicPath = (path: string): string => {
-  const clean = path.startsWith("/") ? path : `/${path}`;
-  const base =
-    process.env.NEXT_PUBLIC_BASE_PATH ||
-    (typeof window !== "undefined" &&
-      (globalThis as any).__NEXT_DATA__?.assetPrefix) ||
-    "";
-  return `${base}${clean}`;
-};
+const PROD_BASE = "/go123logistics";
+
+function runtimeBaseGuess(): string {
+  if (typeof window === "undefined") return "";
+  // If we're running under /go123logistics/*, use that as base.
+  const seg1 = window.location.pathname.split("/")[1] || "";
+  return seg1 ? `/${seg1}` : "";
+}
+
+const buildBase =
+  process.env.NODE_ENV === "production" ? PROD_BASE : "";
+
+export function publicPath(path: string): string {
+  const cleaned = path.startsWith("/") ? path : `/${path}`;
+  // Prefer build-time base; if empty at runtime, try to guess.
+  const base = buildBase || runtimeBaseGuess() || "";
+  return `${base}${cleaned}`;
+}
