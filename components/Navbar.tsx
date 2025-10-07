@@ -1,19 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { publicPath } from "@/lib/publicPath";
+import { publicPath } from '@/lib/publicPath';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
-// Prefix via publicPath so it works at /go123logistics on GH Pages
+// Use publicPath so it works at /go123logistics on GH Pages
 const LOGO_SRC = publicPath('/images/logo.png');
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  // Desktop “Services” dropdown
+  const [servicesOpen, setServicesOpen] = useState(false);
+  // Mobile main drawer + mobile Services disclosure
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+
   const [scrolled, setScrolled] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const desktopMenuRef = useRef<HTMLDivElement | null>(null);
 
   // --- Active path (handles GitHub Pages basePath) ---
   const rawPath = usePathname() || '/';
@@ -28,9 +32,14 @@ export default function Navbar() {
     );
   };
 
-  const onNavigate = () => setOpen(false);
+  const closeAllMenus = () => {
+    setServicesOpen(false);
+    setMobileOpen(false);
+    setMobileServicesOpen(false);
+  };
+  const onNavigate = () => closeAllMenus();
 
-  // sticky shadow on scroll
+  // Sticky shadow on scroll
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
     onScroll();
@@ -38,12 +47,12 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // close on outside click or Escape
+  // Close desktop dropdown on outside click / Esc
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!desktopMenuRef.current?.contains(e.target as Node)) setServicesOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closeAllMenus();
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -60,7 +69,7 @@ export default function Navbar() {
       )}
     >
       <div className="container py-4 md:py-5 min-h-[64px] flex items-center justify-between">
-        {/* Logo only */}
+        {/* Logo */}
         <Link href="/" aria-label="Home" className="inline-flex items-center">
           <img
             src={LOGO_SRC}
@@ -71,6 +80,7 @@ export default function Navbar() {
           />
         </Link>
 
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           <Link
             href="/"
@@ -90,7 +100,6 @@ export default function Navbar() {
             About Us
           </Link>
 
-          {/* NEW: Blog */}
           <Link
             href="/blog"
             onClick={onNavigate}
@@ -100,22 +109,25 @@ export default function Navbar() {
             Blog
           </Link>
 
-          {/* Services dropdown — CLICK to open */}
-          <div ref={menuRef} className="relative">
+          {/* Services dropdown — CLICK to open (desktop) */}
+          <div ref={desktopMenuRef} className="relative">
             <button
               type="button"
-              onClick={() => setOpen((o) => !o)}
+              onClick={() => setServicesOpen((o) => !o)}
               className={clsx(
                 'inline-flex items-center gap-1 px-1 hover:text-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md',
-                // Highlight "Services" if any child route is active
                 isActive(['/services', '/shipping-guide']) && 'text-emerald-700 font-semibold'
               )}
               aria-haspopup="menu"
-              aria-expanded={open}
+              aria-expanded={servicesOpen}
               aria-controls="services-menu"
             >
               Services
-              <svg className={clsx('h-4 w-4 transition-transform', open && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
@@ -126,7 +138,7 @@ export default function Navbar() {
               role="menu"
               className={clsx(
                 'absolute right-0 mt-2 w-72 rounded-2xl border border-slate-100 bg-white shadow-soft p-2 origin-top-right transition',
-                open ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
+                servicesOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
               )}
             >
               <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">Shipment</div>
@@ -202,15 +214,157 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        {/* Mobile quick action */}
-        <div className="md:hidden">
-          <Link
-            href="/contact"
-            onClick={onNavigate}
-            className="inline-flex items-center rounded-full bg-emerald-600 text-white px-4 py-2 shadow-soft hover:bg-emerald-700"
-          >
-            Contact Us
-          </Link>
+        {/* Mobile: hamburger button */}
+        <button
+          type="button"
+          className="md:hidden inline-flex items-center justify-center rounded-md p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          aria-label="Open menu"
+          aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen((v) => !v)}
+        >
+          {mobileOpen ? (
+            // X icon
+            <svg className="h-6 w-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeWidth="2" strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            // Hamburger icon
+            <svg className="h-6 w-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeWidth="2" strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile drawer */}
+      <div
+        className={clsx(
+          'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden bg-white border-t border-slate-100',
+          mobileOpen ? 'max-h-[480px] opacity-100' : 'max-h-0 opacity-0'
+        )}
+      >
+        <div className="container py-3">
+          <ul className="flex flex-col gap-1">
+            <li>
+              <Link
+                href="/"
+                onClick={onNavigate}
+                aria-current={isActive('/') ? 'page' : undefined}
+                className={clsx(
+                  'block rounded-lg px-3 py-2',
+                  isActive('/') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
+                )}
+              >
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/about"
+                onClick={onNavigate}
+                aria-current={isActive('/about') ? 'page' : undefined}
+                className={clsx(
+                  'block rounded-lg px-3 py-2',
+                  isActive('/about') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
+                )}
+              >
+                About Us
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/blog"
+                onClick={onNavigate}
+                aria-current={isActive('/blog') ? 'page' : undefined}
+                className={clsx(
+                  'block rounded-lg px-3 py-2',
+                  isActive('/blog') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
+                )}
+              >
+                Blog
+              </Link>
+            </li>
+
+            {/* Mobile Services disclosure */}
+            <li className="mt-1">
+              <button
+                type="button"
+                onClick={() => setMobileServicesOpen((v) => !v)}
+                aria-expanded={mobileServicesOpen}
+                className={clsx(
+                  'w-full inline-flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-50',
+                  isActive(['/services', '/shipping-guide']) && 'text-emerald-700 font-semibold'
+                )}
+              >
+                <span>Services</span>
+                <svg
+                  className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                </svg>
+              </button>
+
+              <div
+                className={clsx(
+                  'pl-3 border-l border-slate-100 ml-3 mt-1 space-y-1 transition-[max-height,opacity] overflow-hidden',
+                  mobileServicesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                )}
+              >
+                <Link
+                  href="/shipping-guide"
+                  onClick={onNavigate}
+                  className={clsx(
+                    'block rounded-md px-3 py-2',
+                    isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  )}
+                >
+                  Shipping Guide &amp; SCAC Codes
+                </Link>
+                <Link
+                  href="/services/ocean-freight"
+                  onClick={onNavigate}
+                  className={clsx(
+                    'block rounded-md px-3 py-2',
+                    isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  )}
+                >
+                  Ocean Freight
+                </Link>
+                <Link
+                  href="/services/air-freight"
+                  onClick={onNavigate}
+                  className={clsx(
+                    'block rounded-md px-3 py-2',
+                    isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  )}
+                >
+                  Air Freight
+                </Link>
+                <Link
+                  href="/services/rail-freight"
+                  onClick={onNavigate}
+                  className={clsx(
+                    'block rounded-md px-3 py-2',
+                    isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  )}
+                >
+                  Rail Freight
+                </Link>
+              </div>
+            </li>
+
+            <li className="pt-2">
+              <Link
+                href="/contact"
+                onClick={onNavigate}
+                className="inline-flex w-full items-center justify-center rounded-full bg-emerald-600 text-white px-4 py-2 shadow-soft hover:bg-emerald-700"
+              >
+                Contact Us
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
     </header>
