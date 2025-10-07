@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { publicPath } from "@/lib/publicPath";
 
 export default function ServicesIndex() {
   return (

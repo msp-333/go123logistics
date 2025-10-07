@@ -1,16 +1,15 @@
-import Image from 'next/image';
+import { publicPath } from "@/lib/publicPath";
 import Link from 'next/link';
 
 export default function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <Image
+      <img
         src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/images/hero.png`}
         alt="Logistics hero"
         width={1600}
         height={900}
         className="w-full h-[420px] object-cover"
-        priority
       />
 
       {/* Black gradient overlay */}
