@@ -15,25 +15,37 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
     title,
     description: post?.excerpt,
     openGraph: post
-      ? {
-          title,
-          description: post.excerpt,
-          images: [{ url: post.image }],
-        }
+      ? { title, description: post.excerpt, images: [{ url: post.image }] }
       : {},
   };
 }
 
 /* ---------- Small UI helpers ---------- */
 function Kicker({ children }: { children: React.ReactNode }) {
-  return <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">{children}</p>;
+  return (
+    <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
+      {children}
+    </p>
+  );
 }
 
-function MetaRow({ date, minutes, tags }: { date: string; minutes: number; tags?: string[] }) {
+function MetaRow({
+  date,
+  minutes,
+  tags,
+}: {
+  date: string;
+  minutes: number;
+  tags?: string[];
+}) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
       <time>
-        {new Date(date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+        {new Date(date).toLocaleDateString(undefined, {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}
       </time>
       <span aria-hidden="true">•</span>
       <span>{minutes} min read</span>
@@ -42,7 +54,10 @@ function MetaRow({ date, minutes, tags }: { date: string; minutes: number; tags?
           <span aria-hidden="true">•</span>
           <ul className="flex flex-wrap gap-2">
             {tags.map((t) => (
-              <li key={t} className="text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+              <li
+                key={t}
+                className="text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100"
+              >
                 #{t}
               </li>
             ))}
@@ -56,7 +71,9 @@ function MetaRow({ date, minutes, tags }: { date: string; minutes: number; tags?
 function ArticleBody({ children }: { children: React.ReactNode }) {
   return (
     <section className="mx-auto max-w-3xl mt-8 text-[16px] md:text-[17px] leading-7 md:leading-8 text-slate-800">
-      <div className="[&>p]:mt-5 [&>p:first-child]:mt-0 [&>ul]:mt-5 [&>ol]:mt-5 [&_li]:mt-2">{children}</div>
+      <div className="[&>p]:mt-5 [&>p:first-child]:mt-0 [&>ul]:mt-5 [&>ol]:mt-5 [&_li]:mt-2">
+        {children}
+      </div>
     </section>
   );
 }
@@ -65,26 +82,37 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
   const post = posts.find((p) => p.slug === params.slug);
   if (!post) return notFound();
 
+  // derived
   const words = post.content.join(" ").split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.round(words / 200));
 
-  const sorted = [...posts].sort((a, b) => +new Date(b.date) - +new Date(a.date));
+  const sorted = [...posts].sort(
+    (a, b) => +new Date(b.date) - +new Date(a.date),
+  );
   const idx = sorted.findIndex((p) => p.slug === post.slug);
   const prev = idx > 0 ? sorted[idx - 1] : null;
   const next = idx >= 0 && idx < sorted.length - 1 ? sorted[idx + 1] : null;
 
   const related =
     posts
-      .filter((p) => p.slug !== post.slug && (p.tags ?? []).some((t) => (post.tags ?? []).includes(t)))
+      .filter(
+        (p) =>
+          p.slug !== post.slug &&
+          (p.tags ?? []).some((t) => (post.tags ?? []).includes(t)),
+      )
       .slice(0, 3) || [];
 
   return (
     <article className="container py-10">
       {/* Breadcrumbs */}
       <nav className="max-w-3xl mx-auto text-sm text-slate-500">
-        <Link href="/" className="hover:underline">Home</Link>
+        <Link href="/" className="hover:underline">
+          Home
+        </Link>
         <span className="mx-2">/</span>
-        <Link href="/blog/" className="hover:underline">Blog</Link>
+        <Link href="/blog/" className="hover:underline">
+          Blog
+        </Link>
         <span className="mx-2">/</span>
         <span className="text-slate-700">{post.title}</span>
       </nav>
@@ -92,17 +120,19 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
       {/* Header */}
       <header className="max-w-3xl mx-auto mt-3">
         <Kicker>Logbook</Kicker>
-        <h1 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">{post.title}</h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">
+          {post.title}
+        </h1>
         <MetaRow date={post.date} minutes={minutes} tags={post.tags} />
       </header>
 
-      {/* Cover with stable height */}
+      {/* COVER IMAGE — no absolute; fixed height wrapper */}
       <figure className="max-w-3xl mx-auto mt-6 rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
-        <div className="relative h-64 md:h-80">
+        <div className="h-64 md:h-80">
           <img
             src={post.image}
             alt={post.title}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="block h-full w-full object-cover"
             loading="eager"
           />
         </div>
@@ -120,24 +150,44 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
         <nav className="mt-10 max-w-3xl mx-auto" aria-label="Post navigation">
           <div className="grid gap-4 sm:grid-cols-2">
             {prev && (
-              <Link href={`/blog/${prev.slug}/`} className="rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 flex items-start gap-3 transition-colors">
-                <svg className="h-4 w-4 mt-0.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+              <Link
+                href={`/blog/${prev.slug}/`}
+                className="rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 flex items-start gap-3 transition-colors"
+              >
+                <svg
+                  className="h-4 w-4 mt-0.5 text-slate-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M12.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L8.414 10l4.293 4.293a1 1 0 010 1.414z" />
                 </svg>
                 <div>
                   <div className="text-[11px] text-slate-500">Previous</div>
-                  <div className="text-[15px] md:text-base leading-snug font-semibold">{prev.title}</div>
+                  <div className="text-[15px] md:text-base leading-snug font-semibold">
+                    {prev.title}
+                  </div>
                 </div>
               </Link>
             )}
 
             {next && (
-              <Link href={`/blog/${next.slug}/`} className={`rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 flex items-start gap-3 transition-colors ${!prev ? "sm:col-span-2" : ""}`}>
+              <Link
+                href={`/blog/${next.slug}/`}
+                className={`rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 flex items-start gap-3 transition-colors ${
+                  !prev ? "sm:col-span-2" : ""
+                }`}
+              >
                 <div className="ml-auto text-right">
                   <div className="text-[11px] text-slate-500">Next</div>
-                  <div className="text-[15px] md:text-base leading-snug font-semibold">{next.title}</div>
+                  <div className="text-[15px] md:text-base leading-snug font-semibold">
+                    {next.title}
+                  </div>
                 </div>
-                <svg className="h-4 w-4 mt-0.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className="h-4 w-4 mt-0.5 text-slate-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" />
                 </svg>
               </Link>
@@ -146,7 +196,7 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
         </nav>
       )}
 
-      {/* Related reads — image constrained inside card */}
+      {/* RELATED CARDS — flex column; image as normal block; text always visible */}
       {related.length > 0 && (
         <section className="mt-12 max-w-3xl mx-auto pt-8 border-t border-slate-200">
           <h2 className="text-xl font-semibold">Related reads</h2>
@@ -155,22 +205,27 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
               <Link
                 key={r.slug}
                 href={`/blog/${r.slug}/`}
-                className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                className="flex flex-col rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                {/* lock image height so it can’t cover text */}
-                <div className="relative h-32">
+                <div className="h-32">
                   <img
                     src={r.image}
                     alt={r.title}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="block h-full w-full object-cover"
                     loading="lazy"
                   />
                 </div>
                 <div className="p-4">
-                  <time className="text-xs text-slate-500">
-                    {new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  <time className="block text-xs text-slate-500">
+                    {new Date(r.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </time>
-                  <h3 className="mt-1 font-semibold text-[15px] leading-snug">{r.title}</h3>
+                  <h3 className="mt-1 font-semibold text-[15px] leading-snug line-clamp-2">
+                    {r.title}
+                  </h3>
                 </div>
               </Link>
             ))}
