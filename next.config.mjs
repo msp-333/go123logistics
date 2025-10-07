@@ -1,29 +1,30 @@
 // next.config.mjs
-
-// Change this if your repo name changes
-const repo = process.env.NEXT_PUBLIC_GH_PAGES_REPO || "go123logistics";
-const isProd = process.env.NODE_ENV === "production";
+const repo = 'go123logistics';
+const isProd = process.env.NODE_ENV === 'production';
+const base = isProd ? `/${repo}` : '';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Export static HTML into /out (required for GitHub Pages)
-  output: "export",
+  // Export static HTML for GitHub Pages
+  output: 'export',
 
-  // Prefix routes & assets when deployed under /<repo>
-  basePath: isProd ? `/${repo}` : "",
-  assetPrefix: isProd ? `/${repo}/` : "",
+  // Make all routes/assets resolve under /go123logistics in prod
+  basePath: base,
+  assetPrefix: base + '/',
 
-  // Use plain <img> at build time (GitHub Pages has no image optimizer)
+  // IMPORTANT: expose the same base to the client & SSG
+  env: {
+    NEXT_PUBLIC_BASE_PATH: base,
+  },
+
+  // Static export-friendly images
   images: { unoptimized: true },
 
-  // Ensure /about/ resolves to /about/index.html on GH Pages
+  // Ensure /blog/ maps to /blog/index.html on GH Pages
   trailingSlash: true,
 
-  // Optional: don’t fail CI on lint issues during export
+  // Optional: don’t fail CI on lint
   eslint: { ignoreDuringBuilds: true },
-
-  // Optional: don’t fail CI on type errors during export
-  typescript: { ignoreBuildErrors: true },
 };
 
 export default nextConfig;
