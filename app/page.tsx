@@ -1,4 +1,5 @@
 import Hero from "@/components/Hero";
+import { publicPath } from "@/lib/publicPath";
 import Link from "next/link";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
