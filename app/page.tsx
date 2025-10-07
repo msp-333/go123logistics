@@ -95,7 +95,7 @@ export default function HomePage() {
         <div className="container relative grid items-center gap-10 py-16 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
             <img
-              src={publicPath("/images/logistics-dashboard.png")}
+              src={publicPath("/images/logistic-dashboard.png")}
               alt="Operations dashboard"
               width={1200}
               height={700}
