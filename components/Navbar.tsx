@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import Image from "next/image";
+import Image from 'next/image';
 import { publicPath } from "@/lib/publicPath";
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
-const LOGO_SRC = '/images/logo.png'; // change if your file uses .svg/.jpg
+// Prefix via publicPath so it works at /go123logistics on GH Pages
+const LOGO_SRC = publicPath('/images/logo.png');
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -61,12 +62,13 @@ export default function Navbar() {
       <div className="container py-4 md:py-5 min-h-[64px] flex items-center justify-between">
         {/* Logo only */}
         <Link href="/" aria-label="Home" className="inline-flex items-center">
-          <img
+          <Image
             src={LOGO_SRC}
             alt="Company logo"
             width={420}
             height={120}
             className="h-12 sm:h-14 md:h-[72px] w-auto object-contain"
+            priority
           />
         </Link>
 
