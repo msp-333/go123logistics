@@ -1,7 +1,6 @@
-// app/blog/page.tsx
 import Link from "next/link";
-import Image from "next/image";
 import { posts } from "@/content/posts";
+import { publicPath } from "@/lib/publicPath";
 
 export const metadata = {
   title: "Logbook — GO123 Logistics",
@@ -32,13 +31,11 @@ export default function BlogIndex() {
           className="mt-8 grid gap-6 md:grid-cols-2 rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden hover:shadow-md transition-shadow"
         >
           <div className="relative h-56 md:h-auto">
-            <Image
+            <img
               src={featured.image}
               alt={featured.title}
-              fill
               className="object-cover"
               sizes="(min-width: 768px) 50vw, 100vw"
-              priority
             />
           </div>
           <div className="p-6 md:p-8">
@@ -79,10 +76,9 @@ export default function BlogIndex() {
             className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-soft hover:shadow-md transition-shadow"
           >
             <div className="relative h-44">
-              <Image
+              <img
                 src={p.image}
                 alt={p.title}
-                fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 33vw"
               />

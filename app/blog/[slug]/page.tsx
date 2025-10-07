@@ -1,6 +1,6 @@
 // app/blog/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import { publicPath } from "@/lib/publicPath";
 import Link from "next/link";
 import { posts } from "@/content/posts";
 
@@ -134,13 +134,12 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
 
       {/* Cover (use width/height for zero warnings) */}
       <figure className="max-w-3xl mx-auto mt-6 rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
-        <Image
+        <img
           src={post.image}
           alt={post.title}
           width={1600}
           height={900}
           className="w-full h-64 md:h-80 object-cover"
-          priority
         />
       </figure>
 
@@ -214,10 +213,9 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
                 className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="relative h-32">
-                  <Image
+                  <img
                     src={r.image}
                     alt={r.title}
-                    fill
                     sizes="(max-width: 768px) 100vw, 384px"
                     className="object-cover"
                   />
