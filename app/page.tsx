@@ -99,7 +99,6 @@ export default function HomePage() {
               alt="Operations dashboard"
               width={1200}
               height={700}
-              priority
               className="h-auto w-full object-cover"
             />
           </div>
