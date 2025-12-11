@@ -1,4 +1,5 @@
 // next.config.mjs
+
 const repo = 'go123logistics';
 const isProd = process.env.NODE_ENV === 'production';
 const base = isProd ? `/${repo}` : '';
@@ -10,7 +11,7 @@ const nextConfig = {
 
   // Make all routes/assets resolve under /go123logistics in prod
   basePath: base,
-  assetPrefix: base + '/',
+  assetPrefix: base ? `${base}/` : undefined,
 
   // IMPORTANT: expose the same base to the client & SSG
   env: {

@@ -86,7 +86,10 @@ export default function Navbar() {
             href="/"
             onClick={onNavigate}
             aria-current={isActive('/') ? 'page' : undefined}
-            className={clsx('px-1 hover:text-emerald-600', isActive('/') && 'text-emerald-700 font-semibold')}
+            className={clsx(
+              'px-1 hover:text-emerald-600',
+              isActive('/') && 'text-emerald-700 font-semibold'
+            )}
           >
             Home
           </Link>
@@ -95,7 +98,10 @@ export default function Navbar() {
             href="/about"
             onClick={onNavigate}
             aria-current={isActive('/about') ? 'page' : undefined}
-            className={clsx('px-1 hover:text-emerald-600', isActive('/about') && 'text-emerald-700 font-semibold')}
+            className={clsx(
+              'px-1 hover:text-emerald-600',
+              isActive('/about') && 'text-emerald-700 font-semibold'
+            )}
           >
             About Us
           </Link>
@@ -104,9 +110,25 @@ export default function Navbar() {
             href="/blog"
             onClick={onNavigate}
             aria-current={isActive('/blog') ? 'page' : undefined}
-            className={clsx('px-1 hover:text-emerald-600', isActive('/blog') && 'text-emerald-700 font-semibold')}
+            className={clsx(
+              'px-1 hover:text-emerald-600',
+              isActive('/blog') && 'text-emerald-700 font-semibold'
+            )}
           >
             Blog
+          </Link>
+
+          {/* NEW: Agent Training link (desktop) */}
+          <Link
+            href="/training"
+            onClick={onNavigate}
+            aria-current={isActive('/training') ? 'page' : undefined}
+            className={clsx(
+              'px-1 hover:text-emerald-600',
+              isActive('/training') && 'text-emerald-700 font-semibold'
+            )}
+          >
+            Agent Training
           </Link>
 
           {/* Services dropdown — CLICK to open (desktop) */}
@@ -116,7 +138,8 @@ export default function Navbar() {
               onClick={() => setServicesOpen((o) => !o)}
               className={clsx(
                 'inline-flex items-center gap-1 px-1 hover:text-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md',
-                isActive(['/services', '/shipping-guide']) && 'text-emerald-700 font-semibold'
+                isActive(['/services', '/shipping-guide']) &&
+                  'text-emerald-700 font-semibold'
               )}
               aria-haspopup="menu"
               aria-expanded={servicesOpen}
@@ -141,7 +164,9 @@ export default function Navbar() {
                 servicesOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
               )}
             >
-              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">Shipment</div>
+              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">
+                Shipment
+              </div>
 
               <Link
                 href="/shipping-guide"
@@ -150,13 +175,17 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  isActive('/shipping-guide')
+                    ? 'bg-emerald-50 text-emerald-700 font-medium'
+                    : 'hover:bg-slate-50'
                 )}
               >
                 Shipping Guide &amp; SCAC Codes
               </Link>
 
-              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">Freight</div>
+              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">
+                Freight
+              </div>
 
               <Link
                 href="/services/ocean-freight"
@@ -165,7 +194,9 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  isActive('/services/ocean-freight')
+                    ? 'bg-emerald-50 text-emerald-700 font-medium'
+                    : 'hover:bg-slate-50'
                 )}
               >
                 Ocean Freight
@@ -178,7 +209,9 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  isActive('/services/air-freight')
+                    ? 'bg-emerald-50 text-emerald-700 font-medium'
+                    : 'hover:bg-slate-50'
                 )}
               >
                 Air Freight
@@ -191,7 +224,9 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  isActive('/services/rail-freight')
+                    ? 'bg-emerald-50 text-emerald-700 font-medium'
+                    : 'hover:bg-slate-50'
                 )}
               >
                 Rail Freight
@@ -285,6 +320,23 @@ export default function Navbar() {
               </Link>
             </li>
 
+            {/* NEW: Agent Training link (mobile) */}
+            <li>
+              <Link
+                href="/training"
+                onClick={onNavigate}
+                aria-current={isActive('/training') ? 'page' : undefined}
+                className={clsx(
+                  'block rounded-lg px-3 py-2',
+                  isActive('/training')
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'hover:bg-slate-50'
+                )}
+              >
+                Agent Training
+              </Link>
+            </li>
+
             {/* Mobile Services disclosure */}
             <li className="mt-1">
               <button
@@ -317,7 +369,9 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/shipping-guide')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
                   Shipping Guide &amp; SCAC Codes
@@ -327,7 +381,9 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/services/ocean-freight')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
                   Ocean Freight
@@ -337,7 +393,9 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/services/air-freight')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
                   Air Freight
@@ -347,7 +405,9 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/services/rail-freight')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
                   Rail Freight
