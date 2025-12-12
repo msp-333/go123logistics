@@ -13,7 +13,8 @@ type ModuleRow = {
   level: string | null;
   duration: string | null;
   passing_score: number | null;
-  video_url: string | null; // optional fallback if you store a public url here
+  video_url: string | null; // optional fallback (public URL)
+  video_path: string | null; // optional fallback (storage key)
 };
 
 type LessonRow = {
@@ -21,35 +22,40 @@ type LessonRow = {
   module_slug: string;
   title: string;
   sort_order: number;
-  video_path: string | null; // STORAGE OBJECT KEY
+  video_path: string | null; // storage object key
   content: string | null;
 };
 
 type ChoiceRow = {
   id: string;
+  question_id: string;
   choice_text: string;
   is_correct: boolean;
-  sort_order: number;
+  sort_order: number | null;
 };
 
 type QuestionRow = {
   id: string;
-  module_slug: string;
+  lesson_id: string;
   question: string;
-  sort_order: number;
-  explanation: string | null;
-  training_question_choices: ChoiceRow[];
+  sort_order: number | null;
+  choices: ChoiceRow[];
 };
 
 type Props = { slug: string };
 
 const VIDEO_BUCKET = 'training-videos';
 
+function isHttpUrl(s: string) {
+  return /^https?:\/\//i.test(s);
+}
+
 export default function TrainingModuleClient({ slug }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const [module, setModule] = useState<ModuleRow | null>(null);
-  const [lesson, setLesson] = useState<LessonRow | null>(null); // we’ll use the first active lesson video
+  const [lesson, setLesson] = useState<LessonRow | null>(null);
+
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
@@ -58,11 +64,13 @@ export default function TrainingModuleClient({ slug }: Props) {
 
   const [videoDone, setVideoDone] = useState(false);
 
-  // quiz state: questionId -> choiceId
+  // questionId -> choiceId
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const passingScore = module?.passing_score ?? 80;
+  const total = questions.length;
 
   useEffect(() => {
     const load = async () => {
@@ -71,10 +79,14 @@ export default function TrainingModuleClient({ slug }: Props) {
       setLoading(true);
       setErrMsg(null);
 
-      // 1) Load module meta
+      setSubmitted(false);
+      setSelected({});
+      setVideoDone(false);
+
+      // 1) module meta
       const { data: mod, error: modErr } = await supabase
         .from('training_modules')
-        .select('slug, title, description, level, duration, passing_score, video_url')
+        .select('slug, title, description, level, duration, passing_score, video_url, video_path')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -88,9 +100,10 @@ export default function TrainingModuleClient({ slug }: Props) {
         setErrMsg(modErr?.message || 'Module not found / inactive.');
         return;
       }
+
       setModule(mod);
 
-      // 2) Load FIRST active lesson (video lives here)
+      // 2) first active lesson (video lives here)
       const { data: les, error: lesErr } = await supabase
         .from('training_lessons')
         .select('id, module_slug, title, sort_order, video_path, content')
@@ -100,73 +113,114 @@ export default function TrainingModuleClient({ slug }: Props) {
         .limit(1)
         .maybeSingle();
 
-      if (lesErr) {
+      if (lesErr || !les) {
         setLesson(null);
-        setVideoUrl(mod.video_url || null); // fallback
-        setErrMsg(`Lessons error: ${lesErr.message}`);
-      } else {
-        setLesson(les || null);
+        setVideoUrl(null);
+        setQuestions([]);
+        setLoading(false);
+        setErrMsg(lesErr?.message || 'No active lessons found for this module.');
+        return;
       }
 
-      // 3) Resolve video URL:
-      // - Prefer lesson.video_path (signed url)
-      // - Fallback to module.video_url if you stored a public url
-      if (les?.video_path) {
-        const { data: signed, error: signErr } = await supabase
-          .storage
+      setLesson(les);
+
+      // 3) video URL
+      setVideoUrl(null);
+
+      const lessonVideoKey = les.video_path;
+      const moduleFallback = mod.video_url || mod.video_path || null;
+
+      if (lessonVideoKey) {
+        const { data: signed, error: signErr } = await supabase.storage
           .from(VIDEO_BUCKET)
-          .createSignedUrl(les.video_path, 60 * 60); // 1 hour
+          .createSignedUrl(lessonVideoKey, 60 * 60); // 1 hour
 
-        if (signErr || !signed?.signedUrl) {
-          setVideoUrl(mod.video_url || null);
-          setErrMsg((prev) => prev || `Video error: ${signErr?.message || 'Could not sign video url.'}`);
-        } else {
+        if (!signErr && signed?.signedUrl) {
           setVideoUrl(signed.signedUrl);
+        } else {
+          // fallback
+          if (typeof moduleFallback === 'string' && isHttpUrl(moduleFallback)) {
+            setVideoUrl(moduleFallback);
+          } else if (typeof moduleFallback === 'string' && moduleFallback) {
+            const { data: s2, error: e2 } = await supabase.storage
+              .from(VIDEO_BUCKET)
+              .createSignedUrl(moduleFallback, 60 * 60);
+            setVideoUrl(!e2 && s2?.signedUrl ? s2.signedUrl : null);
+            if (e2) setErrMsg((prev) => prev || `Video error: ${e2.message}`);
+          } else {
+            setVideoUrl(null);
+          }
+
+          if (signErr) setErrMsg((prev) => prev || `Video error: ${signErr.message}`);
         }
-      } else {
-        setVideoUrl(mod.video_url || null);
+      } else if (typeof moduleFallback === 'string' && isHttpUrl(moduleFallback)) {
+        setVideoUrl(moduleFallback);
+      } else if (typeof moduleFallback === 'string' && moduleFallback) {
+        const { data: signed, error: signErr } = await supabase.storage
+          .from(VIDEO_BUCKET)
+          .createSignedUrl(moduleFallback, 60 * 60);
+        setVideoUrl(!signErr && signed?.signedUrl ? signed.signedUrl : null);
+        if (signErr) setErrMsg((prev) => prev || `Video error: ${signErr.message}`);
       }
 
-      // 4) Load questions + choices by MODULE SLUG
+      // 4) questions by LESSON ID (this matches your table)
       const { data: qs, error: qErr } = await supabase
         .from('training_questions')
-        .select(`
-          id,
-          module_slug,
-          question,
-          sort_order,
-          explanation,
-          training_question_choices (
-            id,
-            choice_text,
-            is_correct,
-            sort_order
-          )
-        `)
-        .eq('module_slug', slug)
+        .select('id, lesson_id, question, sort_order')
+        .eq('lesson_id', les.id)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
       if (qErr) {
         setQuestions([]);
+        setLoading(false);
         setErrMsg((prev) => prev || `Questions error: ${qErr.message}`);
-      } else {
-        const normalized = (qs || []).map((q: any) => ({
-          ...q,
-          training_question_choices: [...(q.training_question_choices || [])].sort(
-            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-          ),
-        }));
-        setQuestions(normalized as QuestionRow[]);
+        return;
       }
 
+      const qList = (qs || []) as Array<{
+        id: string;
+        lesson_id: string;
+        question: string;
+        sort_order: number | null;
+      }>;
+
+      if (qList.length === 0) {
+        setQuestions([]);
+        setLoading(false);
+        return;
+      }
+
+      // 5) choices by QUESTION IDs (this matches your choices table)
+      const questionIds = qList.map((q) => q.id);
+
+      const { data: cs, error: cErr } = await supabase
+        .from('training_question_choices')
+        .select('id, question_id, choice_text, is_correct, sort_order')
+        .in('question_id', questionIds);
+
+      if (cErr) {
+        setQuestions(qList.map((q) => ({ ...q, choices: [] })));
+        setLoading(false);
+        setErrMsg((prev) => prev || `Choices error: ${cErr.message}`);
+        return;
+      }
+
+      const choices = (cs || []) as ChoiceRow[];
+      const byQ: Record<string, ChoiceRow[]> = {};
+      for (const c of choices) (byQ[c.question_id] ||= []).push(c);
+
+      const merged: QuestionRow[] = qList.map((q) => ({
+        ...q,
+        choices: (byQ[q.id] || []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+      }));
+
+      setQuestions(merged);
       setLoading(false);
     };
 
     load();
   }, [slug, user]);
-
-  const total = questions.length;
 
   const score = useMemo(() => {
     if (!submitted || total === 0) return 0;
@@ -174,7 +228,7 @@ export default function TrainingModuleClient({ slug }: Props) {
 
     for (const q of questions) {
       const pickedChoiceId = selected[q.id];
-      const correctChoice = q.training_question_choices.find((c) => c.is_correct);
+      const correctChoice = q.choices.find((c) => c.is_correct);
       if (pickedChoiceId && correctChoice && pickedChoiceId === correctChoice.id) correct++;
     }
 
@@ -186,6 +240,29 @@ export default function TrainingModuleClient({ slug }: Props) {
   const resetQuiz = () => {
     setSelected({});
     setSubmitted(false);
+  };
+
+  const submitQuiz = async () => {
+    if (!user || total === 0) return;
+
+    setSubmitted(true);
+    setSaving(true);
+
+    // optional attempt logging (don’t block if RLS rejects)
+    const answers = questions.map((q) => ({
+      question_id: q.id,
+      selected_choice_id: selected[q.id] ?? null,
+    }));
+
+    const { error } = await supabase.from('training_attempts').insert({
+      module_slug: slug,
+      score,
+      passed,
+      answers,
+    });
+
+    if (error) setErrMsg((prev) => prev || `Save attempt error: ${error.message}`);
+    setSaving(false);
   };
 
   if (authLoading) {
@@ -259,7 +336,6 @@ export default function TrainingModuleClient({ slug }: Props) {
           </div>
         ) : null}
 
-        {/* Top bar */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Link href="/training" className="text-sm font-medium text-slate-600 hover:text-slate-900">
@@ -278,7 +354,6 @@ export default function TrainingModuleClient({ slug }: Props) {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          {/* Sidebar outline */}
           <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
             <h2 className="text-sm font-semibold text-slate-900">Course outline</h2>
             <div className="mt-3 space-y-2">
@@ -299,8 +374,15 @@ export default function TrainingModuleClient({ slug }: Props) {
             </div>
 
             {submitted ? (
-              <div className={clsx('mt-4 rounded-xl border px-3 py-3', passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50')}>
-                <p className="text-sm font-semibold text-slate-900">Result: {passed ? 'Passed ✅' : 'Needs retry ⚠️'}</p>
+              <div
+                className={clsx(
+                  'mt-4 rounded-xl border px-3 py-3',
+                  passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+                )}
+              >
+                <p className="text-sm font-semibold text-slate-900">
+                  Result: {passed ? 'Passed ✅' : 'Needs retry ⚠️'}
+                </p>
                 <p className="mt-1 text-xs text-slate-600">
                   Score: <span className="font-semibold">{score}%</span>
                 </p>
@@ -316,9 +398,7 @@ export default function TrainingModuleClient({ slug }: Props) {
             ) : null}
           </aside>
 
-          {/* Main content */}
           <section className="space-y-6">
-            {/* Video */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold text-slate-900">Lesson video</h2>
@@ -347,7 +427,6 @@ export default function TrainingModuleClient({ slug }: Props) {
               </div>
             </div>
 
-            {/* Quiz */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold text-slate-900">Quiz</h2>
@@ -360,17 +439,19 @@ export default function TrainingModuleClient({ slug }: Props) {
                 </div>
               ) : total === 0 ? (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-700">No quiz questions are available for this module yet.</p>
+                  <p className="text-sm text-slate-700">No quiz questions are available for this lesson yet.</p>
                 </div>
               ) : (
                 <>
                   <div className="mt-4 space-y-5">
                     {questions.map((q, idx) => (
                       <div key={q.id} className="rounded-xl border border-slate-200 p-4">
-                        <p className="text-sm font-semibold text-slate-900">{idx + 1}. {q.question}</p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {idx + 1}. {q.question}
+                        </p>
 
                         <div className="mt-3 grid gap-2">
-                          {q.training_question_choices.map((c) => {
+                          {q.choices.map((c) => {
                             const checked = selected[q.id] === c.id;
 
                             const correct = submitted && c.is_correct;
@@ -385,11 +466,11 @@ export default function TrainingModuleClient({ slug }: Props) {
                                     ? correct
                                       ? 'border-emerald-300 bg-emerald-50'
                                       : wrongPick
-                                        ? 'border-amber-300 bg-amber-50'
-                                        : 'border-slate-200'
+                                      ? 'border-amber-300 bg-amber-50'
+                                      : 'border-slate-200'
                                     : checked
-                                      ? 'border-emerald-300 bg-emerald-50'
-                                      : 'border-slate-200 hover:bg-slate-50'
+                                    ? 'border-emerald-300 bg-emerald-50'
+                                    : 'border-slate-200 hover:bg-slate-50'
                                 )}
                               >
                                 <input
@@ -405,10 +486,6 @@ export default function TrainingModuleClient({ slug }: Props) {
                             );
                           })}
                         </div>
-
-                        {submitted && q.explanation ? (
-                          <p className="mt-3 text-sm text-slate-600">{q.explanation}</p>
-                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -424,10 +501,11 @@ export default function TrainingModuleClient({ slug }: Props) {
 
                     <button
                       type="button"
-                      onClick={() => setSubmitted(true)}
-                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+                      onClick={submitQuiz}
+                      disabled={submitted || saving}
+                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      Submit quiz
+                      {saving ? 'Saving…' : submitted ? 'Submitted' : 'Submit quiz'}
                     </button>
                   </div>
                 </>
