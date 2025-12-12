@@ -7,8 +7,8 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ""; // e.g. "/go123logist
 type Resource = {
   title: string;
   description: string;
-  href: string;      // "/resources/....pdf"
-  filename: string;  // suggested download name
+  href: string; // "/resources/....pdf"
+  filename: string;
 };
 
 const RESOURCES: Resource[] = [
@@ -27,9 +27,14 @@ const RESOURCES: Resource[] = [
 ];
 
 export default function TrainingResourcesPage() {
-  const [open, setOpen] = useState<null | Resource>(null);
+  const [open, setOpen] = useState<Resource | null>(null);
 
-  // lock scroll + ESC to close
+  const openUrl = useMemo(() => {
+    if (!open) return "";
+    return `${BASE_PATH}${open.href}`;
+  }, [open]);
+
+  // ESC closes + lock page scroll while modal open
   useEffect(() => {
     if (!open) return;
 
@@ -47,13 +52,9 @@ export default function TrainingResourcesPage() {
     };
   }, [open]);
 
-  const openUrl = useMemo(() => {
-    if (!open) return "";
-    return `${BASE_PATH}${open.href}`;
-  }, [open]);
-
   return (
-    <main className="bg-slate-50 px-4 py-10">
+    // ✅ This makes the whole page a single background color (no white banding)
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
         <header>
           <h1 className="text-2xl font-semibold text-slate-900">Resources</h1>
@@ -97,16 +98,16 @@ export default function TrainingResourcesPage() {
           aria-modal="true"
           aria-label={`Preview ${open.title}`}
         >
-          {/* Backdrop */}
+          {/* Backdrop (click to close) */}
           <button
+            type="button"
             aria-label="Close preview"
             className="absolute inset-0 bg-black/40"
             onClick={() => setOpen(null)}
-            type="button"
           />
 
           {/* Panel */}
-          <div className="relative z-10 w-[min(1000px,92vw)] overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div className="relative z-10 w-[min(1100px,94vw)] overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-slate-900">
@@ -125,6 +126,7 @@ export default function TrainingResourcesPage() {
                 >
                   Download
                 </a>
+
                 <button
                   type="button"
                   onClick={() => setOpen(null)}
@@ -135,16 +137,10 @@ export default function TrainingResourcesPage() {
               </div>
             </div>
 
-            {/* PDF viewer */}
             <div className="h-[78vh] bg-slate-100">
-              <iframe
-                title={open.title}
-                src={openUrl}
-                className="h-full w-full"
-              />
+              <iframe title={open.title} src={openUrl} className="h-full w-full" />
             </div>
 
-            {/* Small fallback hint */}
             <div className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500">
               If the preview doesn’t load on your device, use “Download”.
             </div>

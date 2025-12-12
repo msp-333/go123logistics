@@ -1,4 +1,3 @@
-// app/training/[slug]/page.tsx
 import TrainingModuleClient from './TrainingModuleClient';
 
 export const dynamic = 'force-static';
@@ -18,7 +17,7 @@ async function fetchSlugs(): Promise<string[]> {
   }
 
   const res = await fetch(
-    `${supabaseUrl}/rest/v1/training_modules?select=slug&is_active=eq.true`,
+    `${supabaseUrl}/rest/v1/training_lessons?select=module_slug&is_active=eq.true`,
     {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
       cache: 'no-store',
@@ -27,18 +26,16 @@ async function fetchSlugs(): Promise<string[]> {
 
   if (!res.ok) throw new Error(await res.text());
 
-  const rows = (await res.json()) as Array<{ slug: string | null }>;
-  return rows.map((r) => r.slug).filter(Boolean) as string[];
+  const rows = (await res.json()) as Array<{ module_slug: string | null }>;
+  return rows.map((r) => r.module_slug).filter(Boolean) as string[];
 }
 
 export async function generateStaticParams(): Promise<Params[]> {
   const slugs = await fetchSlugs();
 
-  // If this is empty, static export can't generate any /training/* pages.
-  // Also avoids a confusing Next error in some cases.
   if (slugs.length === 0) {
     throw new Error(
-      'generateStaticParams found 0 training module slugs. Check: (1) training_modules has active rows, (2) RLS allows this build-time read, (3) SUPABASE_SERVICE_ROLE_KEY is set in CI.'
+      'generateStaticParams found 0 module slugs. Check training_lessons has active rows and build-time access works.'
     );
   }
 
