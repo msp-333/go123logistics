@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If already logged in, skip login
   useEffect(() => {
     if (!loading && user) router.replace('/training');
   }, [loading, user, router]);
@@ -41,20 +40,16 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-[60vh] flex items-center justify-center bg-slate-50 px-4 py-16">
+    <main className="flex-1 flex items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">
-          Agent Login
-        </h1>
+        <h1 className="text-xl font-semibold text-slate-900">Agent Login</h1>
         <p className="mt-1 text-sm text-slate-500">
           Sign in to access GO123 training modules.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-slate-700">Email</label>
             <input
               type="email"
               required
@@ -66,9 +61,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-slate-700">Password</label>
             <input
               type="password"
               required
@@ -79,11 +72,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
             type="submit"
