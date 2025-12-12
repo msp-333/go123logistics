@@ -1,12 +1,8 @@
-// app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
-import Footer from '@/components/Footer';
 import Providers from './providers';
-
-// Use your switcher if you created it; otherwise swap to Navbar
 import NavbarSwitcher from '@/components/NavbarSwitcher';
-// import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'GO123 Logistics — Freight, Trucking & Shipping',
@@ -17,17 +13,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-white text-slate-900">
+      <body className="min-h-screen flex flex-col bg-white text-slate-900">
         <Providers>
-          {/* ✅ This wrapper is the real flex layout */}
-          <div className="min-h-screen flex flex-col">
-            <NavbarSwitcher />
-            {/* <Navbar /> */}
-
-            <main className="flex-1">{children}</main>
-
-            <Footer />
-          </div>
+          <NavbarSwitcher />
+          <main className="flex-1">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>
