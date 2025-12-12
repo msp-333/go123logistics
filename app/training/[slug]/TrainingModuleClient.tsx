@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/app/providers';
@@ -69,6 +69,8 @@ export default function TrainingModuleClient({ slug }: Props) {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const videoRef = useRef<HTMLDivElement | null>(null);
+
   // Load module + lessons + progress
   useEffect(() => {
     const run = async () => {
@@ -77,7 +79,7 @@ export default function TrainingModuleClient({ slug }: Props) {
       setLoading(true);
       setErr(null);
 
-      // 1) Load lessons for this slug (needs module_id so we can fetch the right module row)
+      // 1) Lessons by module_slug
       const { data: les, error: lesErr } = await supabase
         .from('training_lessons')
         .select('id, module_id, module_slug, title, sort_order, video_path, content, is_active')
@@ -95,7 +97,7 @@ export default function TrainingModuleClient({ slug }: Props) {
       setLessons(lessonList);
       setSelectedLessonId(lessonList[0]?.id ?? null);
 
-      // 2) Load module meta by module_id (from first lesson)
+      // 2) Module meta by module_id (from first lesson)
       const moduleId = lessonList[0]?.module_id ?? null;
       if (moduleId) {
         const { data: mod, error: modErr } = await supabase
@@ -104,16 +106,13 @@ export default function TrainingModuleClient({ slug }: Props) {
           .eq('id', moduleId)
           .maybeSingle();
 
-        if (modErr) {
-          setErr((prev) => prev || modErr.message);
-        } else {
-          setModuleRow(mod || null);
-        }
+        if (modErr) setErr((prev) => prev || modErr.message);
+        setModuleRow(mod || null);
       } else {
         setModuleRow(null);
       }
 
-      // 3) Load progress for lessons
+      // 3) Progress for these lessons
       if (lessonList.length) {
         const { data: prog, error: progErr } = await supabase
           .from('training_lesson_progress')
@@ -140,7 +139,7 @@ export default function TrainingModuleClient({ slug }: Props) {
     [lessons, selectedLessonId]
   );
 
-  // Lesson lock rules
+  // Lesson lock rules: lesson 1 unlocked; others unlocked if previous lesson PASSED
   const unlockedLessonIds = useMemo(() => {
     const unlocked = new Set<string>();
     for (let i = 0; i < lessons.length; i++) {
@@ -187,7 +186,7 @@ export default function TrainingModuleClient({ slug }: Props) {
         }
       }
 
-      // QUIZ: questions by lesson_id
+      // QUESTIONS by lesson_id
       const { data: qs, error: qErr } = await supabase
         .from('training_questions')
         .select('id, lesson_id, question, sort_order, is_active')
@@ -212,7 +211,7 @@ export default function TrainingModuleClient({ slug }: Props) {
         return;
       }
 
-      // Choices by question_id
+      // CHOICES by question_id
       const qIds = qList.map((q) => q.id);
       const { data: cs, error: cErr } = await supabase
         .from('training_question_choices')
@@ -245,6 +244,14 @@ export default function TrainingModuleClient({ slug }: Props) {
     setSelectedLessonId(lesson.id);
   };
 
+  const retryLesson = () => {
+    setAnswers({});
+    setResult(null);
+    setTimeout(() => {
+      videoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   const submitTest = async () => {
     if (!user || !selectedLesson) return;
     setSaving(true);
@@ -267,6 +274,10 @@ export default function TrainingModuleClient({ slug }: Props) {
     const passed = score >= PASS_PERCENT;
     setResult({ score, passed });
 
+    // IMPORTANT FIX: completed_at is NOT NULL in your DB,
+    // so we ALWAYS set a timestamp (even if they fail).
+    const nowIso = new Date().toISOString();
+
     const { error: upErr } = await supabase
       .from('training_lesson_progress')
       .upsert(
@@ -275,8 +286,8 @@ export default function TrainingModuleClient({ slug }: Props) {
           lesson_id: selectedLesson.id,
           passed,
           score,
-          completed_at: passed ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
+          completed_at: nowIso,
+          updated_at: nowIso,
         },
         { onConflict: 'user_id,lesson_id' }
       );
@@ -293,6 +304,9 @@ export default function TrainingModuleClient({ slug }: Props) {
     }));
 
     setSaving(false);
+
+    // If failed, move them back to the video
+    if (!passed) retryLesson();
   };
 
   if (authLoading) {
@@ -346,9 +360,7 @@ export default function TrainingModuleClient({ slug }: Props) {
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-slate-900">{slug.replaceAll('-', ' ')}</h1>
-          {moduleRow?.duration ? (
-            <p className="mt-1 text-sm text-slate-600">Duration: {moduleRow.duration}</p>
-          ) : null}
+          {moduleRow?.duration ? <p className="mt-1 text-sm text-slate-600">Duration: {moduleRow.duration}</p> : null}
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -401,9 +413,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                   <div>
                     <p className="text-xs text-slate-500">Lesson {selectedLesson.sort_order}</p>
                     <h2 className="text-xl font-semibold text-slate-900">{selectedLesson.title || 'Lesson'}</h2>
-                    {selectedLesson.content ? (
-                      <p className="mt-1 text-sm text-slate-600">{selectedLesson.content}</p>
-                    ) : null}
+                    {selectedLesson.content ? <p className="mt-1 text-sm text-slate-600">{selectedLesson.content}</p> : null}
                   </div>
 
                   {progress[selectedLesson.id]?.passed ? (
@@ -415,7 +425,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                   )}
                 </div>
 
-                <div className="mt-5">
+                <div className="mt-5" ref={videoRef}>
                   {videoSrc ? (
                     <video
                       controls
@@ -454,9 +464,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                                   key={c.id}
                                   className={clsx(
                                     'flex items-center gap-3 rounded-xl border px-3 py-2 cursor-pointer transition',
-                                    checked
-                                      ? 'border-emerald-300 bg-emerald-50'
-                                      : 'border-slate-200 hover:bg-slate-50'
+                                    checked ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:bg-slate-50'
                                   )}
                                 >
                                   <input
@@ -485,7 +493,20 @@ export default function TrainingModuleClient({ slug }: Props) {
                             Score: {result.score}% • {result.passed ? 'Passed ✅' : 'Not passed yet'}
                           </p>
 
-                          {result.passed && nextLesson ? (
+                          {!result.passed ? (
+                            <div className="mt-3">
+                              <p className="text-sm text-amber-900">
+                                Please re-watch the video and try again.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={retryLesson}
+                                className="mt-3 inline-flex items-center justify-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+                              >
+                                Go back & try again
+                              </button>
+                            </div>
+                          ) : result.passed && nextLesson ? (
                             <button
                               type="button"
                               onClick={() => onPickLesson(nextLesson)}
