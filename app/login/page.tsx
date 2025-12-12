@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-slate-900">Agent Login</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Sign in to access GO123 training modules.
+          Sign in to access GO123 Training Module, for customer inquiries please click the contact us button.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
