@@ -12,19 +12,33 @@ type ModuleRow = {
   description: string | null;
   level: string | null;
   duration: string | null;
-  passing_score: number | null;   // e.g. 80
-  video_path: string | null;      // path inside bucket (recommended)
-  video_url: string | null;       // optional (public URL)
+  passing_score: number | null;
+  video_url: string | null; // optional fallback if you store a public url here
+};
+
+type LessonRow = {
+  id: string;
+  module_slug: string;
+  title: string;
+  sort_order: number;
+  video_path: string | null; // STORAGE OBJECT KEY
+  content: string | null;
+};
+
+type ChoiceRow = {
+  id: string;
+  choice_text: string;
+  is_correct: boolean;
+  sort_order: number;
 };
 
 type QuestionRow = {
   id: string;
   module_slug: string;
-  prompt: string;
-  choices: string[];
-  correct_index: number;
-  explanation: string | null;
+  question: string;
   sort_order: number;
+  explanation: string | null;
+  training_question_choices: ChoiceRow[];
 };
 
 type Props = { slug: string };
@@ -35,17 +49,18 @@ export default function TrainingModuleClient({ slug }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const [module, setModule] = useState<ModuleRow | null>(null);
+  const [lesson, setLesson] = useState<LessonRow | null>(null); // we’ll use the first active lesson video
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
   const [videoDone, setVideoDone] = useState(false);
 
-  // quiz state
-  const [idx, setIdx] = useState(0);
-  const [selected, setSelected] = useState<Record<string, number>>({});
+  // quiz state: questionId -> choiceId
+  const [selected, setSelected] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const passingScore = module?.passing_score ?? 80;
 
@@ -54,46 +69,97 @@ export default function TrainingModuleClient({ slug }: Props) {
       if (!user) return;
 
       setLoading(true);
+      setErrMsg(null);
 
+      // 1) Load module meta
       const { data: mod, error: modErr } = await supabase
         .from('training_modules')
-        .select('slug, title, description, level, duration, passing_score, video_path, video_url')
+        .select('slug, title, description, level, duration, passing_score, video_url')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
 
       if (modErr || !mod) {
         setModule(null);
-        setQuestions([]);
+        setLesson(null);
         setVideoUrl(null);
+        setQuestions([]);
         setLoading(false);
+        setErrMsg(modErr?.message || 'Module not found / inactive.');
         return;
       }
-
       setModule(mod);
 
-      // video URL resolution (prefer storage signed URL if video_path provided)
-      if (mod.video_url) {
-        setVideoUrl(mod.video_url);
-      } else if (mod.video_path) {
+      // 2) Load FIRST active lesson (video lives here)
+      const { data: les, error: lesErr } = await supabase
+        .from('training_lessons')
+        .select('id, module_slug, title, sort_order, video_path, content')
+        .eq('module_slug', slug)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (lesErr) {
+        setLesson(null);
+        setVideoUrl(mod.video_url || null); // fallback
+        setErrMsg(`Lessons error: ${lesErr.message}`);
+      } else {
+        setLesson(les || null);
+      }
+
+      // 3) Resolve video URL:
+      // - Prefer lesson.video_path (signed url)
+      // - Fallback to module.video_url if you stored a public url
+      if (les?.video_path) {
         const { data: signed, error: signErr } = await supabase
           .storage
           .from(VIDEO_BUCKET)
-          .createSignedUrl(mod.video_path, 60 * 60); // 1 hour
+          .createSignedUrl(les.video_path, 60 * 60); // 1 hour
 
-        setVideoUrl(!signErr && signed?.signedUrl ? signed.signedUrl : null);
+        if (signErr || !signed?.signedUrl) {
+          setVideoUrl(mod.video_url || null);
+          setErrMsg((prev) => prev || `Video error: ${signErr?.message || 'Could not sign video url.'}`);
+        } else {
+          setVideoUrl(signed.signedUrl);
+        }
       } else {
-        setVideoUrl(null);
+        setVideoUrl(mod.video_url || null);
       }
 
+      // 4) Load questions + choices by MODULE SLUG
       const { data: qs, error: qErr } = await supabase
         .from('training_questions')
-        .select('id, module_slug, prompt, choices, correct_index, explanation, sort_order')
+        .select(`
+          id,
+          module_slug,
+          question,
+          sort_order,
+          explanation,
+          training_question_choices (
+            id,
+            choice_text,
+            is_correct,
+            sort_order
+          )
+        `)
         .eq('module_slug', slug)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
-      setQuestions(!qErr && qs ? qs : []);
+      if (qErr) {
+        setQuestions([]);
+        setErrMsg((prev) => prev || `Questions error: ${qErr.message}`);
+      } else {
+        const normalized = (qs || []).map((q: any) => ({
+          ...q,
+          training_question_choices: [...(q.training_question_choices || [])].sort(
+            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          ),
+        }));
+        setQuestions(normalized as QuestionRow[]);
+      }
+
       setLoading(false);
     };
 
@@ -105,55 +171,19 @@ export default function TrainingModuleClient({ slug }: Props) {
   const score = useMemo(() => {
     if (!submitted || total === 0) return 0;
     let correct = 0;
+
     for (const q of questions) {
-      const pick = selected[q.id];
-      if (pick === q.correct_index) correct++;
+      const pickedChoiceId = selected[q.id];
+      const correctChoice = q.training_question_choices.find((c) => c.is_correct);
+      if (pickedChoiceId && correctChoice && pickedChoiceId === correctChoice.id) correct++;
     }
+
     return Math.round((correct / total) * 100);
-  }, [submitted, questions, selected, total]);
+  }, [submitted, total, questions, selected]);
 
   const passed = submitted ? score >= passingScore : false;
 
-  const current = questions[idx];
-
-  const onPick = (qId: string, choiceIndex: number) => {
-    if (submitted) return;
-    setSelected((prev) => ({ ...prev, [qId]: choiceIndex }));
-  };
-
-  const canGoNext = submitted || (current && selected[current.id] !== undefined);
-
-  const submitQuiz = async () => {
-    if (!user || total === 0) return;
-    setSubmitted(true);
-
-    // Save attempt
-    setSaving(true);
-    const answers = questions.map((q) => ({
-      question_id: q.id,
-      selected_index: selected[q.id] ?? null,
-      correct_index: q.correct_index,
-      is_correct: (selected[q.id] ?? -1) === q.correct_index,
-    }));
-
-    const { error } = await supabase.from('training_attempts').insert({
-      module_slug: slug,
-      score,
-      passed: score >= passingScore,
-      answers,
-    });
-
-    // ignore insert errors for UI (RLS or table mismatch), but keep user informed if needed
-    if (error) {
-      // You can surface this if you want:
-      // console.error(error);
-    }
-
-    setSaving(false);
-  };
-
   const resetQuiz = () => {
-    setIdx(0);
     setSelected({});
     setSubmitted(false);
   };
@@ -204,7 +234,7 @@ export default function TrainingModuleClient({ slug }: Props) {
       <main className="min-h-[60vh] flex items-center justify-center bg-slate-50 px-4 py-16">
         <div className="max-w-xl rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
           <h1 className="text-xl font-semibold text-slate-900">Course not found</h1>
-          <p className="mt-2 text-sm text-slate-600">This module may be inactive or missing.</p>
+          <p className="mt-2 text-sm text-slate-600">{errMsg || 'This module may be inactive or missing.'}</p>
           <div className="mt-5">
             <Link className="text-sm font-semibold text-emerald-700 hover:text-emerald-800" href="/training">
               Back to Training Dashboard
@@ -223,6 +253,12 @@ export default function TrainingModuleClient({ slug }: Props) {
   return (
     <main className="bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-6xl space-y-6">
+        {errMsg ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            {errMsg}
+          </div>
+        ) : null}
+
         {/* Top bar */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -230,21 +266,14 @@ export default function TrainingModuleClient({ slug }: Props) {
               ← Back to dashboard
             </Link>
             <h1 className="mt-2 text-2xl font-semibold text-slate-900">{module.title}</h1>
-            {module.description ? (
-              <p className="mt-1 text-sm text-slate-600">{module.description}</p>
-            ) : null}
+            {module.description ? <p className="mt-1 text-sm text-slate-600">{module.description}</p> : null}
+            {lesson?.title ? <p className="mt-1 text-xs text-slate-500">Lesson: {lesson.title}</p> : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">
-              {module.level || 'All levels'}
-            </span>
-            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">
-              {module.duration || 'Self-paced'}
-            </span>
-            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">
-              Passing score: {passingScore}%
-            </span>
+            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">{module.level || 'All levels'}</span>
+            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">{module.duration || 'Self-paced'}</span>
+            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">Passing score: {passingScore}%</span>
           </div>
         </div>
 
@@ -261,9 +290,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                     o.done ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
                   )}
                 >
-                  <span className="text-slate-900">
-                    {i + 1}. {o.title}
-                  </span>
+                  <span className="text-slate-900">{i + 1}. {o.title}</span>
                   <span className={clsx('text-xs font-semibold', o.done ? 'text-emerald-700' : 'text-slate-400')}>
                     {o.done ? 'Done' : 'Pending'}
                   </span>
@@ -273,13 +300,10 @@ export default function TrainingModuleClient({ slug }: Props) {
 
             {submitted ? (
               <div className={clsx('mt-4 rounded-xl border px-3 py-3', passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50')}>
-                <p className="text-sm font-semibold text-slate-900">
-                  Result: {passed ? 'Passed ✅' : 'Needs retry ⚠️'}
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Result: {passed ? 'Passed ✅' : 'Needs retry ⚠️'}</p>
                 <p className="mt-1 text-xs text-slate-600">
                   Score: <span className="font-semibold">{score}%</span>
                 </p>
-
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={resetQuiz}
@@ -294,7 +318,7 @@ export default function TrainingModuleClient({ slug }: Props) {
 
           {/* Main content */}
           <section className="space-y-6">
-            {/* Video lesson */}
+            {/* Video */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold text-slate-900">Lesson video</h2>
@@ -302,9 +326,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                   onClick={() => setVideoDone(true)}
                   className={clsx(
                     'rounded-md px-3 py-2 text-xs font-semibold',
-                    videoDone
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    videoDone ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-600 text-white hover:bg-emerald-700'
                   )}
                 >
                   {videoDone ? 'Completed ✓' : 'Mark as watched'}
@@ -313,13 +335,8 @@ export default function TrainingModuleClient({ slug }: Props) {
 
               <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-black">
                 {videoUrl ? (
-                  <video
-                    key={videoUrl}
-                    controls
-                    className="w-full h-auto"
-                    preload="metadata"
-                  >
-                    <source src={videoUrl} />
+                  <video key={videoUrl} controls className="w-full h-auto" preload="metadata">
+                    <source src={videoUrl} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                 ) : (
@@ -328,26 +345,18 @@ export default function TrainingModuleClient({ slug }: Props) {
                   </div>
                 )}
               </div>
-
-              <p className="mt-3 text-xs text-slate-500">
-                Tip: Watch the full lesson before starting the quiz.
-              </p>
             </div>
 
             {/* Quiz */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold text-slate-900">Quiz</h2>
-                <p className="text-xs text-slate-500">
-                  {total ? `${Math.min(idx + 1, total)}/${total}` : 'No questions yet'}
-                </p>
+                <p className="text-xs text-slate-500">{total ? `${total} questions` : 'No questions yet'}</p>
               </div>
 
               {!videoDone ? (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-700">
-                    Please complete the video lesson first to unlock the quiz.
-                  </p>
+                  <p className="text-sm text-slate-700">Please complete the video lesson first to unlock the quiz.</p>
                 </div>
               ) : total === 0 ? (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -355,110 +364,72 @@ export default function TrainingModuleClient({ slug }: Props) {
                 </div>
               ) : (
                 <>
-                  {/* question card */}
-                  <div className="mt-4 rounded-xl border border-slate-200 p-4">
-                    <p className="text-sm font-semibold text-slate-900">{current.prompt}</p>
+                  <div className="mt-4 space-y-5">
+                    {questions.map((q, idx) => (
+                      <div key={q.id} className="rounded-xl border border-slate-200 p-4">
+                        <p className="text-sm font-semibold text-slate-900">{idx + 1}. {q.question}</p>
 
-                    <div className="mt-3 space-y-2">
-                      {current.choices.map((c, i) => {
-                        const pick = selected[current.id];
-                        const isPicked = pick === i;
-                        const isCorrect = i === current.correct_index;
+                        <div className="mt-3 grid gap-2">
+                          {q.training_question_choices.map((c) => {
+                            const checked = selected[q.id] === c.id;
 
-                        const showResult = submitted;
-                        const style = showResult
-                          ? isCorrect
-                            ? 'border-emerald-300 bg-emerald-50'
-                            : isPicked
-                              ? 'border-amber-300 bg-amber-50'
-                              : 'border-slate-200 bg-white hover:bg-slate-50'
-                          : isPicked
-                            ? 'border-emerald-300 bg-emerald-50'
-                            : 'border-slate-200 bg-white hover:bg-slate-50';
+                            const correct = submitted && c.is_correct;
+                            const wrongPick = submitted && checked && !c.is_correct;
 
-                        return (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => onPick(current.id, i)}
-                            className={clsx(
-                              'w-full text-left rounded-lg border px-3 py-2 text-sm transition',
-                              style
-                            )}
-                          >
-                            {c}
-                          </button>
-                        );
-                      })}
-                    </div>
+                            return (
+                              <label
+                                key={c.id}
+                                className={clsx(
+                                  'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition',
+                                  submitted
+                                    ? correct
+                                      ? 'border-emerald-300 bg-emerald-50'
+                                      : wrongPick
+                                        ? 'border-amber-300 bg-amber-50'
+                                        : 'border-slate-200'
+                                    : checked
+                                      ? 'border-emerald-300 bg-emerald-50'
+                                      : 'border-slate-200 hover:bg-slate-50'
+                                )}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`q-${q.id}`}
+                                  className="mt-1"
+                                  disabled={submitted}
+                                  checked={checked}
+                                  onChange={() => setSelected((prev) => ({ ...prev, [q.id]: c.id }))}
+                                />
+                                <span className="text-sm text-slate-700">{c.choice_text}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
 
-                    {submitted && current.explanation ? (
-                      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                        <span className="font-semibold">Explanation:</span> {current.explanation}
+                        {submitted && q.explanation ? (
+                          <p className="mt-3 text-sm text-slate-600">{q.explanation}</p>
+                        ) : null}
                       </div>
-                    ) : null}
+                    ))}
                   </div>
 
-                  {/* nav buttons */}
-                  <div className="mt-4 flex items-center justify-between gap-2">
+                  <div className="mt-5 flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => setIdx((v) => Math.max(0, v - 1))}
-                      disabled={idx === 0}
-                      className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      onClick={resetQuiz}
+                      className="text-sm font-medium text-slate-600 hover:text-slate-900"
                     >
-                      Previous
+                      Reset
                     </button>
 
-                    {idx < total - 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => setIdx((v) => Math.min(total - 1, v + 1))}
-                        disabled={!canGoNext}
-                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        Next
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={submitQuiz}
-                        disabled={submitted || saving}
-                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {saving ? 'Saving…' : submitted ? 'Submitted' : 'Submit quiz'}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSubmitted(true)}
+                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+                    >
+                      Submit quiz
+                    </button>
                   </div>
-
-                  {/* final result */}
-                  {submitted ? (
-                    <div className={clsx('mt-4 rounded-xl border px-4 py-3', passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50')}>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {passed ? 'You passed! ✅' : 'Not passed yet. Try again. ⚠️'}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-700">
-                        Score: <span className="font-semibold">{score}%</span> (Passing: {passingScore}%)
-                      </p>
-
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <Link
-                          href="/training"
-                          className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          Back to dashboard
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={resetQuiz}
-                          className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
-                        >
-                          Retake quiz
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
                 </>
               )}
             </div>
