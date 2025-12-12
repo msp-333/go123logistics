@@ -79,7 +79,7 @@ export default function TrainingDashboardClient() {
     <main className="bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold text-slate-900">Training Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Agent Training Dashboard</h1>
           <p className="mt-1 text-sm text-slate-600">
             Progress: <span className="font-medium text-slate-900">{completedCount}</span> / {modules.length} modules
           </p>
