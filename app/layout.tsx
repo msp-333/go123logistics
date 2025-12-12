@@ -1,9 +1,8 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import Providers from './providers';
+import NavbarSwitcher from '@/components/NavbarSwitcher';
 
 export const metadata: Metadata = {
   title: 'GO123 Logistics — Freight, Trucking & Shipping',
@@ -16,9 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-white text-slate-900">
         <Providers>
-          <Navbar />
+          <NavbarSwitcher />
           <main className="flex-1">{children}</main>
-          <Footer />
         </Providers>
       </body>
     </html>
