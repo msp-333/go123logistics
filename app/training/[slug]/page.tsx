@@ -3,19 +3,14 @@ import TrainingModuleClient from './TrainingModuleClient';
 
 export const dynamicParams = false;
 
-// Tell Next which slugs to pre-generate for static export.
-// Add more slugs to this array when you add more modules.
+// MUST be named exactly: generateStaticParams
 export function generateStaticParams() {
   return [
     { slug: 'fundamentals' },
-    // { slug: 'another-module' },
+    // add more slugs here (must match your DB)
   ];
 }
 
-export default function TrainingModulePage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default function Page({ params }: { params: { slug: string } }) {
   return <TrainingModuleClient slug={params.slug} />;
 }
