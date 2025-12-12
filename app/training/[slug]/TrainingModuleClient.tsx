@@ -1,347 +1,469 @@
-// app/training/[slug]/TrainingModuleClient.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/app/providers';
 
-type Question = {
-  id: string;
-  order_index: number;
-  prompt: string;
-  options: string[];
-  correct_index: number;
-};
-
-type TrainingModule = {
-  id: string;
+type ModuleRow = {
   slug: string;
   title: string;
   description: string | null;
   level: string | null;
   duration: string | null;
-  video_url: string | null;
-  passing_score: number | null;
-  questions: Question[];
+  passing_score: number | null;   // e.g. 80
+  video_path: string | null;      // path inside bucket (recommended)
+  video_url: string | null;       // optional (public URL)
 };
 
-const DEFAULT_PASSING_SCORE = 80;
+type QuestionRow = {
+  id: string;
+  module_slug: string;
+  prompt: string;
+  choices: string[];
+  correct_index: number;
+  explanation: string | null;
+  sort_order: number;
+};
 
-export default function TrainingModuleClient({ slug }: { slug: string }) {
-  const router = useRouter();
-  const { user } = useAuth();
+type Props = { slug: string };
 
-  const [module, setModule] = useState<TrainingModule | null>(null);
+const VIDEO_BUCKET = 'training-videos';
+
+export default function TrainingModuleClient({ slug }: Props) {
+  const { user, loading: authLoading } = useAuth();
+
+  const [module, setModule] = useState<ModuleRow | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [answers, setAnswers] = useState<Record<string, number | null>>({});
+  const [videoDone, setVideoDone] = useState(false);
+
+  // quiz state
+  const [idx, setIdx] = useState(0);
+  const [selected, setSelected] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [score, setScore] = useState<number | null>(null);
-  const [passed, setPassed] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const loadModule = async () => {
-      setLoading(true);
-      setLoadError(null);
+  const passingScore = module?.passing_score ?? 80;
 
-      const { data, error } = await supabase
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+
+      setLoading(true);
+
+      const { data: mod, error: modErr } = await supabase
         .from('training_modules')
-        .select(
-          `
-          id,
-          slug,
-          title,
-          description,
-          level,
-          duration,
-          video_url,
-          passing_score,
-          questions:training_questions (
-            id,
-            order_index,
-            prompt,
-            options,
-            correct_index
-          )
-        `
-        )
+        .select('slug, title, description, level, duration, passing_score, video_path, video_url')
         .eq('slug', slug)
-        .order('order_index', {
-          ascending: true,
-          referencedTable: 'training_questions',
-        })
+        .eq('is_active', true)
         .maybeSingle();
 
-      if (error) {
-        setLoadError(error.message);
+      if (modErr || !mod) {
+        setModule(null);
+        setQuestions([]);
+        setVideoUrl(null);
         setLoading(false);
         return;
       }
-
-      if (!data) {
-        setLoadError('Module not found.');
-        setLoading(false);
-        return;
-      }
-
-      const mod: TrainingModule = {
-        id: data.id,
-        slug: data.slug,
-        title: data.title,
-        description: data.description,
-        level: data.level,
-        duration: data.duration,
-        video_url: data.video_url,
-        passing_score: data.passing_score ?? DEFAULT_PASSING_SCORE,
-        questions: data.questions ?? [],
-      };
 
       setModule(mod);
+
+      // video URL resolution (prefer storage signed URL if video_path provided)
+      if (mod.video_url) {
+        setVideoUrl(mod.video_url);
+      } else if (mod.video_path) {
+        const { data: signed, error: signErr } = await supabase
+          .storage
+          .from(VIDEO_BUCKET)
+          .createSignedUrl(mod.video_path, 60 * 60); // 1 hour
+
+        setVideoUrl(!signErr && signed?.signedUrl ? signed.signedUrl : null);
+      } else {
+        setVideoUrl(null);
+      }
+
+      const { data: qs, error: qErr } = await supabase
+        .from('training_questions')
+        .select('id, module_slug, prompt, choices, correct_index, explanation, sort_order')
+        .eq('module_slug', slug)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      setQuestions(!qErr && qs ? qs : []);
       setLoading(false);
     };
 
-    loadModule();
-  }, [slug]);
+    load();
+  }, [slug, user]);
 
-  const onSelect = (questionId: string, optionIndex: number) => {
+  const total = questions.length;
+
+  const score = useMemo(() => {
+    if (!submitted || total === 0) return 0;
+    let correct = 0;
+    for (const q of questions) {
+      const pick = selected[q.id];
+      if (pick === q.correct_index) correct++;
+    }
+    return Math.round((correct / total) * 100);
+  }, [submitted, questions, selected, total]);
+
+  const passed = submitted ? score >= passingScore : false;
+
+  const current = questions[idx];
+
+  const onPick = (qId: string, choiceIndex: number) => {
     if (submitted) return;
-    setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
+    setSelected((prev) => ({ ...prev, [qId]: choiceIndex }));
   };
 
-  const handleSubmit = async () => {
-    if (!module || submitted) return;
+  const canGoNext = submitted || (current && selected[current.id] !== undefined);
 
-    const questions = module.questions;
-    if (!questions.length) return;
-
-    let correctCount = 0;
-    questions.forEach((q) => {
-      if (answers[q.id] === q.correct_index) correctCount += 1;
-    });
-
-    const pct = Math.round((correctCount / questions.length) * 100);
-    const required = module.passing_score ?? DEFAULT_PASSING_SCORE;
-    const didPass = pct >= required;
-
-    setScore(pct);
-    setPassed(didPass);
+  const submitQuiz = async () => {
+    if (!user || total === 0) return;
     setSubmitted(true);
 
-    if (user) {
-      try {
-        setSaving(true);
-        await supabase.from('training_attempts').insert({
-          user_id: user.id,
-          module_id: module.id,
-          module_slug: module.slug,
-          score: pct,
-          passed: didPass,
-        });
-      } catch {
-        // ignore saving error
-      } finally {
-        setSaving(false);
-      }
+    // Save attempt
+    setSaving(true);
+    const answers = questions.map((q) => ({
+      question_id: q.id,
+      selected_index: selected[q.id] ?? null,
+      correct_index: q.correct_index,
+      is_correct: (selected[q.id] ?? -1) === q.correct_index,
+    }));
+
+    const { error } = await supabase.from('training_attempts').insert({
+      module_slug: slug,
+      score,
+      passed: score >= passingScore,
+      answers,
+    });
+
+    // ignore insert errors for UI (RLS or table mismatch), but keep user informed if needed
+    if (error) {
+      // You can surface this if you want:
+      // console.error(error);
     }
+
+    setSaving(false);
   };
 
-  const allAnswered =
-    module &&
-    module.questions.length > 0 &&
-    module.questions.every(
-      (q) =>
-        answers[q.id] !== undefined &&
-        answers[q.id] !== null
+  const resetQuiz = () => {
+    setIdx(0);
+    setSelected({});
+    setSubmitted(false);
+  };
+
+  if (authLoading) {
+    return (
+      <main className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-sm text-slate-500">Checking your session…</p>
+      </main>
     );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-[60vh] flex items-center justify-center bg-slate-50 px-4 py-16">
+        <div className="max-w-lg rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
+          <h1 className="text-xl font-semibold text-slate-900">Training</h1>
+          <p className="mt-2 text-sm text-slate-600">Please sign in to access this course.</p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center rounded-md border border-emerald-600 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+            >
+              Create account
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-sm text-slate-500">Loading module…</p>
+        <p className="text-sm text-slate-500">Loading course…</p>
       </main>
     );
   }
 
-  if (loadError || !module) {
+  if (!module) {
     return (
-      <main className="min-h-[60vh] flex items-center justify-center bg-slate-50 px-4 py-12">
-        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-sm text-red-600">
-            {loadError || 'Module not found.'}
-          </p>
-          <button
-            onClick={() => router.push('/training')}
-            className="mt-4 inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-          >
-            Back to training
-          </button>
+      <main className="min-h-[60vh] flex items-center justify-center bg-slate-50 px-4 py-16">
+        <div className="max-w-xl rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
+          <h1 className="text-xl font-semibold text-slate-900">Course not found</h1>
+          <p className="mt-2 text-sm text-slate-600">This module may be inactive or missing.</p>
+          <div className="mt-5">
+            <Link className="text-sm font-semibold text-emerald-700 hover:text-emerald-800" href="/training">
+              Back to Training Dashboard
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
-  const requiredScore = module.passing_score ?? DEFAULT_PASSING_SCORE;
+  const outline = [
+    { key: 'video', title: 'Watch lesson', done: videoDone },
+    { key: 'quiz', title: 'Quiz & assessment', done: submitted && passed },
+  ];
 
   return (
     <main className="bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-5xl space-y-8">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Top bar */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-              Module
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-900">
-              {module.title}
-            </h1>
-            {module.description && (
-              <p className="mt-2 text-sm text-slate-600">
-                {module.description}
-              </p>
-            )}
-            <p className="mt-1 text-xs text-slate-500">
-              You must score at least {requiredScore}% to pass.
-            </p>
+            <Link href="/training" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              ← Back to dashboard
+            </Link>
+            <h1 className="mt-2 text-2xl font-semibold text-slate-900">{module.title}</h1>
+            {module.description ? (
+              <p className="mt-1 text-sm text-slate-600">{module.description}</p>
+            ) : null}
           </div>
 
-          <button
-            onClick={() => router.push('/training')}
-            className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
-          >
-            ← Back to training
-          </button>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">
+              {module.level || 'All levels'}
+            </span>
+            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">
+              {module.duration || 'Self-paced'}
+            </span>
+            <span className="rounded-full bg-white border border-slate-200 px-3 py-1">
+              Passing score: {passingScore}%
+            </span>
+          </div>
         </div>
 
-        {/* Video */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-sm">
-          <div className="aspect-video w-full">
-            {module.video_url ? (
-              <video controls className="h-full w-full">
-                <source src={module.video_url} />
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <div className="flex h-full items-center justify-center bg-slate-900 text-sm text-slate-200">
-                Training video not configured for this module.
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Quiz */}
-        <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Knowledge Check
-          </h2>
-
-          {module.questions.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              No questions configured yet for this module.
-            </p>
-          ) : (
-            <>
-              <p className="text-sm text-slate-600">
-                Choose the best answer for each question. Your final score will
-                decide if you pass this module.
-              </p>
-
-              <ol className="space-y-5">
-                {module.questions.map((q, idx) => {
-                  const selected = answers[q.id];
-                  return (
-                    <li key={q.id} className="space-y-3">
-                      <p className="text-sm font-medium text-slate-900">
-                        <span className="mr-2 text-slate-500">
-                          {idx + 1}.
-                        </span>
-                        {q.prompt}
-                      </p>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {q.options.map((opt, optionIndex) => {
-                          const isSelected = selected === optionIndex;
-                          const isCorrect = q.correct_index === optionIndex;
-
-                          let borderClasses = 'border-slate-200';
-                          let bgClasses = 'bg-white';
-
-                          if (submitted) {
-                            if (isCorrect) {
-                              borderClasses = 'border-emerald-500';
-                              bgClasses = 'bg-emerald-50';
-                            } else if (isSelected && !isCorrect) {
-                              borderClasses = 'border-red-400';
-                              bgClasses = 'bg-red-50';
-                            }
-                          } else if (isSelected) {
-                            borderClasses = 'border-emerald-500';
-                            bgClasses = 'bg-emerald-50';
-                          }
-
-                          return (
-                            <button
-                              key={opt}
-                              type="button"
-                              onClick={() => onSelect(q.id, optionIndex)}
-                              className={[
-                                'flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm transition',
-                                bgClasses,
-                                borderClasses,
-                                !submitted && 'hover:border-emerald-400',
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
-                            >
-                              <span className="mt-0.5 inline-flex h-4 w-4 flex-none items-center justify-center rounded-full border border-slate-300 text-[10px]">
-                                {String.fromCharCode(65 + optionIndex)}
-                              </span>
-                              <span>{opt}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-
-              <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-slate-500">
-                  {submitted && score !== null ? (
-                    <>
-                      <span className="font-medium text-slate-900">
-                        Score: {score}% —{' '}
-                        {passed ? (
-                          <span className="text-emerald-600">Passed</span>
-                        ) : (
-                          <span className="text-red-600">Not passed</span>
-                        )}
-                      </span>
-                      {saving && (
-                        <span className="ml-2 text-xs text-slate-400">
-                          Saving result…
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>You must answer all questions before submitting.</>
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          {/* Sidebar outline */}
+          <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
+            <h2 className="text-sm font-semibold text-slate-900">Course outline</h2>
+            <div className="mt-3 space-y-2">
+              {outline.map((o, i) => (
+                <div
+                  key={o.key}
+                  className={clsx(
+                    'flex items-center justify-between rounded-xl border px-3 py-2 text-sm',
+                    o.done ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
                   )}
-                </div>
-
-                <button
-                  type="button"
-                  disabled={!allAnswered || submitted}
-                  onClick={handleSubmit}
-                  className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
                 >
-                  {submitted ? 'Submitted' : 'Submit answers'}
+                  <span className="text-slate-900">
+                    {i + 1}. {o.title}
+                  </span>
+                  <span className={clsx('text-xs font-semibold', o.done ? 'text-emerald-700' : 'text-slate-400')}>
+                    {o.done ? 'Done' : 'Pending'}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {submitted ? (
+              <div className={clsx('mt-4 rounded-xl border px-3 py-3', passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50')}>
+                <p className="text-sm font-semibold text-slate-900">
+                  Result: {passed ? 'Passed ✅' : 'Needs retry ⚠️'}
+                </p>
+                <p className="mt-1 text-xs text-slate-600">
+                  Score: <span className="font-semibold">{score}%</span>
+                </p>
+
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={resetQuiz}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Retake quiz
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </aside>
+
+          {/* Main content */}
+          <section className="space-y-6">
+            {/* Video lesson */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-slate-900">Lesson video</h2>
+                <button
+                  onClick={() => setVideoDone(true)}
+                  className={clsx(
+                    'rounded-md px-3 py-2 text-xs font-semibold',
+                    videoDone
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  )}
+                >
+                  {videoDone ? 'Completed ✓' : 'Mark as watched'}
                 </button>
               </div>
-            </>
-          )}
-        </section>
+
+              <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-black">
+                {videoUrl ? (
+                  <video
+                    key={videoUrl}
+                    controls
+                    className="w-full h-auto"
+                    preload="metadata"
+                  >
+                    <source src={videoUrl} />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <div className="flex h-56 items-center justify-center text-sm text-slate-200">
+                    Video not available yet.
+                  </div>
+                )}
+              </div>
+
+              <p className="mt-3 text-xs text-slate-500">
+                Tip: Watch the full lesson before starting the quiz.
+              </p>
+            </div>
+
+            {/* Quiz */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-slate-900">Quiz</h2>
+                <p className="text-xs text-slate-500">
+                  {total ? `${Math.min(idx + 1, total)}/${total}` : 'No questions yet'}
+                </p>
+              </div>
+
+              {!videoDone ? (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm text-slate-700">
+                    Please complete the video lesson first to unlock the quiz.
+                  </p>
+                </div>
+              ) : total === 0 ? (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm text-slate-700">No quiz questions are available for this module yet.</p>
+                </div>
+              ) : (
+                <>
+                  {/* question card */}
+                  <div className="mt-4 rounded-xl border border-slate-200 p-4">
+                    <p className="text-sm font-semibold text-slate-900">{current.prompt}</p>
+
+                    <div className="mt-3 space-y-2">
+                      {current.choices.map((c, i) => {
+                        const pick = selected[current.id];
+                        const isPicked = pick === i;
+                        const isCorrect = i === current.correct_index;
+
+                        const showResult = submitted;
+                        const style = showResult
+                          ? isCorrect
+                            ? 'border-emerald-300 bg-emerald-50'
+                            : isPicked
+                              ? 'border-amber-300 bg-amber-50'
+                              : 'border-slate-200 bg-white hover:bg-slate-50'
+                          : isPicked
+                            ? 'border-emerald-300 bg-emerald-50'
+                            : 'border-slate-200 bg-white hover:bg-slate-50';
+
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => onPick(current.id, i)}
+                            className={clsx(
+                              'w-full text-left rounded-lg border px-3 py-2 text-sm transition',
+                              style
+                            )}
+                          >
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {submitted && current.explanation ? (
+                      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                        <span className="font-semibold">Explanation:</span> {current.explanation}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* nav buttons */}
+                  <div className="mt-4 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIdx((v) => Math.max(0, v - 1))}
+                      disabled={idx === 0}
+                      className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+
+                    {idx < total - 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setIdx((v) => Math.min(total - 1, v + 1))}
+                        disabled={!canGoNext}
+                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={submitQuiz}
+                        disabled={submitted || saving}
+                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {saving ? 'Saving…' : submitted ? 'Submitted' : 'Submit quiz'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* final result */}
+                  {submitted ? (
+                    <div className={clsx('mt-4 rounded-xl border px-4 py-3', passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50')}>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {passed ? 'You passed! ✅' : 'Not passed yet. Try again. ⚠️'}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-700">
+                        Score: <span className="font-semibold">{score}%</span> (Passing: {passingScore}%)
+                      </p>
+
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <Link
+                          href="/training"
+                          className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          Back to dashboard
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={resetQuiz}
+                          className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                        >
+                          Retake quiz
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );

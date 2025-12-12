@@ -5,11 +5,14 @@ import { publicPath } from '@/lib/publicPath';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
+import { useAuth } from '@/app/providers';
 
 // Use publicPath so it works at /go123logistics on GH Pages
 const LOGO_SRC = publicPath('/images/logo.png');
 
 export default function Navbar() {
+  const { user, loading: authLoading, signOut } = useAuth();
+
   // Desktop “Services” dropdown
   const [servicesOpen, setServicesOpen] = useState(false);
   // Mobile main drawer + mobile Services disclosure
@@ -86,10 +89,7 @@ export default function Navbar() {
             href="/"
             onClick={onNavigate}
             aria-current={isActive('/') ? 'page' : undefined}
-            className={clsx(
-              'px-1 hover:text-emerald-600',
-              isActive('/') && 'text-emerald-700 font-semibold'
-            )}
+            className={clsx('px-1 hover:text-emerald-600', isActive('/') && 'text-emerald-700 font-semibold')}
           >
             Home
           </Link>
@@ -98,10 +98,7 @@ export default function Navbar() {
             href="/about"
             onClick={onNavigate}
             aria-current={isActive('/about') ? 'page' : undefined}
-            className={clsx(
-              'px-1 hover:text-emerald-600',
-              isActive('/about') && 'text-emerald-700 font-semibold'
-            )}
+            className={clsx('px-1 hover:text-emerald-600', isActive('/about') && 'text-emerald-700 font-semibold')}
           >
             About Us
           </Link>
@@ -110,25 +107,9 @@ export default function Navbar() {
             href="/blog"
             onClick={onNavigate}
             aria-current={isActive('/blog') ? 'page' : undefined}
-            className={clsx(
-              'px-1 hover:text-emerald-600',
-              isActive('/blog') && 'text-emerald-700 font-semibold'
-            )}
+            className={clsx('px-1 hover:text-emerald-600', isActive('/blog') && 'text-emerald-700 font-semibold')}
           >
             Blog
-          </Link>
-
-          {/* NEW: Agent Training link (desktop) */}
-          <Link
-            href="/training"
-            onClick={onNavigate}
-            aria-current={isActive('/training') ? 'page' : undefined}
-            className={clsx(
-              'px-1 hover:text-emerald-600',
-              isActive('/training') && 'text-emerald-700 font-semibold'
-            )}
-          >
-            Agent Training
           </Link>
 
           {/* Services dropdown — CLICK to open (desktop) */}
@@ -138,8 +119,7 @@ export default function Navbar() {
               onClick={() => setServicesOpen((o) => !o)}
               className={clsx(
                 'inline-flex items-center gap-1 px-1 hover:text-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md',
-                isActive(['/services', '/shipping-guide']) &&
-                  'text-emerald-700 font-semibold'
+                isActive(['/services', '/shipping-guide']) && 'text-emerald-700 font-semibold'
               )}
               aria-haspopup="menu"
               aria-expanded={servicesOpen}
@@ -155,7 +135,6 @@ export default function Navbar() {
               </svg>
             </button>
 
-            {/* Keep mounted for smooth UX; toggle visibility */}
             <div
               id="services-menu"
               role="menu"
@@ -164,9 +143,7 @@ export default function Navbar() {
                 servicesOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
               )}
             >
-              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">
-                Shipment
-              </div>
+              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">Shipment</div>
 
               <Link
                 href="/shipping-guide"
@@ -175,17 +152,13 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/shipping-guide')
-                    ? 'bg-emerald-50 text-emerald-700 font-medium'
-                    : 'hover:bg-slate-50'
+                  isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                 )}
               >
                 Shipping Guide &amp; SCAC Codes
               </Link>
 
-              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">
-                Freight
-              </div>
+              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">Freight</div>
 
               <Link
                 href="/services/ocean-freight"
@@ -194,9 +167,7 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/services/ocean-freight')
-                    ? 'bg-emerald-50 text-emerald-700 font-medium'
-                    : 'hover:bg-slate-50'
+                  isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                 )}
               >
                 Ocean Freight
@@ -209,9 +180,7 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/services/air-freight')
-                    ? 'bg-emerald-50 text-emerald-700 font-medium'
-                    : 'hover:bg-slate-50'
+                  isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                 )}
               >
                 Air Freight
@@ -224,9 +193,7 @@ export default function Navbar() {
                 role="menuitem"
                 className={clsx(
                   'block px-3 py-2 rounded-lg',
-                  isActive('/services/rail-freight')
-                    ? 'bg-emerald-50 text-emerald-700 font-medium'
-                    : 'hover:bg-slate-50'
+                  isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                 )}
               >
                 Rail Freight
@@ -234,6 +201,7 @@ export default function Navbar() {
             </div>
           </div>
 
+          {/* Contact Us */}
           <Link
             href="/contact"
             onClick={onNavigate}
@@ -247,6 +215,40 @@ export default function Navbar() {
           >
             Contact Us
           </Link>
+
+          {/* ✅ Auth button beside Contact Us */}
+          {!authLoading && !user ? (
+            <Link
+              href="/login"
+              onClick={onNavigate}
+              className="inline-flex items-center rounded-full px-4 py-2 border border-emerald-600 text-emerald-700 hover:bg-emerald-50 shadow-soft"
+            >
+              Login
+            </Link>
+          ) : null}
+
+          {!authLoading && user ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/training"
+                onClick={onNavigate}
+                className={clsx(
+                  'inline-flex items-center rounded-full px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-soft',
+                  isActive('/training') && 'border-emerald-600 text-emerald-700'
+                )}
+              >
+                Training
+              </Link>
+
+              <button
+                type="button"
+                onClick={signOut}
+                className="inline-flex items-center rounded-full px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-soft"
+              >
+                Logout
+              </button>
+            </div>
+          ) : null}
         </nav>
 
         {/* Mobile: hamburger button */}
@@ -258,12 +260,10 @@ export default function Navbar() {
           onClick={() => setMobileOpen((v) => !v)}
         >
           {mobileOpen ? (
-            // X icon
             <svg className="h-6 w-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeWidth="2" strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            // Hamburger icon
             <svg className="h-6 w-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeWidth="2" strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
             </svg>
@@ -275,7 +275,7 @@ export default function Navbar() {
       <div
         className={clsx(
           'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden bg-white border-t border-slate-100',
-          mobileOpen ? 'max-h-[480px] opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[560px] opacity-100' : 'max-h-0 opacity-0'
         )}
       >
         <div className="container py-3">
@@ -293,6 +293,7 @@ export default function Navbar() {
                 Home
               </Link>
             </li>
+
             <li>
               <Link
                 href="/about"
@@ -306,6 +307,7 @@ export default function Navbar() {
                 About Us
               </Link>
             </li>
+
             <li>
               <Link
                 href="/blog"
@@ -317,23 +319,6 @@ export default function Navbar() {
                 )}
               >
                 Blog
-              </Link>
-            </li>
-
-            {/* NEW: Agent Training link (mobile) */}
-            <li>
-              <Link
-                href="/training"
-                onClick={onNavigate}
-                aria-current={isActive('/training') ? 'page' : undefined}
-                className={clsx(
-                  'block rounded-lg px-3 py-2',
-                  isActive('/training')
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'hover:bg-slate-50'
-                )}
-              >
-                Agent Training
               </Link>
             </li>
 
@@ -369,51 +354,89 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/shipping-guide')
-                      ? 'bg-emerald-50 text-emerald-700 font-medium'
-                      : 'hover:bg-slate-50'
+                    isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
                   Shipping Guide &amp; SCAC Codes
                 </Link>
+
                 <Link
                   href="/services/ocean-freight"
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/services/ocean-freight')
-                      ? 'bg-emerald-50 text-emerald-700 font-medium'
-                      : 'hover:bg-slate-50'
+                    isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
                   Ocean Freight
                 </Link>
+
                 <Link
                   href="/services/air-freight"
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/services/air-freight')
-                      ? 'bg-emerald-50 text-emerald-700 font-medium'
-                      : 'hover:bg-slate-50'
+                    isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
                   Air Freight
                 </Link>
+
                 <Link
                   href="/services/rail-freight"
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-md px-3 py-2',
-                    isActive('/services/rail-freight')
-                      ? 'bg-emerald-50 text-emerald-700 font-medium'
-                      : 'hover:bg-slate-50'
+                    isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
                   Rail Freight
                 </Link>
               </div>
             </li>
+
+            {/* ✅ Auth buttons on mobile */}
+            {!authLoading && !user ? (
+              <li className="pt-2">
+                <Link
+                  href="/login"
+                  onClick={onNavigate}
+                  className="inline-flex w-full items-center justify-center rounded-full border border-emerald-600 text-emerald-700 px-4 py-2 shadow-soft hover:bg-emerald-50"
+                >
+                  Login
+                </Link>
+              </li>
+            ) : null}
+
+            {!authLoading && user ? (
+              <>
+                <li className="pt-2">
+                  <Link
+                    href="/training"
+                    onClick={onNavigate}
+                    className={clsx(
+                      'inline-flex w-full items-center justify-center rounded-full border border-slate-300 text-slate-700 px-4 py-2 shadow-soft hover:bg-slate-50',
+                      isActive('/training') && 'border-emerald-600 text-emerald-700'
+                    )}
+                  >
+                    Training
+                  </Link>
+                </li>
+
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      signOut();
+                      onNavigate();
+                    }}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 text-slate-700 px-4 py-2 shadow-soft hover:bg-slate-50"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : null}
 
             <li className="pt-2">
               <Link
