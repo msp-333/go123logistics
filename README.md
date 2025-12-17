@@ -5,7 +5,7 @@ Static site modeled after the provided designs: Home, About, Shipping Guide (wit
 
 ## Tech
 - Next.js (App Router, TypeScript)
-- Tailwind CSS k
+- Tailwind CSS 
 - TanStack React Query (used to fetch the SCAC dataset)
 - Zod (form validation for Contact page)
 
