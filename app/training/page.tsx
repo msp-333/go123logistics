@@ -16,13 +16,13 @@ type TrainingModule = {
 
 type TrainingAttempt = {
   module_slug: string | null;
-  score: number | null;          // store 0-100 if you have it
+  score: number | null;
   passed: boolean | null;
   created_at: string;
 };
 
 export default function TrainingHomePage() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // ✅ removed signOut
 
   const [modules, setModules] = useState<TrainingModule[]>([]);
   const [attempts, setAttempts] = useState<TrainingAttempt[]>([]);
@@ -62,7 +62,7 @@ export default function TrainingHomePage() {
     for (const a of attempts) {
       const slug = a.module_slug;
       if (!slug) continue;
-      if (!map.has(slug)) map.set(slug, a); // attempts are sorted newest-first
+      if (!map.has(slug)) map.set(slug, a);
     }
     return map;
   }, [attempts]);
@@ -84,7 +84,6 @@ export default function TrainingHomePage() {
     );
   }
 
-  // ✅ Public users see ONLY the login prompt (no modules visible)
   if (!user) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center bg-slate-50 px-4 py-16">
@@ -116,20 +115,11 @@ export default function TrainingHomePage() {
     <main className="bg-slate-50 px-4 py-12">
       <div className="mx-auto max-w-5xl space-y-8">
         {/* Header */}
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Training Dashboard</h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Welcome, {user.email}. Track your training progress below.
-            </p>
-          </div>
-
-          <button
-            onClick={signOut}
-            className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
-          >
-            Sign out
-          </button>
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-slate-900">Training Dashboard</h1>
+          <p className="text-sm text-slate-600">
+            Welcome, {user.email}. Track your training progress below.
+          </p>
         </header>
 
         {/* Progress card */}
@@ -198,12 +188,8 @@ export default function TrainingHomePage() {
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="rounded-full bg-slate-100 px-3 py-1">
-                      {m.level || 'All levels'}
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1">
-                      {m.duration || 'Self-paced'}
-                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1">{m.level || 'All levels'}</span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1">{m.duration || 'Self-paced'}</span>
                     {score !== null ? (
                       <span className="rounded-full bg-slate-100 px-3 py-1">Last score: {score}%</span>
                     ) : null}
@@ -227,7 +213,6 @@ export default function TrainingHomePage() {
   );
 }
 
-// small local helper
 function clsx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
