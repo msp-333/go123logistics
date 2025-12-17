@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/app/providers';
@@ -13,7 +13,7 @@ type ModuleRow = {
   description: string | null;
   level: string | null;
   duration: string | null;
-  video_url: string; // your table has this NOT NULL
+  video_url: string; // your table has this NOT NULL (can be storage key or public url)
 };
 
 type LessonRow = {
@@ -45,6 +45,7 @@ type ProgressRow = {
   lesson_id: string;
   passed: boolean;
   score: number;
+  completed_at?: string | null;
 };
 
 const BUCKET = 'training-videos';
@@ -54,7 +55,10 @@ export default function TrainingModulePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const sp = useSearchParams();
-  const slug = sp.get('slug');
+  const params = useParams<{ slug?: string }>();
+
+  // supports BOTH /training/[slug] AND old ?slug= style
+  const slug = (params?.slug as string | undefined) ?? sp.get('slug') ?? '';
 
   const [moduleRow, setModuleRow] = useState<ModuleRow | null>(null);
   const [lessons, setLessons] = useState<LessonRow[]>([]);
@@ -75,7 +79,7 @@ export default function TrainingModulePage() {
     if (!authLoading && !user) router.replace('/login');
   }, [authLoading, user, router]);
 
-  // Load module + lessons + progress
+  // Load module + lessons + progress (✅ progress is now filtered by user_id)
   useEffect(() => {
     const run = async () => {
       if (!user || !slug) return;
@@ -110,13 +114,14 @@ export default function TrainingModulePage() {
 
       const lessonList = (les || []) as LessonRow[];
       setLessons(lessonList);
-      setSelectedLessonId(lessonList[0]?.id ?? null);
+      setSelectedLessonId((prev) => prev ?? lessonList[0]?.id ?? null);
 
-      // progress for these lessons
+      // ✅ filter by user_id so you only see your own progress
       if (lessonList.length) {
         const { data: prog, error: progErr } = await supabase
           .from('training_lesson_progress')
-          .select('lesson_id, passed, score')
+          .select('lesson_id, passed, score, completed_at')
+          .eq('user_id', user.id)
           .in('lesson_id', lessonList.map((l) => l.id));
 
         if (!progErr && prog) {
@@ -167,15 +172,19 @@ export default function TrainingModulePage() {
 
       if (!user || !selectedLesson || isSelectedLocked) return;
 
-      // video object key: prefer lesson.video_path, fallback to module.video_url
-      const objectKey = selectedLesson.video_path || moduleRow?.video_url || null;
+      // video: storage key OR public URL
+      const objectKeyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
 
-      if (objectKey) {
-        const { data, error } = await supabase.storage
-          .from(BUCKET)
-          .createSignedUrl(objectKey, 60 * 60 * 24 * 7); // 7 days
+      if (objectKeyOrUrl) {
+        if (/^https?:\/\//i.test(objectKeyOrUrl)) {
+          setVideoSrc(objectKeyOrUrl);
+        } else {
+          const { data, error } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrl(objectKeyOrUrl, 60 * 60 * 24 * 7);
 
-        if (!error && data?.signedUrl) setVideoSrc(data.signedUrl);
+          if (!error && data?.signedUrl) setVideoSrc(data.signedUrl);
+        }
       }
 
       const { data: qs, error: qErr } = await supabase
@@ -187,16 +196,19 @@ export default function TrainingModulePage() {
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
-      if (!qErr && qs) {
-        // ensure choices are ordered
-        const normalized = (qs as any[]).map((q) => ({
-          ...q,
-          training_question_choices: [...(q.training_question_choices || [])].sort(
-            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-          ),
-        }));
-        setQuestions(normalized as QuestionRow[]);
+      if (qErr) {
+        setErr(qErr.message);
+        return;
       }
+
+      const normalized = (qs as any[] | null | undefined)?.map((q) => ({
+        ...q,
+        training_question_choices: [...(q.training_question_choices || [])].sort(
+          (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+        ),
+      })) ?? [];
+
+      setQuestions(normalized as QuestionRow[]);
     };
 
     run();
@@ -205,6 +217,12 @@ export default function TrainingModulePage() {
   const onPickLesson = (lesson: LessonRow) => {
     if (!unlockedLessonIds.has(lesson.id)) return;
     setSelectedLessonId(lesson.id);
+  };
+
+  const resetQuiz = () => {
+    setAnswers({});
+    setResult(null);
+    setErr(null);
   };
 
   const submitTest = async () => {
@@ -229,7 +247,9 @@ export default function TrainingModulePage() {
     const passed = score >= PASS_PERCENT;
     setResult({ score, passed });
 
-    // Save progress (upsert)
+    // ✅ completed_at set ALWAYS (avoids NOT NULL errors)
+    const nowIso = new Date().toISOString();
+
     const { error: upErr } = await supabase
       .from('training_lesson_progress')
       .upsert(
@@ -238,8 +258,7 @@ export default function TrainingModulePage() {
           lesson_id: selectedLesson.id,
           passed,
           score,
-          completed_at: passed ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
+          completed_at: nowIso,
         },
         { onConflict: 'user_id,lesson_id' }
       );
@@ -252,7 +271,7 @@ export default function TrainingModulePage() {
 
     setProgress((prev) => ({
       ...prev,
-      [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score },
+      [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score, completed_at: nowIso },
     }));
 
     setSaving(false);
@@ -303,29 +322,40 @@ export default function TrainingModulePage() {
     return idx >= 0 ? lessons[idx + 1] ?? null : null;
   })();
 
+  const moduleCompleted =
+    lessons.length > 0 && lessons.every((l) => progress[l.id]?.passed);
+
   return (
     <main className="bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* Header */}
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
-              <p className="mt-1 text-sm text-slate-600">{moduleRow.description}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                <Pill>{moduleRow.level || 'All levels'}</Pill>
-                <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
-              </div>
-            </div>
+          <h1 className="text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
+          {moduleRow.description ? <p className="mt-1 text-sm text-slate-600">{moduleRow.description}</p> : null}
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+            <Pill>{moduleRow.level || 'All levels'}</Pill>
+            <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
           </div>
         </header>
 
-        {/* Course layout */}
+        {moduleCompleted ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+            <p className="text-sm font-semibold text-emerald-800">Module completed ✅</p>
+            <p className="mt-1 text-sm text-emerald-800/90">
+              Great job — you passed all lessons in this module.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            >
+              Back to dashboard
+            </button>
+          </div>
+        ) : null}
+
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Sidebar lessons */}
           <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">Lessons</h2>
-
             <div className="mt-3 space-y-2">
               {lessons.map((l) => {
                 const unlocked = unlockedLessonIds.has(l.id);
@@ -360,7 +390,6 @@ export default function TrainingModulePage() {
             </div>
           </aside>
 
-          {/* Main lesson content */}
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             {isSelectedLocked ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -383,12 +412,13 @@ export default function TrainingModulePage() {
                     <Pill className="bg-emerald-50 text-emerald-700 border-emerald-200">
                       Passed • {progress[selectedLesson.id].score}%
                     </Pill>
+                  ) : progress[selectedLesson.id] ? (
+                    <Pill className="border-amber-200 bg-amber-50 text-amber-700">Attempted</Pill>
                   ) : (
-                    <Pill>Not passed yet</Pill>
+                    <Pill>Not attempted</Pill>
                   )}
                 </div>
 
-                {/* Video */}
                 <div className="mt-5">
                   {videoSrc ? (
                     <video
@@ -399,18 +429,15 @@ export default function TrainingModulePage() {
                     />
                   ) : (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm text-slate-600">
-                        No video found for this lesson yet (missing video_path).
-                      </p>
+                      <p className="text-sm text-slate-600">No video found for this lesson yet.</p>
                     </div>
                   )}
                 </div>
 
-                {/* Test your understanding */}
                 <div className="mt-8 border-t border-slate-100 pt-6">
                   <h3 className="text-lg font-semibold text-slate-900">Test your understanding</h3>
                   <p className="mt-1 text-sm text-slate-600">
-                    Answer the questions below. You need <b>{PASS_PERCENT}%</b> to pass and unlock the next lesson.
+                    You need <b>{PASS_PERCENT}%</b> to pass.
                   </p>
 
                   {questions.length === 0 ? (
@@ -461,10 +488,17 @@ export default function TrainingModulePage() {
                           <p className={clsx('text-sm font-medium', result.passed ? 'text-emerald-800' : 'text-amber-800')}>
                             Score: {result.score}% • {result.passed ? 'Passed ✅' : 'Not passed yet'}
                           </p>
+
                           {!result.passed ? (
-                            <p className="mt-1 text-sm text-amber-800/90">
-                              Review the video and try again.
-                            </p>
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                type="button"
+                                onClick={resetQuiz}
+                                className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-50"
+                              >
+                                Try again
+                              </button>
+                            </div>
                           ) : nextLesson ? (
                             <button
                               type="button"
@@ -474,9 +508,13 @@ export default function TrainingModulePage() {
                               Continue to next lesson
                             </button>
                           ) : (
-                            <p className="mt-1 text-sm text-emerald-800/90">
-                              Great job — you finished this module.
-                            </p>
+                            <button
+                              type="button"
+                              onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                            >
+                              Finish & go back to dashboard
+                            </button>
                           )}
                         </div>
                       ) : null}
@@ -489,8 +527,6 @@ export default function TrainingModulePage() {
                       >
                         {saving ? 'Saving…' : 'Submit answers'}
                       </button>
-
-                      {err ? <p className="text-sm text-red-600">{err}</p> : null}
                     </div>
                   )}
                 </div>
