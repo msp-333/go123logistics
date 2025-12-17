@@ -27,17 +27,13 @@ type LessonProgressRow = {
   lesson_id: string;
   passed: boolean;
   score: number;
-  completed_at: string; // required in your DB
+  completed_at: string;
 };
 
 function formatShortDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(d);
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
 }
 
 function StatusPill({
@@ -47,10 +43,8 @@ function StatusPill({
   variant: 'passed' | 'inprogress' | 'notstarted';
   children: React.ReactNode;
 }) {
-  const base =
-    'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap';
+  const base = 'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium';
 
-  // Neutral “passed” (NOT green)
   const styles =
     variant === 'passed'
       ? 'border-slate-200 bg-slate-100 text-slate-800'
@@ -80,7 +74,7 @@ function SkeletonCard() {
 export default function TrainingDashboardClient() {
   const { user } = useAuth();
   const sp = useSearchParams();
-  const refresh = sp.get('refresh'); // optional: module sends you back with ?refresh=...
+  const refresh = sp.get('refresh');
 
   const [modules, setModules] = useState<ModuleRow[]>([]);
   const [lessons, setLessons] = useState<LessonRow[]>([]);
@@ -148,7 +142,6 @@ export default function TrainingDashboardClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, refresh]);
 
-  // Refresh when user returns to tab
   useEffect(() => {
     if (!user) return;
 
@@ -167,7 +160,6 @@ export default function TrainingDashboardClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // Canonical mapping: module_id -> lessons[]
   const lessonsByModuleId = useMemo(() => {
     const map = new Map<string, LessonRow[]>();
     for (const l of lessons) {
@@ -228,16 +220,11 @@ export default function TrainingDashboardClient() {
     });
   }, [modules, lessonsByModuleId, progByLessonId]);
 
-  const completedCount = useMemo(
-    () => moduleCards.filter((m) => m.completed).length,
-    [moduleCards]
-  );
-
+  const completedCount = useMemo(() => moduleCards.filter((m) => m.completed).length, [moduleCards]);
   const progressPct = useMemo(
     () => (moduleCards.length ? Math.round((completedCount / moduleCards.length) * 100) : 0),
     [completedCount, moduleCards.length]
   );
-
   const remainingCount = Math.max(0, moduleCards.length - completedCount);
 
   if (!user) {
@@ -291,7 +278,7 @@ export default function TrainingDashboardClient() {
 
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full bg-emerald-600 transition-[width] duration-500 ease-out"
+                className="h-full bg-slate-900 transition-[width] duration-500 ease-out"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -314,7 +301,7 @@ export default function TrainingDashboardClient() {
         ) : moduleCards.length === 0 ? (
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-base font-semibold text-slate-900">No modules yet</h2>
-            <p className="mt-1 text-sm text-slate-600">Once modules are added, they’ll show up here automatically.</p>
+            <p className="mt-1 text-sm text-slate-600">Once modules are added, they’ll show up here.</p>
           </section>
         ) : (
           <section className="grid gap-4 sm:grid-cols-2">
@@ -331,7 +318,7 @@ export default function TrainingDashboardClient() {
               return (
                 <div
                   key={m.id}
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -349,21 +336,17 @@ export default function TrainingDashboardClient() {
                       )}
 
                       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                        <span className="whitespace-nowrap">
+                        <span>
                           Lessons: {m.lessonsPassed}/{m.lessonsTotal || 0} passed
                         </span>
-                        {m.latestScore !== null ? (
-                          <span className="whitespace-nowrap">• Latest score: {m.latestScore}%</span>
-                        ) : null}
-                        {m.latestDate ? (
-                          <span className="whitespace-nowrap">• Last attempt: {formatShortDate(m.latestDate)}</span>
-                        ) : null}
+                        {m.latestScore !== null ? <span>• Latest score: {m.latestScore}%</span> : null}
+                        {m.latestDate ? <span>• Last attempt: {formatShortDate(m.latestDate)}</span> : null}
                       </div>
                     </div>
 
                     <Link
                       href={`/training/${m.slug}`}
-                      className="inline-flex shrink-0 items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+                      className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
                     >
                       {actionLabel}
                     </Link>

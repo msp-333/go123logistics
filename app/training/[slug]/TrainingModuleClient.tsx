@@ -1,7 +1,8 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/app/providers';
@@ -13,7 +14,7 @@ type ModuleRow = {
   description: string | null;
   level: string | null;
   duration: string | null;
-  video_url: string; // can be storage key or public URL
+  video_url: string;
   sort_order?: number | null;
 };
 
@@ -49,16 +50,16 @@ type ProgressRow = {
   completed_at?: string | null;
 };
 
+type Props = {
+  slug: string;
+};
+
 const BUCKET = 'training-videos';
 const PASS_PERCENT = 80;
 
-export default function TrainingModulePage() {
+export default function TrainingModuleClient({ slug }: Props) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const sp = useSearchParams();
-  const params = useParams<{ slug?: string }>();
-
-  const slug = (params?.slug as string | undefined) ?? sp.get('slug') ?? '';
 
   const [moduleRow, setModuleRow] = useState<ModuleRow | null>(null);
   const [lessons, setLessons] = useState<LessonRow[]>([]);
@@ -71,7 +72,6 @@ export default function TrainingModulePage() {
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
 
   const [showQuiz, setShowQuiz] = useState(true);
-
   const [nextModuleSlug, setNextModuleSlug] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -82,10 +82,10 @@ export default function TrainingModulePage() {
     if (!authLoading && !user) router.replace('/login');
   }, [authLoading, user, router]);
 
-  // Load module + lessons + progress (canonical: module_id)
   useEffect(() => {
     const run = async () => {
       if (!user || !slug) return;
+
       setLoading(true);
       setErr(null);
 
@@ -137,7 +137,6 @@ export default function TrainingModulePage() {
         setProgress(map);
       }
 
-      // Find next module slug (by sort_order)
       const { data: allMods } = await supabase
         .from('training_modules')
         .select('slug, sort_order, is_active')
@@ -183,7 +182,6 @@ export default function TrainingModulePage() {
   const selectedProgress = selectedLesson ? progress[selectedLesson.id] : undefined;
   const selectedPassed = !!selectedProgress?.passed;
 
-  // When switching lessons, default quiz visibility: hide if already passed
   useEffect(() => {
     setAnswers({});
     setResult(null);
@@ -192,7 +190,6 @@ export default function TrainingModulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLessonId, selectedPassed]);
 
-  // Load video + questions when lesson changes
   useEffect(() => {
     const run = async () => {
       setVideoSrc(null);
@@ -214,7 +211,6 @@ export default function TrainingModulePage() {
         }
       }
 
-      // Still load questions (so user can retake if they choose)
       const { data: qs, error: qErr } = await supabase
         .from('training_questions')
         .select(
@@ -241,7 +237,7 @@ export default function TrainingModulePage() {
     };
 
     void run();
-  }, [user, selectedLessonId, isSelectedLocked, moduleRow?.video_url]);
+  }, [user, selectedLessonId, isSelectedLocked, moduleRow?.video_url, selectedLesson]);
 
   const onPickLesson = (lesson: LessonRow) => {
     if (!unlockedLessonIds.has(lesson.id)) return;
@@ -257,6 +253,7 @@ export default function TrainingModulePage() {
 
   const submitTest = async () => {
     if (!user || !selectedLesson) return;
+
     setSaving(true);
     setErr(null);
 
@@ -287,7 +284,7 @@ export default function TrainingModulePage() {
           lesson_id: selectedLesson.id,
           passed,
           score,
-          completed_at: nowIso, // ALWAYS set (no NOT NULL issues)
+          completed_at: nowIso,
         },
         { onConflict: 'user_id,lesson_id' }
       );
@@ -303,16 +300,14 @@ export default function TrainingModulePage() {
       [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score, completed_at: nowIso },
     }));
 
-    // If passed, hide quiz by default (cleaner UX)
     if (passed) setShowQuiz(false);
-
     setSaving(false);
   };
 
   if (authLoading || !user) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-sm text-slate-500">Loading...</p>
       </main>
     );
   }
@@ -331,7 +326,7 @@ export default function TrainingModulePage() {
     return (
       <main className="bg-slate-50 px-4 py-10">
         <div className="mx-auto max-w-5xl">
-          <p className="text-sm text-slate-500">Loading module…</p>
+          <p className="text-sm text-slate-500">Loading module...</p>
         </div>
       </main>
     );
@@ -359,7 +354,6 @@ export default function TrainingModulePage() {
   return (
     <main className="bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* Header (neutral, no green “passed”) */}
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
           {moduleRow.description ? (
@@ -371,22 +365,19 @@ export default function TrainingModulePage() {
           </div>
         </header>
 
-        {/* Module completed (neutral) */}
         {moduleCompleted ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-semibold text-slate-900">Module completed</p>
-            <p className="mt-1 text-sm text-slate-600">
-              You have passed all lessons in this module.
-            </p>
+            <p className="mt-1 text-sm text-slate-600">You have passed all lessons in this module.</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {nextModuleSlug ? (
                 <button
                   type="button"
                   onClick={() => router.push(`/training/${nextModuleSlug}`)}
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                  className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
                 >
-                  Go to next module
+                  Next module
                 </button>
               ) : null}
 
@@ -402,7 +393,6 @@ export default function TrainingModulePage() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Sidebar lessons */}
           <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">Lessons</h2>
 
@@ -426,12 +416,12 @@ export default function TrainingModulePage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-xs text-slate-500 whitespace-nowrap">Lesson {l.sort_order}</p>
+                        <p className="text-xs text-slate-500">Lesson {l.sort_order}</p>
                         <p className="text-sm font-medium text-slate-900 break-words">{l.title}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {done ? <StatusDot className="bg-slate-700" /> : null}
-                        {!unlocked ? <span className="text-xs text-slate-500 whitespace-nowrap">Locked</span> : null}
+                        {!unlocked ? <span className="text-xs text-slate-500">Locked</span> : null}
                       </div>
                     </div>
                   </button>
@@ -440,38 +430,37 @@ export default function TrainingModulePage() {
             </div>
           </aside>
 
-          {/* Main lesson content */}
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             {isSelectedLocked ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm text-slate-700">
-                  This lesson is locked. Pass the previous lesson’s <b>Test your understanding</b> to unlock it.
+                  This lesson is locked. Pass the previous lesson’s test to unlock it.
                 </p>
               </div>
             ) : (
               <>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs text-slate-500 whitespace-nowrap">Lesson {selectedLesson.sort_order}</p>
-                    <h2 className="text-xl font-semibold text-slate-900 break-words">{selectedLesson.title}</h2>
+                    <p className="text-xs text-slate-500">Lesson {selectedLesson.sort_order}</p>
+                    <h2 className="text-xl font-semibold text-slate-900 break-words">
+                      {selectedLesson.title}
+                    </h2>
                     {selectedLesson.content ? (
                       <p className="mt-1 text-sm text-slate-600">{selectedLesson.content}</p>
                     ) : null}
                   </div>
 
-                  {/* Neutral status pill (no green “Passed”) */}
                   {selectedPassed ? (
-                    <Pill className="border-slate-200 bg-slate-100 text-slate-800 whitespace-nowrap">
+                    <Pill className="border-slate-200 bg-slate-100 text-slate-800">
                       Passed • {selectedProgress?.score ?? 0}%
                     </Pill>
                   ) : selectedProgress ? (
-                    <Pill className="border-amber-200 bg-amber-50 text-amber-800 whitespace-nowrap">Attempted</Pill>
+                    <Pill className="border-amber-200 bg-amber-50 text-amber-800">Attempted</Pill>
                   ) : (
-                    <Pill className="whitespace-nowrap">Not attempted</Pill>
+                    <Pill>Not attempted</Pill>
                   )}
                 </div>
 
-                {/* Video */}
                 <div className="mt-5">
                   {videoSrc ? (
                     <video
@@ -482,12 +471,11 @@ export default function TrainingModulePage() {
                     />
                   ) : (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm text-slate-600">No video found for this lesson yet.</p>
+                      <p className="text-sm text-slate-600">No video found for this lesson.</p>
                     </div>
                   )}
                 </div>
 
-                {/* Quiz */}
                 <div className="mt-8 border-t border-slate-100 pt-6">
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
@@ -497,12 +485,11 @@ export default function TrainingModulePage() {
                       </p>
                     </div>
 
-                    {/* If passed, allow optional retake */}
                     {selectedPassed ? (
                       <button
                         type="button"
                         onClick={resetQuiz}
-                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 whitespace-nowrap"
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
                       >
                         Retake quiz
                       </button>
@@ -510,7 +497,7 @@ export default function TrainingModulePage() {
                   </div>
 
                   {questions.length === 0 ? (
-                    <p className="mt-4 text-sm text-slate-500">No questions yet for this lesson.</p>
+                    <p className="mt-4 text-sm text-slate-500">No questions for this lesson yet.</p>
                   ) : selectedPassed && !showQuiz ? (
                     <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <p className="text-sm font-medium text-slate-900">Lesson passed</p>
@@ -523,17 +510,17 @@ export default function TrainingModulePage() {
                           <button
                             type="button"
                             onClick={() => onPickLesson(nextLesson)}
-                            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
                           >
-                            Continue to next lesson
+                            Continue
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => router.push(`/training?refresh=${Date.now()}`)}
-                            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
                           >
-                            Finish & go back to dashboard
+                            Back to dashboard
                           </button>
                         )}
 
@@ -572,7 +559,9 @@ export default function TrainingModulePage() {
                                     name={`q-${q.id}`}
                                     className="h-4 w-4"
                                     checked={checked}
-                                    onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: c.id }))}
+                                    onChange={() =>
+                                      setAnswers((prev) => ({ ...prev, [q.id]: c.id }))
+                                    }
                                   />
                                   <span className="text-sm text-slate-800">{c.choice_text}</span>
                                 </label>
@@ -589,7 +578,12 @@ export default function TrainingModulePage() {
                             result.passed ? 'border-slate-200 bg-slate-50' : 'border-amber-200 bg-amber-50'
                           )}
                         >
-                          <p className={clsx('text-sm font-medium', result.passed ? 'text-slate-900' : 'text-amber-900')}>
+                          <p
+                            className={clsx(
+                              'text-sm font-medium',
+                              result.passed ? 'text-slate-900' : 'text-amber-900'
+                            )}
+                          >
                             Score: {result.score}% • {result.passed ? 'Passed' : 'Not passed'}
                           </p>
 
@@ -598,7 +592,7 @@ export default function TrainingModulePage() {
                               <button
                                 type="button"
                                 onClick={resetQuiz}
-                                className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-50 whitespace-nowrap"
+                                className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-50"
                               >
                                 Try again
                               </button>
@@ -607,17 +601,17 @@ export default function TrainingModulePage() {
                             <button
                               type="button"
                               onClick={() => onPickLesson(nextLesson)}
-                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
                             >
-                              Continue to next lesson
+                              Continue
                             </button>
                           ) : (
                             <button
                               type="button"
                               onClick={() => router.push(`/training?refresh=${Date.now()}`)}
-                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
                             >
-                              Finish & go back to dashboard
+                              Back to dashboard
                             </button>
                           )}
                         </div>
@@ -627,9 +621,9 @@ export default function TrainingModulePage() {
                         type="button"
                         disabled={saving || questions.some((q) => !answers[q.id])}
                         onClick={submitTest}
-                        className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
                       >
-                        {saving ? 'Saving…' : 'Submit answers'}
+                        {saving ? 'Saving...' : 'Submit answers'}
                       </button>
                     </div>
                   )}
@@ -643,11 +637,11 @@ export default function TrainingModulePage() {
   );
 }
 
-function Pill({ children, className }: { children: React.ReactNode; className?: string }) {
+function Pill({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs whitespace-nowrap',
+        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs',
         className
       )}
     >
