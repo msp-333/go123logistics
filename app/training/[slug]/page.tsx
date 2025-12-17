@@ -1,3 +1,4 @@
+// app/training/[slug]/page.tsx
 import TrainingModuleClient from './TrainingModuleClient';
 
 export const dynamic = 'force-static';
@@ -7,22 +8,12 @@ type Params = { slug: string };
 
 async function fetchSlugs(): Promise<string[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !key) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY).'
-    );
-  }
-
-  const res = await fetch(
-    `${supabaseUrl}/rest/v1/training_lessons?select=module_slug&is_active=eq.true`,
-    {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      cache: 'no-store',
-    }
-  );
+  const res = await fetch(`${supabaseUrl}/rest/v1/training_lessons?select=module_slug&is_active=eq.true`, {
+    headers: { apikey: key!, Authorization: `Bearer ${key}` },
+    cache: 'no-store',
+  });
 
   if (!res.ok) throw new Error(await res.text());
 
@@ -32,13 +23,7 @@ async function fetchSlugs(): Promise<string[]> {
 
 export async function generateStaticParams(): Promise<Params[]> {
   const slugs = await fetchSlugs();
-
-  if (slugs.length === 0) {
-    throw new Error(
-      'generateStaticParams found 0 module slugs. Check training_lessons has active rows and build-time access works.'
-    );
-  }
-
+  if (slugs.length === 0) throw new Error('generateStaticParams found 0 module slugs.');
   return slugs.map((slug) => ({ slug }));
 }
 
