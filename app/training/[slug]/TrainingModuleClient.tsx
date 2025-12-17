@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
@@ -12,23 +11,32 @@ type Props = { slug: string };
 type ModuleRow = {
   id: string;
   slug: string;
-  title: string;
+  title: string | null;
   description: string | null;
   level: string | null;
   duration: string | null;
-  video_url: string | null;
+  passing_score: number | null;
+  video_url: string | null; // can be a public URL OR a storage object key
+  is_active: boolean;
   sort_order: number | null;
 };
 
 type LessonRow = {
   id: string;
-  module_id: string;
+  module_id: string | null;
   module_slug: string;
-  title: string;
+  title: string | null;
   sort_order: number;
-  video_path: string | null;
+  video_path: string | null; // storage object key
   content: string | null;
   is_active: boolean;
+};
+
+type QuestionRow = {
+  id: string;
+  lesson_id: string;
+  question: string;
+  sort_order: number | null;
 };
 
 type ChoiceRow = {
@@ -39,15 +47,6 @@ type ChoiceRow = {
   sort_order: number | null;
 };
 
-type QuestionRow = {
-  id: string;
-  lesson_id: string;
-  question: string;
-  sort_order: number | null;
-  is_active: boolean;
-  choices: ChoiceRow[];
-};
-
 type ProgressRow = {
   lesson_id: string;
   passed: boolean;
@@ -55,7 +54,6 @@ type ProgressRow = {
 };
 
 const BUCKET = 'training-videos';
-const DEFAULT_PASS_PERCENT = 80;
 
 export default function TrainingModuleClient({ slug }: Props) {
   const { user, loading: authLoading } = useAuth();
@@ -68,20 +66,18 @@ export default function TrainingModuleClient({ slug }: Props) {
 
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
 
-  // Quiz state
-  const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  // quiz (robust)
+  const [questions, setQuestions] = useState<Array<QuestionRow & { choices: ChoiceRow[] }>>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({}); // questionId -> choiceId
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
 
-  const [pageLoading, setPageLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const PASS_PERCENT = moduleRow?.video_url !== undefined ? (moduleRow?.duration !== undefined ? (moduleRow as any)?.passing_score ?? DEFAULT_PASS_PERCENT : DEFAULT_PASS_PERCENT) : DEFAULT_PASS_PERCENT;
-  // If your training_modules DOES have passing_score, PASS_PERCENT will still work.
-  // If not, it falls back to DEFAULT_PASS_PERCENT.
+  const PASS_PERCENT = moduleRow?.passing_score ?? 80;
 
-  // Auth guard
+  // Guard auth
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login');
   }, [authLoading, user, router]);
@@ -91,23 +87,30 @@ export default function TrainingModuleClient({ slug }: Props) {
     const run = async () => {
       if (!user) return;
 
-      setPageLoading(true);
+      setLoading(true);
       setErr(null);
 
+      // Module (by slug)
       const { data: mod, error: modErr } = await supabase
         .from('training_modules')
-        .select('id, slug, title, description, level, duration, video_url, sort_order')
+        .select('id, slug, title, description, level, duration, passing_score, video_url, is_active, sort_order')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
 
       if (modErr || !mod) {
+        setModuleRow(null);
+        setLessons([]);
+        setSelectedLessonId(null);
+        setProgress({});
+        setLoading(false);
         setErr(modErr?.message || 'Module not found / inactive.');
-        setPageLoading(false);
         return;
       }
+
       setModuleRow(mod);
 
+      // Lessons (by module_slug)
       const { data: les, error: lesErr } = await supabase
         .from('training_lessons')
         .select('id, module_id, module_slug, title, sort_order, video_path, content, is_active')
@@ -116,32 +119,37 @@ export default function TrainingModuleClient({ slug }: Props) {
         .order('sort_order', { ascending: true });
 
       if (lesErr) {
+        setLessons([]);
+        setSelectedLessonId(null);
+        setLoading(false);
         setErr(lesErr.message);
-        setPageLoading(false);
         return;
       }
 
       const lessonList = (les || []) as LessonRow[];
       setLessons(lessonList);
-      setSelectedLessonId(lessonList[0]?.id ?? null);
+      setSelectedLessonId((prev) => prev ?? lessonList[0]?.id ?? null);
 
-      // Progress for these lessons (if your RLS allows select)
+      // Progress for these lessons (filter by user_id to satisfy RLS)
       if (lessonList.length) {
         const { data: prog, error: progErr } = await supabase
           .from('training_lesson_progress')
           .select('lesson_id, passed, score')
+          .eq('user_id', user.id)
           .in('lesson_id', lessonList.map((l) => l.id));
 
         if (!progErr && prog) {
           const map: Record<string, ProgressRow> = {};
-          for (const p of prog as any[]) {
-            map[p.lesson_id] = { lesson_id: p.lesson_id, passed: !!p.passed, score: Number(p.score ?? 0) };
-          }
+          for (const p of prog as any[]) map[p.lesson_id] = p;
           setProgress(map);
+        } else {
+          setProgress({});
         }
+      } else {
+        setProgress({});
       }
 
-      setPageLoading(false);
+      setLoading(false);
     };
 
     run();
@@ -152,7 +160,7 @@ export default function TrainingModuleClient({ slug }: Props) {
     [lessons, selectedLessonId]
   );
 
-  // Unlock rules: lesson 1 unlocked; others unlocked if previous lesson PASSED
+  // Lesson lock rules: lesson 1 unlocked; others unlocked if previous lesson PASSED
   const unlockedLessonIds = useMemo(() => {
     const unlocked = new Set<string>();
     for (let i = 0; i < lessons.length; i++) {
@@ -172,32 +180,30 @@ export default function TrainingModuleClient({ slug }: Props) {
     return !unlockedLessonIds.has(selectedLesson.id);
   }, [selectedLesson, unlockedLessonIds]);
 
-  const passedCount = useMemo(() => {
-    return lessons.reduce((acc, l) => acc + (progress[l.id]?.passed ? 1 : 0), 0);
-  }, [lessons, progress]);
-
-  const moduleCompleted = useMemo(() => {
-    return lessons.length > 0 && lessons.every((l) => progress[l.id]?.passed);
-  }, [lessons, progress]);
-
-  const currentProgress = progress[selectedLessonId || ''];
-
+  // Badge text (fixes “Not passed yet” / “Not attempted yet”)
   const lessonStatusBadge = useMemo(() => {
-    if (!selectedLessonId) return null;
-    const p = progress[selectedLessonId];
-    if (!p) {
-      return { label: 'Not attempted yet', className: 'bg-slate-50 text-slate-700 border-slate-200' };
-    }
-    if (p.passed) {
-      return { label: `Passed • ${p.score}%`, className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-    }
-    return { label: `Attempted • ${p.score}% (Retry)`, className: 'bg-amber-50 text-amber-800 border-amber-200' };
-  }, [progress, selectedLessonId]);
+    if (!selectedLesson) return null;
+    const p = progress[selectedLesson.id];
 
-  const isLastLesson = useMemo(() => {
-    if (!selectedLesson) return false;
-    return lessons.length > 0 && lessons[lessons.length - 1]?.id === selectedLesson.id;
-  }, [lessons, selectedLesson]);
+    if (!p) {
+      return {
+        label: 'Not attempted yet',
+        className: 'bg-slate-900/[0.04] text-slate-700 ring-slate-900/[0.06]',
+      };
+    }
+
+    if (p.passed) {
+      return {
+        label: `Passed • ${p.score}%`,
+        className: 'bg-emerald-600/10 text-emerald-800 ring-emerald-600/15',
+      };
+    }
+
+    return {
+      label: `Attempted • ${p.score}% (Retry)`,
+      className: 'bg-amber-500/10 text-amber-900 ring-amber-500/20',
+    };
+  }, [selectedLesson, progress]);
 
   // Load signed video + quiz when lesson changes
   useEffect(() => {
@@ -210,7 +216,7 @@ export default function TrainingModuleClient({ slug }: Props) {
 
       if (!user || !selectedLesson || isSelectedLocked) return;
 
-      // VIDEO: prefer lesson.video_path; fallback to module.video_url if it exists
+      // VIDEO: prefer lesson.video_path, fallback to module.video_url
       const objectKeyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
 
       if (objectKeyOrUrl) {
@@ -219,14 +225,14 @@ export default function TrainingModuleClient({ slug }: Props) {
         } else {
           const { data, error } = await supabase.storage
             .from(BUCKET)
-            .createSignedUrl(objectKeyOrUrl, 60 * 60 * 24 * 7);
+            .createSignedUrl(objectKeyOrUrl, 60 * 60 * 24 * 7); // 7 days
 
           if (!error && data?.signedUrl) setVideoSrc(data.signedUrl);
           if (error) setErr((prev) => prev || `Video error: ${error.message}`);
         }
       }
 
-      // QUIZ: fetch questions then fetch choices (does NOT require PostgREST relationship config)
+      // QUIZ (robust): fetch questions, then fetch choices separately (no relationship dependency)
       const { data: qs, error: qErr } = await supabase
         .from('training_questions')
         .select('id, lesson_id, question, sort_order, is_active')
@@ -239,14 +245,7 @@ export default function TrainingModuleClient({ slug }: Props) {
         return;
       }
 
-      const qList = (qs || []) as Array<{
-        id: string;
-        lesson_id: string;
-        question: string;
-        sort_order: number | null;
-        is_active: boolean;
-      }>;
-
+      const qList = (qs || []) as QuestionRow[];
       if (qList.length === 0) {
         setQuestions([]);
         return;
@@ -269,26 +268,20 @@ export default function TrainingModuleClient({ slug }: Props) {
       const byQ: Record<string, ChoiceRow[]> = {};
       for (const c of choices) (byQ[c.question_id] ||= []).push(c);
 
-      const merged: QuestionRow[] = qList.map((q) => ({
-        ...q,
-        choices: (byQ[q.id] || []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
-      }));
-
-      setQuestions(merged);
+      setQuestions(
+        qList.map((q) => ({
+          ...q,
+          choices: (byQ[q.id] || []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+        }))
+      );
     };
 
     run();
-  }, [user, selectedLessonId, isSelectedLocked, moduleRow?.video_url]);
+  }, [user, selectedLessonId, isSelectedLocked, moduleRow?.video_url, selectedLesson?.id]);
 
   const onPickLesson = (lesson: LessonRow) => {
     if (!unlockedLessonIds.has(lesson.id)) return;
     setSelectedLessonId(lesson.id);
-  };
-
-  const resetQuiz = () => {
-    setAnswers({});
-    setResult(null);
-    setErr(null);
   };
 
   const submitTest = async () => {
@@ -311,25 +304,25 @@ export default function TrainingModuleClient({ slug }: Props) {
     }
 
     const score = Math.round((correct / total) * 100);
-    const passed = score >= DEFAULT_PASS_PERCENT; // if you do have passing_score later, we can use it here
+    const passed = score >= PASS_PERCENT;
     setResult({ score, passed });
 
-    // IMPORTANT: your DB complained completed_at cannot be null,
-    // so we ALWAYS send a timestamp.
-    const completedAt = new Date().toISOString();
+    // Save progress (upsert)
+    const payload: any = {
+      user_id: user.id,
+      lesson_id: selectedLesson.id,
+      passed,
+      score,
+      updated_at: new Date().toISOString(),
+    };
+
+    // If your table requires completed_at NOT NULL, always set it.
+    // If it allows null, this still works.
+    payload.completed_at = passed ? new Date().toISOString() : new Date().toISOString();
 
     const { error: upErr } = await supabase
       .from('training_lesson_progress')
-      .upsert(
-        {
-          user_id: user.id,
-          lesson_id: selectedLesson.id,
-          passed,
-          score,
-          completed_at: completedAt,
-        },
-        { onConflict: 'user_id,lesson_id' }
-      );
+      .upsert(payload, { onConflict: 'user_id,lesson_id' });
 
     if (upErr) {
       setErr(upErr.message);
@@ -337,21 +330,24 @@ export default function TrainingModuleClient({ slug }: Props) {
       return;
     }
 
-    // Update local progress immediately
     setProgress((prev) => ({
       ...prev,
       [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score },
     }));
 
     setSaving(false);
-
-    // If they just passed the LAST lesson, go to success page
-    if (passed && isLastLesson) {
-      router.push(`/training/success?slug=${encodeURIComponent(slug)}`);
-    }
   };
 
-  // ---------- UI guards ----------
+  const nextLesson = useMemo(() => {
+    if (!selectedLesson) return null;
+    const idx = lessons.findIndex((l) => l.id === selectedLesson.id);
+    return idx >= 0 ? lessons[idx + 1] ?? null : null;
+  }, [lessons, selectedLesson]);
+
+  const moduleTitle = moduleRow?.title || slug.replaceAll('-', ' ');
+  const moduleDesc = moduleRow?.description || '';
+  const moduleDuration = moduleRow?.duration || null;
+
   if (authLoading || !user) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center">
@@ -360,9 +356,9 @@ export default function TrainingModuleClient({ slug }: Props) {
     );
   }
 
-  if (pageLoading) {
+  if (loading) {
     return (
-      <main className="bg-slate-50 px-4 py-10">
+      <main className="bg-gradient-to-b from-slate-50 to-white px-4 py-10">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm text-slate-500">Loading module…</p>
         </div>
@@ -372,62 +368,63 @@ export default function TrainingModuleClient({ slug }: Props) {
 
   if (err || !moduleRow || !selectedLesson) {
     return (
-      <main className="bg-slate-50 px-4 py-10">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-white p-6">
-          <p className="text-sm text-red-700">{err || 'Module not found.'}</p>
-          <div className="mt-4">
-            <Link href="/training" className="text-sm font-semibold text-emerald-700 hover:text-emerald-800">
-              ← Back to Training Dashboard
-            </Link>
-          </div>
+      <main className="bg-gradient-to-b from-slate-50 to-white px-4 py-10">
+        <div className="mx-auto max-w-3xl rounded-3xl bg-white/80 backdrop-blur ring-1 ring-slate-200/60 p-8 shadow-sm">
+          <h1 className="text-lg font-semibold text-slate-900">Course not available</h1>
+          <p className="mt-2 text-sm text-slate-600">{err || 'This module may be missing or inactive.'}</p>
+          <button
+            type="button"
+            onClick={() => router.push('/training')}
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            Back to Training Dashboard
+          </button>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="bg-slate-50 px-4 py-8">
+    <main className="bg-gradient-to-b from-slate-50 to-white px-4 py-10">
       <div className="mx-auto max-w-6xl space-y-6">
         {/* Header */}
-        <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <header className="rounded-3xl bg-white/80 backdrop-blur ring-1 ring-slate-200/60 p-7 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <Link href="/training" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                ← Back to dashboard
-              </Link>
-
-              <h1 className="mt-2 text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
-
-              {moduleRow.description ? (
-                <p className="mt-1 text-sm text-slate-600">{moduleRow.description}</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">
+                {moduleTitle}
+              </h1>
+              {moduleDesc ? (
+                <p className="mt-2 text-sm leading-6 text-slate-600">{moduleDesc}</p>
               ) : null}
 
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Pill>{moduleRow.level || 'All levels'}</Pill>
-                <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
-                <Pill className="bg-slate-50 text-slate-700 border-slate-200">
-                  Progress: {passedCount}/{lessons.length}
-                </Pill>
-                {moduleCompleted ? (
-                  <Pill className="bg-emerald-50 text-emerald-700 border-emerald-200">Module completed ✅</Pill>
-                ) : null}
+                <Pill>{moduleDuration || 'Self-paced'}</Pill>
+                <Pill>Pass: {PASS_PERCENT}%</Pill>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => router.push('/training')}
+              className="shrink-0 rounded-full bg-slate-900/[0.04] px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-900/[0.06] hover:bg-slate-900/[0.06]"
+            >
+              Back to dashboard
+            </button>
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-          {/* Sidebar (sticky on desktop) */}
-          <aside className="lg:sticky lg:top-6 h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">Lessons</h2>
-              <span className="text-xs text-slate-500">{lessons.length} total</span>
-            </div>
+        {/* Layout */}
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          {/* Sidebar lessons */}
+          <aside className="rounded-3xl bg-white/80 backdrop-blur ring-1 ring-slate-200/60 p-4 shadow-sm h-fit">
+            <h2 className="text-sm font-semibold text-slate-900 px-2">Lessons</h2>
 
             <div className="mt-3 space-y-2">
               {lessons.map((l) => {
                 const unlocked = unlockedLessonIds.has(l.id);
-                const p = progress[l.id];
+                const done = progress[l.id]?.passed;
                 const active = l.id === selectedLessonId;
 
                 return (
@@ -437,125 +434,112 @@ export default function TrainingModuleClient({ slug }: Props) {
                     onClick={() => onPickLesson(l)}
                     disabled={!unlocked}
                     className={clsx(
-                      'w-full text-left rounded-xl border px-3 py-3 transition',
-                      active ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:bg-slate-50',
-                      !unlocked && 'opacity-50 cursor-not-allowed hover:bg-white'
+                      'w-full text-left rounded-2xl px-4 py-3 transition',
+                      'ring-1 ring-slate-200/70 hover:bg-slate-900/[0.02]',
+                      active && 'bg-emerald-600/10 ring-emerald-600/20',
+                      !unlocked && 'opacity-50 cursor-not-allowed hover:bg-transparent'
                     )}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-xs text-slate-500">Lesson {l.sort_order}</p>
-                        <p className="text-sm font-medium text-slate-900 truncate">{l.title}</p>
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {l.title || `Lesson ${l.sort_order}`}
+                        </p>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        {p?.passed ? <StatusDot className="bg-emerald-500" /> : null}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {done ? <StatusDot className="bg-emerald-500" /> : <StatusDot className="bg-slate-300" />}
                         {!unlocked ? <span className="text-xs text-slate-500">Locked</span> : null}
                       </div>
                     </div>
-
-                    {p ? (
-                      <p className="mt-2 text-xs text-slate-600">
-                        {p.passed ? `Passed • ${p.score}%` : `Attempted • ${p.score}%`}
-                      </p>
-                    ) : (
-                      <p className="mt-2 text-xs text-slate-500">Not attempted</p>
-                    )}
                   </button>
                 );
               })}
             </div>
           </aside>
 
-          {/* Main */}
+          {/* Main content */}
           <section className="space-y-6">
             {/* Lesson header */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs text-slate-500">Lesson {selectedLesson.sort_order}</p>
-                  <h2 className="text-xl font-semibold text-slate-900">{selectedLesson.title}</h2>
-                  {selectedLesson.content ? (
-                    <p className="mt-1 text-sm text-slate-600">{selectedLesson.content}</p>
-                  ) : null}
-                </div>
-
-                {lessonStatusBadge ? (
-                  <Pill className={lessonStatusBadge.className}>{lessonStatusBadge.label}</Pill>
-                ) : null}
-              </div>
-
+            <div className="rounded-3xl bg-white/80 backdrop-blur ring-1 ring-slate-200/60 p-6 sm:p-7 shadow-sm">
               {isSelectedLocked ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="rounded-2xl bg-slate-900/[0.03] ring-1 ring-slate-900/[0.06] p-4">
                   <p className="text-sm text-slate-700">
                     This lesson is locked. Pass the previous lesson quiz to unlock it.
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500">Lesson {selectedLesson.sort_order}</p>
+                    <h2 className="mt-1 text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
+                      {selectedLesson.title || `Lesson ${selectedLesson.sort_order}`}
+                    </h2>
+                    {selectedLesson.content ? (
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{selectedLesson.content}</p>
+                    ) : null}
+                  </div>
+
+                  {lessonStatusBadge ? (
+                    <Pill className={clsx(lessonStatusBadge.className, 'whitespace-nowrap shrink-0')}>
+                      {lessonStatusBadge.label}
+                    </Pill>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             {/* Video */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-slate-900">Lesson video</h3>
-              </div>
+            <div className="rounded-3xl bg-white/80 backdrop-blur ring-1 ring-slate-200/60 p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">Lesson video</h3>
 
-              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-black">
-                {videoSrc ? (
-                  <video controls playsInline className="w-full h-auto" src={videoSrc} />
+              <div className="mt-4 overflow-hidden rounded-3xl ring-1 ring-slate-200/70 bg-black">
+                {videoSrc && !isSelectedLocked ? (
+                  <video
+                    controls
+                    playsInline
+                    className="w-full h-auto"
+                    src={videoSrc}
+                  />
                 ) : (
                   <div className="flex h-56 items-center justify-center text-sm text-slate-200">
                     Video not available yet.
                   </div>
                 )}
               </div>
-
-              <p className="mt-3 text-xs text-slate-500">Tip: Watch the full lesson before starting the quiz.</p>
             </div>
 
             {/* Quiz */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">Test your understanding</h3>
-                  <p className="text-sm text-slate-600">
-                    You need <b>{DEFAULT_PASS_PERCENT}%</b> to pass.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={resetQuiz}
-                    className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Reset
-                  </button>
-                </div>
+            <div className="rounded-3xl bg-white/80 backdrop-blur ring-1 ring-slate-200/60 p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-900">Test your understanding</h3>
+                <Pill>Need {PASS_PERCENT}%</Pill>
               </div>
 
               {isSelectedLocked ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-700">Pass the previous lesson to unlock this quiz.</p>
-                </div>
+                <p className="mt-4 text-sm text-slate-600">
+                  Pass the previous lesson quiz to unlock this lesson.
+                </p>
               ) : questions.length === 0 ? (
                 <p className="mt-4 text-sm text-slate-500">No questions yet for this lesson.</p>
               ) : (
                 <div className="mt-5 space-y-5">
                   {questions.map((q, i) => (
-                    <div key={q.id} className="rounded-2xl border border-slate-200 p-4">
+                    <div key={q.id} className="rounded-3xl ring-1 ring-slate-200/70 p-5">
                       <p className="text-sm font-medium text-slate-900">
                         {(q.sort_order ?? i + 1)}. {q.question}
                       </p>
 
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-4 space-y-2">
                         {q.choices.map((c) => {
                           const checked = answers[q.id] === c.id;
                           return (
                             <label
                               key={c.id}
                               className={clsx(
-                                'flex items-center gap-3 rounded-xl border px-3 py-2 cursor-pointer transition',
-                                checked ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:bg-slate-50'
+                                'flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer transition',
+                                'ring-1 ring-slate-200/70 hover:bg-slate-900/[0.02]',
+                                checked && 'bg-emerald-600/10 ring-emerald-600/20'
                               )}
                             >
                               <input
@@ -576,35 +560,68 @@ export default function TrainingModuleClient({ slug }: Props) {
                   {result ? (
                     <div
                       className={clsx(
-                        'rounded-2xl border p-4',
-                        result.passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+                        'rounded-3xl p-5 ring-1',
+                        result.passed
+                          ? 'bg-emerald-600/10 text-emerald-900 ring-emerald-600/20'
+                          : 'bg-amber-500/10 text-amber-900 ring-amber-500/20'
                       )}
                     >
-                      <p className={clsx('text-sm font-semibold', result.passed ? 'text-emerald-800' : 'text-amber-800')}>
+                      <p className="text-sm font-semibold">
                         Score: {result.score}% • {result.passed ? 'Passed ✅' : 'Not passed yet'}
                       </p>
+
                       {!result.passed ? (
-                        <p className="mt-1 text-sm text-amber-800/90">
-                          Please rewatch the video and try again. You can reset and resubmit.
+                        <p className="mt-1 text-sm opacity-90">
+                          Watch the video again, then retake the quiz.
                         </p>
-                      ) : isLastLesson ? (
-                        <p className="mt-1 text-sm text-emerald-800/90">
-                          Great job — you completed this module. Redirecting to success…
-                        </p>
-                      ) : null}
+                      ) : nextLesson ? (
+                        <button
+                          type="button"
+                          onClick={() => onPickLesson(nextLesson)}
+                          className="mt-4 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
+                        >
+                          Continue to next lesson
+                        </button>
+                      ) : (
+                        <div className="mt-4">
+                          <p className="text-sm opacity-90">Great job — you finished this module.</p>
+                          <button
+                            type="button"
+                            onClick={() => router.push('/training')}
+                            className="mt-3 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
+                          >
+                            Back to dashboard
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : null}
 
-                  <button
-                    type="button"
-                    disabled={saving || questions.some((q) => !answers[q.id])}
-                    onClick={submitTest}
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-                  >
-                    {saving ? 'Saving…' : 'Submit answers'}
-                  </button>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={saving || questions.some((q) => !answers[q.id])}
+                      onClick={submitTest}
+                      className="inline-flex w-full items-center justify-center rounded-full bg-emerald-600 px-5 py-3 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {saving ? 'Saving…' : 'Submit answers'}
+                    </button>
 
-                  {err ? <p className="text-sm text-red-600">{err}</p> : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAnswers({});
+                        setResult(null);
+                      }}
+                      className="inline-flex w-full items-center justify-center rounded-full bg-slate-900/[0.04] px-5 py-3 text-sm font-medium text-slate-700 ring-1 ring-slate-900/[0.06] hover:bg-slate-900/[0.06]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {err ? (
+                    <p className="text-sm text-red-600">{err}</p>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -619,7 +636,8 @@ function Pill({ children, className }: { children: React.ReactNode; className?: 
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs',
+        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium',
+        'bg-slate-900/[0.04] text-slate-700 ring-1 ring-slate-900/[0.06]',
         className
       )}
     >
