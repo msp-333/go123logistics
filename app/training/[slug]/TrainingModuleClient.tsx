@@ -359,9 +359,14 @@ export default function TrainingModuleClient({ slug }: Props) {
     <main className="bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold text-slate-900">{slug.replaceAll('-', ' ')}</h1>
-          {moduleRow?.duration ? <p className="mt-1 text-sm text-slate-600">Duration: {moduleRow.duration}</p> : null}
-        </header>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {lessons[0]?.title ?? slug.replaceAll('-', ' ')}
+        </h1>
+
+        {moduleRow?.duration ? (
+          <p className="mt-1 text-sm text-slate-600">Duration: {moduleRow.duration}</p>
+        ) : null}
+      </header>
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
           <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
