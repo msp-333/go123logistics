@@ -57,6 +57,15 @@ type Props = {
 const BUCKET = 'training-videos';
 const PASS_PERCENT = 80;
 
+function clampStyle(lines: number) {
+  return {
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical' as const,
+    WebkitLineClamp: lines,
+    overflow: 'hidden',
+  };
+}
+
 export default function TrainingModuleClient({ slug }: Props) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -355,27 +364,47 @@ export default function TrainingModuleClient({ slug }: Props) {
     <main className="bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
-          {moduleRow.description ? (
-            <p className="mt-1 text-sm text-slate-600">{moduleRow.description}</p>
-          ) : null}
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-            <Pill>{moduleRow.level || 'All levels'}</Pill>
-            <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold text-slate-900 leading-snug">
+                {moduleRow.title}
+              </h1>
+              {moduleRow.description ? (
+                <p
+                  className="mt-2 text-sm text-slate-600 leading-relaxed break-words"
+                  style={clampStyle(3)}
+                >
+                  {moduleRow.description}
+                </p>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                <Pill>{moduleRow.level || 'Beginner'}</Pill>
+                <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
+              </div>
+            </div>
+
+            {moduleCompleted ? (
+              <span className="shrink-0 inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 whitespace-nowrap">
+                Completed
+              </span>
+            ) : null}
           </div>
         </header>
 
         {moduleCompleted ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Module completed</p>
-            <p className="mt-1 text-sm text-slate-600">You have passed all lessons in this module.</p>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+            <p className="text-sm font-semibold text-emerald-900">Module completed</p>
+            <p className="mt-1 text-sm text-emerald-900/80">
+              You have passed all lessons in this module.
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {nextModuleSlug ? (
                 <button
                   type="button"
                   onClick={() => router.push(`/training/${nextModuleSlug}`)}
-                  className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                 >
                   Next module
                 </button>
@@ -384,7 +413,7 @@ export default function TrainingModuleClient({ slug }: Props) {
               <button
                 type="button"
                 onClick={() => router.push(`/training?refresh=${Date.now()}`)}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50"
               >
                 Back to dashboard
               </button>
@@ -410,17 +439,22 @@ export default function TrainingModuleClient({ slug }: Props) {
                     disabled={!unlocked}
                     className={clsx(
                       'w-full text-left rounded-xl border px-3 py-3 transition',
-                      active ? 'border-slate-300 bg-slate-50' : 'border-slate-200 hover:bg-slate-50',
+                      active
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : 'border-slate-200 hover:bg-slate-50',
                       !unlocked && 'opacity-50 cursor-not-allowed hover:bg-white'
                     )}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-xs text-slate-500">Lesson {l.sort_order}</p>
-                        <p className="text-sm font-medium text-slate-900 break-words">{l.title}</p>
+                        <p className="mt-0.5 text-sm font-semibold text-slate-900 leading-snug break-words">
+                          {l.title}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {done ? <StatusDot className="bg-slate-700" /> : null}
+
+                      <div className="shrink-0 flex items-center gap-2 pt-0.5">
+                        {done ? <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> : null}
                         {!unlocked ? <span className="text-xs text-slate-500">Locked</span> : null}
                       </div>
                     </div>
@@ -434,31 +468,39 @@ export default function TrainingModuleClient({ slug }: Props) {
             {isSelectedLocked ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm text-slate-700">
-                  This lesson is locked. Pass the previous lesson’s test to unlock it.
+                  This lesson is locked. Pass the previous lesson’s quiz to unlock it.
                 </p>
               </div>
             ) : (
               <>
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <p className="text-xs text-slate-500">Lesson {selectedLesson.sort_order}</p>
-                    <h2 className="text-xl font-semibold text-slate-900 break-words">
+                    <h2 className="mt-1 text-xl font-semibold text-slate-900 leading-snug break-words">
                       {selectedLesson.title}
                     </h2>
                     {selectedLesson.content ? (
-                      <p className="mt-1 text-sm text-slate-600">{selectedLesson.content}</p>
+                      <p className="mt-2 text-sm text-slate-600 leading-relaxed break-words">
+                        {selectedLesson.content}
+                      </p>
                     ) : null}
                   </div>
 
-                  {selectedPassed ? (
-                    <Pill className="border-slate-200 bg-slate-100 text-slate-800">
-                      Passed • {selectedProgress?.score ?? 0}%
-                    </Pill>
-                  ) : selectedProgress ? (
-                    <Pill className="border-amber-200 bg-amber-50 text-amber-800">Attempted</Pill>
-                  ) : (
-                    <Pill>Not attempted</Pill>
-                  )}
+                  <div className="shrink-0">
+                    {selectedPassed ? (
+                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 whitespace-nowrap">
+                        Passed {selectedProgress?.score ?? 0}%
+                      </span>
+                    ) : selectedProgress ? (
+                      <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 whitespace-nowrap">
+                        Attempted
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                        Not attempted
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-5">
@@ -481,7 +523,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900">Test your understanding</h3>
                       <p className="mt-1 text-sm text-slate-600">
-                        You need <b>{PASS_PERCENT}%</b> to pass.
+                        Passing score: <b>{PASS_PERCENT}%</b>.
                       </p>
                     </div>
 
@@ -489,7 +531,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                       <button
                         type="button"
                         onClick={resetQuiz}
-                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
                       >
                         Retake quiz
                       </button>
@@ -499,9 +541,9 @@ export default function TrainingModuleClient({ slug }: Props) {
                   {questions.length === 0 ? (
                     <p className="mt-4 text-sm text-slate-500">No questions for this lesson yet.</p>
                   ) : selectedPassed && !showQuiz ? (
-                    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm font-medium text-slate-900">Lesson passed</p>
-                      <p className="mt-1 text-sm text-slate-600">
+                    <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                      <p className="text-sm font-semibold text-emerald-900">Lesson passed</p>
+                      <p className="mt-1 text-sm text-emerald-900/80">
                         Score: {selectedProgress?.score ?? 0}%
                       </p>
 
@@ -510,24 +552,24 @@ export default function TrainingModuleClient({ slug }: Props) {
                           <button
                             type="button"
                             onClick={() => onPickLesson(nextLesson)}
-                            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                           >
-                            Continue
+                            Continue to next lesson
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => router.push(`/training?refresh=${Date.now()}`)}
-                            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                           >
-                            Back to dashboard
+                            Finish and go back to dashboard
                           </button>
                         )}
 
                         <button
                           type="button"
                           onClick={resetQuiz}
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                          className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50"
                         >
                           Review answers
                         </button>
@@ -537,7 +579,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                     <div className="mt-5 space-y-5">
                       {questions.map((q) => (
                         <div key={q.id} className="rounded-2xl border border-slate-200 p-4">
-                          <p className="text-sm font-medium text-slate-900">
+                          <p className="text-sm font-semibold text-slate-900">
                             {q.sort_order}. {q.question}
                           </p>
 
@@ -548,22 +590,24 @@ export default function TrainingModuleClient({ slug }: Props) {
                                 <label
                                   key={c.id}
                                   className={clsx(
-                                    'flex items-center gap-3 rounded-xl border px-3 py-2 cursor-pointer transition',
+                                    'flex items-start gap-3 rounded-xl border px-3 py-2 cursor-pointer transition',
                                     checked
-                                      ? 'border-slate-300 bg-slate-50'
+                                      ? 'border-emerald-200 bg-emerald-50'
                                       : 'border-slate-200 hover:bg-slate-50'
                                   )}
                                 >
                                   <input
                                     type="radio"
                                     name={`q-${q.id}`}
-                                    className="h-4 w-4"
+                                    className="mt-1 h-4 w-4"
                                     checked={checked}
                                     onChange={() =>
                                       setAnswers((prev) => ({ ...prev, [q.id]: c.id }))
                                     }
                                   />
-                                  <span className="text-sm text-slate-800">{c.choice_text}</span>
+                                  <span className="text-sm text-slate-800 leading-relaxed">
+                                    {c.choice_text}
+                                  </span>
                                 </label>
                               );
                             })}
@@ -575,13 +619,15 @@ export default function TrainingModuleClient({ slug }: Props) {
                         <div
                           className={clsx(
                             'rounded-2xl border p-4',
-                            result.passed ? 'border-slate-200 bg-slate-50' : 'border-amber-200 bg-amber-50'
+                            result.passed
+                              ? 'border-emerald-200 bg-emerald-50'
+                              : 'border-amber-200 bg-amber-50'
                           )}
                         >
                           <p
                             className={clsx(
-                              'text-sm font-medium',
-                              result.passed ? 'text-slate-900' : 'text-amber-900'
+                              'text-sm font-semibold',
+                              result.passed ? 'text-emerald-900' : 'text-amber-900'
                             )}
                           >
                             Score: {result.score}% • {result.passed ? 'Passed' : 'Not passed'}
@@ -592,7 +638,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                               <button
                                 type="button"
                                 onClick={resetQuiz}
-                                className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-50"
+                                className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-50"
                               >
                                 Try again
                               </button>
@@ -601,17 +647,17 @@ export default function TrainingModuleClient({ slug }: Props) {
                             <button
                               type="button"
                               onClick={() => onPickLesson(nextLesson)}
-                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                             >
-                              Continue
+                              Continue to next lesson
                             </button>
                           ) : (
                             <button
                               type="button"
                               onClick={() => router.push(`/training?refresh=${Date.now()}`)}
-                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                             >
-                              Back to dashboard
+                              Finish and go back to dashboard
                             </button>
                           )}
                         </div>
@@ -621,7 +667,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                         type="button"
                         disabled={saving || questions.some((q) => !answers[q.id])}
                         onClick={submitTest}
-                        className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                       >
                         {saving ? 'Saving...' : 'Submit answers'}
                       </button>
@@ -641,15 +687,11 @@ function Pill({ children, className }: { children: ReactNode; className?: string
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs',
+        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs whitespace-nowrap',
         className
       )}
     >
       {children}
     </span>
   );
-}
-
-function StatusDot({ className }: { className?: string }) {
-  return <span className={clsx('h-2.5 w-2.5 rounded-full', className)} />;
 }

@@ -20,10 +20,7 @@ async function fetchSlugs(): Promise<string[]> {
   const res = await fetch(
     `${supabaseUrl}/rest/v1/training_lessons?select=module_slug&is_active=eq.true`,
     {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-      },
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
       cache: 'force-cache',
     }
   );

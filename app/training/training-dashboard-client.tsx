@@ -11,13 +11,15 @@ type ModuleRow = {
   slug: string;
   title: string;
   description: string | null;
+  level: string | null;
+  duration: string | null;
   sort_order: number | null;
   is_active: boolean;
 };
 
 type LessonRow = {
   id: string;
-  module_id: string;
+  module_id: string | null;
   module_slug: string | null;
   sort_order: number | null;
   is_active: boolean;
@@ -30,24 +32,38 @@ type LessonProgressRow = {
   completed_at: string;
 };
 
+function clampStyle(lines: number) {
+  return {
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical' as const,
+    WebkitLineClamp: lines,
+    overflow: 'hidden',
+  };
+}
+
 function formatShortDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(d);
 }
 
 function StatusPill({
   variant,
   children,
 }: {
-  variant: 'passed' | 'inprogress' | 'notstarted';
+  variant: 'completed' | 'inprogress' | 'notstarted';
   children: React.ReactNode;
 }) {
-  const base = 'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium';
+  const base =
+    'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap shrink-0';
 
   const styles =
-    variant === 'passed'
-      ? 'border-slate-200 bg-slate-100 text-slate-800'
+    variant === 'completed'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
       : variant === 'inprogress'
         ? 'border-amber-200 bg-amber-50 text-amber-800'
         : 'border-slate-200 bg-white text-slate-700';
@@ -65,7 +81,7 @@ function SkeletonCard() {
           <div className="mt-2 h-3 w-5/6 animate-pulse rounded bg-slate-100" />
           <div className="mt-4 h-6 w-28 animate-pulse rounded-full bg-slate-100" />
         </div>
-        <div className="h-9 w-24 animate-pulse rounded-md bg-slate-200" />
+        <div className="h-10 w-28 animate-pulse rounded-xl bg-slate-200" />
       </div>
     </div>
   );
@@ -91,7 +107,7 @@ export default function TrainingDashboardClient() {
     const [modsRes, lessonsRes, progRes] = await Promise.all([
       supabase
         .from('training_modules')
-        .select('id,slug,title,description,sort_order,is_active')
+        .select('id,slug,title,description,level,duration,sort_order,is_active')
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
       supabase
@@ -137,11 +153,13 @@ export default function TrainingDashboardClient() {
     setLoading(false);
   };
 
+  // Load on mount and when refresh changes
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, refresh]);
 
+  // Refresh when tab is focused again
   useEffect(() => {
     if (!user) return;
 
@@ -160,9 +178,43 @@ export default function TrainingDashboardClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Optional realtime refresh (safe even if you don’t enable realtime)
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('training-progress-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'training_lesson_progress',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => void load()
+      )
+      .subscribe();
+
+    return () => {
+      void channel.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const progByLessonId = useMemo(() => {
+    const m = new Map<string, LessonProgressRow>();
+    for (const p of lessonProgress) m.set(p.lesson_id, p);
+    return m;
+  }, [lessonProgress]);
+
+  // Map lessons to modules safely:
+  // 1) Prefer module_id
+  // 2) Fallback to module_slug (covers legacy rows)
   const lessonsByModuleId = useMemo(() => {
     const map = new Map<string, LessonRow[]>();
     for (const l of lessons) {
+      if (!l.module_id) continue;
       const arr = map.get(l.module_id) ?? [];
       arr.push(l);
       map.set(l.module_id, arr);
@@ -174,15 +226,26 @@ export default function TrainingDashboardClient() {
     return map;
   }, [lessons]);
 
-  const progByLessonId = useMemo(() => {
-    const m = new Map<string, LessonProgressRow>();
-    for (const p of lessonProgress) m.set(p.lesson_id, p);
-    return m;
-  }, [lessonProgress]);
+  const lessonsByModuleSlug = useMemo(() => {
+    const map = new Map<string, LessonRow[]>();
+    for (const l of lessons) {
+      if (!l.module_slug) continue;
+      const arr = map.get(l.module_slug) ?? [];
+      arr.push(l);
+      map.set(l.module_slug, arr);
+    }
+    for (const [k, arr] of map.entries()) {
+      arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      map.set(k, arr);
+    }
+    return map;
+  }, [lessons]);
 
   const moduleCards = useMemo(() => {
     return modules.map((m) => {
-      const mLessons = lessonsByModuleId.get(m.id) ?? [];
+      const byId = lessonsByModuleId.get(m.id) ?? [];
+      const bySlug = lessonsByModuleSlug.get(m.slug) ?? [];
+      const mLessons = byId.length ? byId : bySlug;
 
       const attempted = mLessons.some((l) => progByLessonId.has(l.id));
       const passedCount = mLessons.filter((l) => progByLessonId.get(l.id)?.passed).length;
@@ -190,8 +253,8 @@ export default function TrainingDashboardClient() {
       const completed = mLessons.length > 0 && passedCount === mLessons.length;
       const inprogress = !completed && attempted;
 
-      const statusVariant: 'passed' | 'inprogress' | 'notstarted' = completed
-        ? 'passed'
+      const statusVariant: 'completed' | 'inprogress' | 'notstarted' = completed
+        ? 'completed'
         : inprogress
           ? 'inprogress'
           : 'notstarted';
@@ -218,13 +281,18 @@ export default function TrainingDashboardClient() {
         latestScore,
       };
     });
-  }, [modules, lessonsByModuleId, progByLessonId]);
+  }, [modules, lessonsByModuleId, lessonsByModuleSlug, progByLessonId]);
 
-  const completedCount = useMemo(() => moduleCards.filter((m) => m.completed).length, [moduleCards]);
+  const completedCount = useMemo(
+    () => moduleCards.filter((m) => m.completed).length,
+    [moduleCards]
+  );
+
   const progressPct = useMemo(
     () => (moduleCards.length ? Math.round((completedCount / moduleCards.length) * 100) : 0),
     [completedCount, moduleCards.length]
   );
+
   const remainingCount = Math.max(0, moduleCards.length - completedCount);
 
   if (!user) {
@@ -246,9 +314,9 @@ export default function TrainingDashboardClient() {
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold text-slate-900">Agent Training</h1>
+              <h1 className="text-2xl font-semibold text-slate-900">Training Dashboard</h1>
               <p className="mt-1 text-sm text-slate-600">
-                Complete modules at your own pace. Progress updates after each lesson quiz.
+                Welcome, {user.email}. Track your training progress below.
               </p>
             </div>
 
@@ -278,10 +346,14 @@ export default function TrainingDashboardClient() {
 
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full bg-slate-900 transition-[width] duration-500 ease-out"
+                className="h-full bg-emerald-600 transition-[width] duration-500 ease-out"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
+
+            <p className="mt-3 text-xs text-slate-500">
+              Tip: Passing each module requires completing the quiz successfully.
+            </p>
           </div>
 
           {error ? (
@@ -307,7 +379,7 @@ export default function TrainingDashboardClient() {
           <section className="grid gap-4 sm:grid-cols-2">
             {moduleCards.map((m) => {
               const label =
-                m.statusVariant === 'passed'
+                m.statusVariant === 'completed'
                   ? 'Completed'
                   : m.statusVariant === 'inprogress'
                     ? 'In progress'
@@ -323,17 +395,34 @@ export default function TrainingDashboardClient() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="min-w-0 text-base font-semibold text-slate-900">
-                          {m.title}
-                        </h2>
+                        <span className="text-xs font-semibold tracking-wide text-emerald-700">
+                          COURSE
+                        </span>
                         <StatusPill variant={m.statusVariant}>{label}</StatusPill>
                       </div>
 
-                      {m.description ? (
-                        <p className="mt-2 text-sm text-slate-600">{m.description}</p>
-                      ) : (
-                        <p className="mt-2 text-sm text-slate-500">Open this module to begin.</p>
-                      )}
+                      <h2
+                        className="mt-2 text-lg font-semibold text-slate-900 leading-snug"
+                        style={clampStyle(2)}
+                      >
+                        {m.title}
+                      </h2>
+
+                      <p
+                        className="mt-2 text-sm text-slate-600 leading-relaxed break-words"
+                        style={clampStyle(3)}
+                      >
+                        {m.description || 'Open this module to begin.'}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+                          {m.level || 'Beginner'}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+                          {m.duration || 'Self-paced'}
+                        </span>
+                      </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                         <span>
@@ -343,10 +432,12 @@ export default function TrainingDashboardClient() {
                         {m.latestDate ? <span>• Last attempt: {formatShortDate(m.latestDate)}</span> : null}
                       </div>
                     </div>
+                  </div>
 
+                  <div className="mt-5">
                     <Link
                       href={`/training/${m.slug}`}
-                      className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                      className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
                     >
                       {actionLabel}
                     </Link>
