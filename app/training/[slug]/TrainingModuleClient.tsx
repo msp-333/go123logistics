@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/app/providers';
-
-type Props = { slug: string };
 
 type ModuleRow = {
   id: string;
@@ -15,16 +13,14 @@ type ModuleRow = {
   description: string | null;
   level: string | null;
   duration: string | null;
-  passing_score: number | null;
-  video_url: string | null; // can be null if you store only lesson video_path
-  sort_order: number | null;
-  is_active: boolean;
+  video_url: string; // can be storage key or public URL
+  sort_order?: number | null;
 };
 
 type LessonRow = {
   id: string;
-  module_id: string | null;
-  module_slug: string;
+  module_id: string;
+  module_slug: string | null;
   title: string;
   sort_order: number;
   video_path: string | null;
@@ -50,13 +46,19 @@ type ProgressRow = {
   lesson_id: string;
   passed: boolean;
   score: number;
+  completed_at?: string | null;
 };
 
 const BUCKET = 'training-videos';
+const PASS_PERCENT = 80;
 
-export default function TrainingModuleClient({ slug }: Props) {
+export default function TrainingModulePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const sp = useSearchParams();
+  const params = useParams<{ slug?: string }>();
+
+  const slug = (params?.slug as string | undefined) ?? sp.get('slug') ?? '';
 
   const [moduleRow, setModuleRow] = useState<ModuleRow | null>(null);
   const [lessons, setLessons] = useState<LessonRow[]>([]);
@@ -64,38 +66,37 @@ export default function TrainingModuleClient({ slug }: Props) {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
-
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
-  const [retakeMode, setRetakeMode] = useState(false);
+
+  const [showQuiz, setShowQuiz] = useState(true);
+
+  const [nextModuleSlug, setNextModuleSlug] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Auth guard
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login');
   }, [authLoading, user, router]);
 
-  // Load module + lessons + progress
+  // Load module + lessons + progress (canonical: module_id)
   useEffect(() => {
     const run = async () => {
-      if (!user) return;
-
+      if (!user || !slug) return;
       setLoading(true);
       setErr(null);
 
       const { data: mod, error: modErr } = await supabase
         .from('training_modules')
-        .select('id,slug,title,description,level,duration,passing_score,video_url,sort_order,is_active')
+        .select('id, slug, title, description, level, duration, video_url, sort_order')
         .eq('slug', slug)
-        .eq('is_active', true)
-        .maybeSingle();
+        .single();
 
       if (modErr || !mod) {
-        setErr(modErr?.message || 'Module not found / inactive.');
+        setErr(modErr?.message || 'Module not found.');
         setLoading(false);
         return;
       }
@@ -103,8 +104,8 @@ export default function TrainingModuleClient({ slug }: Props) {
 
       const { data: les, error: lesErr } = await supabase
         .from('training_lessons')
-        .select('id,module_id,module_slug,title,sort_order,video_path,content,is_active')
-        .eq('module_slug', slug)
+        .select('id, module_id, module_slug, title, sort_order, video_path, content, is_active')
+        .eq('module_id', mod.id)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
@@ -116,21 +117,37 @@ export default function TrainingModuleClient({ slug }: Props) {
 
       const lessonList = (les || []) as LessonRow[];
       setLessons(lessonList);
-      setSelectedLessonId((prev) => prev || lessonList[0]?.id || null);
+      setSelectedLessonId((prev) => prev ?? lessonList[0]?.id ?? null);
 
-      // progress for these lessons (THIS USER ONLY)
       if (lessonList.length) {
         const { data: prog, error: progErr } = await supabase
           .from('training_lesson_progress')
-          .select('lesson_id, passed, score')
+          .select('lesson_id, passed, score, completed_at')
           .eq('user_id', user.id)
           .in('lesson_id', lessonList.map((l) => l.id));
 
-        if (!progErr && prog) {
-          const map: Record<string, ProgressRow> = {};
-          for (const p of prog as any[]) map[p.lesson_id] = p;
-          setProgress(map);
+        if (progErr) {
+          setErr(progErr.message);
+          setLoading(false);
+          return;
         }
+
+        const map: Record<string, ProgressRow> = {};
+        for (const p of (prog as any[]) ?? []) map[p.lesson_id] = p;
+        setProgress(map);
+      }
+
+      // Find next module slug (by sort_order)
+      const { data: allMods } = await supabase
+        .from('training_modules')
+        .select('slug, sort_order, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (allMods && Array.isArray(allMods)) {
+        const idx = allMods.findIndex((m: any) => m.slug === mod.slug);
+        const next = idx >= 0 ? allMods[idx + 1]?.slug ?? null : null;
+        setNextModuleSlug(next);
       }
 
       setLoading(false);
@@ -144,9 +161,6 @@ export default function TrainingModuleClient({ slug }: Props) {
     [lessons, selectedLessonId]
   );
 
-  const passingScore = moduleRow?.passing_score ?? 80;
-
-  // lesson locks: lesson 1 unlocked; others unlocked if previous lesson PASSED
   const unlockedLessonIds = useMemo(() => {
     const unlocked = new Set<string>();
     for (let i = 0; i < lessons.length; i++) {
@@ -167,55 +181,61 @@ export default function TrainingModuleClient({ slug }: Props) {
   }, [selectedLesson, unlockedLessonIds]);
 
   const selectedProgress = selectedLesson ? progress[selectedLesson.id] : undefined;
-  const alreadyPassed = !!selectedProgress?.passed;
+  const selectedPassed = !!selectedProgress?.passed;
 
-  const moduleAllLessonsPassed = useMemo(() => {
-    if (!lessons.length) return false;
-    return lessons.every((l) => progress[l.id]?.passed);
-  }, [lessons, progress]);
+  // When switching lessons, default quiz visibility: hide if already passed
+  useEffect(() => {
+    setAnswers({});
+    setResult(null);
+    setErr(null);
+    setShowQuiz(!selectedPassed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLessonId, selectedPassed]);
 
-  // Load signed video + questions when lesson changes
+  // Load video + questions when lesson changes
   useEffect(() => {
     const run = async () => {
       setVideoSrc(null);
       setQuestions([]);
-      setAnswers({});
-      setResult(null);
-      setRetakeMode(false);
-      setErr(null);
 
       if (!user || !selectedLesson || isSelectedLocked) return;
 
-      // VIDEO: prefer lesson.video_path; fallback to module.video_url (could be a storage key or an https url)
-      const keyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
-      if (keyOrUrl) {
-        if (/^https?:\/\//i.test(keyOrUrl)) {
-          setVideoSrc(keyOrUrl);
+      const objectKeyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
+
+      if (objectKeyOrUrl) {
+        if (/^https?:\/\//i.test(objectKeyOrUrl)) {
+          setVideoSrc(objectKeyOrUrl);
         } else {
-          const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(keyOrUrl, 60 * 60 * 24 * 7);
+          const { data, error } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrl(objectKeyOrUrl, 60 * 60 * 24 * 7);
+
           if (!error && data?.signedUrl) setVideoSrc(data.signedUrl);
         }
       }
 
-      // QUESTIONS + CHOICES (relationship works in your schema now)
+      // Still load questions (so user can retake if they choose)
       const { data: qs, error: qErr } = await supabase
         .from('training_questions')
-        .select('id, question, sort_order, training_question_choices(id, choice_text, is_correct, sort_order)')
+        .select(
+          'id, question, sort_order, training_question_choices(id, choice_text, is_correct, sort_order)'
+        )
         .eq('lesson_id', selectedLesson.id)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
       if (qErr) {
-        setErr(`Questions error: ${qErr.message}`);
+        setErr(qErr.message);
         return;
       }
 
-      const normalized = (qs || []).map((q: any) => ({
-        ...q,
-        training_question_choices: [...(q.training_question_choices || [])].sort(
-          (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-        ),
-      }));
+      const normalized =
+        (qs as any[] | null | undefined)?.map((q) => ({
+          ...q,
+          training_question_choices: [...(q.training_question_choices || [])].sort(
+            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          ),
+        })) ?? [];
 
       setQuestions(normalized as QuestionRow[]);
     };
@@ -228,17 +248,15 @@ export default function TrainingModuleClient({ slug }: Props) {
     setSelectedLessonId(lesson.id);
   };
 
-  const statusLabel = useMemo(() => {
-    if (!selectedLesson) return '';
-    const p = progress[selectedLesson.id];
-    if (!p) return 'Not attempted yet';
-    if (p.passed) return `Passed • ${p.score}%`;
-    return `Needs retry • ${p.score}%`;
-  }, [progress, selectedLesson]);
+  const resetQuiz = () => {
+    setAnswers({});
+    setResult(null);
+    setErr(null);
+    setShowQuiz(true);
+  };
 
   const submitTest = async () => {
     if (!user || !selectedLesson) return;
-
     setSaving(true);
     setErr(null);
 
@@ -256,10 +274,11 @@ export default function TrainingModuleClient({ slug }: Props) {
     }
 
     const score = Math.round((correct / total) * 100);
-    const passed = score >= passingScore;
+    const passed = score >= PASS_PERCENT;
     setResult({ score, passed });
 
-    // Save progress (upsert). IMPORTANT: completed_at is NOT NULL in your DB, so always set it.
+    const nowIso = new Date().toISOString();
+
     const { error: upErr } = await supabase
       .from('training_lesson_progress')
       .upsert(
@@ -268,7 +287,7 @@ export default function TrainingModuleClient({ slug }: Props) {
           lesson_id: selectedLesson.id,
           passed,
           score,
-          completed_at: new Date().toISOString(),
+          completed_at: nowIso, // ALWAYS set (no NOT NULL issues)
         },
         { onConflict: 'user_id,lesson_id' }
       );
@@ -279,49 +298,16 @@ export default function TrainingModuleClient({ slug }: Props) {
       return;
     }
 
-    // Update local state so UI changes immediately
     setProgress((prev) => ({
       ...prev,
-      [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score },
+      [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score, completed_at: nowIso },
     }));
 
-    // If this completes the whole module, write an attempt row so the DASHBOARD reflects it
-    // (Dashboard reads training_attempts)
-    const nextProgress = {
-      ...progress,
-      [selectedLesson.id]: { lesson_id: selectedLesson.id, passed, score },
-    };
-
-    const allPassedNow = lessons.length > 0 && lessons.every((l) => nextProgress[l.id]?.passed);
-    if (allPassedNow && moduleRow) {
-      const scores = lessons
-        .map((l) => nextProgress[l.id]?.score)
-        .filter((v): v is number => typeof v === 'number');
-
-      const moduleScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : score;
-
-      const { error: attErr } = await supabase.from('training_attempts').insert({
-        user_id: user.id,
-        module_id: moduleRow.id,
-        module_slug: moduleRow.slug,
-        score: moduleScore,
-        passed: true,
-      });
-
-      if (attErr) {
-        // This is usually RLS policy missing on training_attempts insert
-        setErr(`Saved lesson, but dashboard attempt insert failed: ${attErr.message}`);
-      }
-    }
+    // If passed, hide quiz by default (cleaner UX)
+    if (passed) setShowQuiz(false);
 
     setSaving(false);
   };
-
-  const nextLesson = useMemo(() => {
-    if (!selectedLesson) return null;
-    const idx = lessons.findIndex((l) => l.id === selectedLesson.id);
-    return idx >= 0 ? lessons[idx + 1] ?? null : null;
-  }, [lessons, selectedLesson]);
 
   if (authLoading || !user) {
     return (
@@ -331,17 +317,27 @@ export default function TrainingModuleClient({ slug }: Props) {
     );
   }
 
+  if (!slug) {
+    return (
+      <main className="bg-slate-50 px-4 py-10">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm text-slate-700">Missing module slug.</p>
+        </div>
+      </main>
+    );
+  }
+
   if (loading) {
     return (
       <main className="bg-slate-50 px-4 py-10">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           <p className="text-sm text-slate-500">Loading module…</p>
         </div>
       </main>
     );
   }
 
-  if (err && !moduleRow) {
+  if (err) {
     return (
       <main className="bg-slate-50 px-4 py-10">
         <div className="mx-auto max-w-5xl rounded-2xl border border-red-200 bg-white p-6">
@@ -353,52 +349,67 @@ export default function TrainingModuleClient({ slug }: Props) {
 
   if (!moduleRow || !selectedLesson) return null;
 
+  const nextLesson = (() => {
+    const idx = lessons.findIndex((l) => l.id === selectedLesson.id);
+    return idx >= 0 ? lessons[idx + 1] ?? null : null;
+  })();
+
+  const moduleCompleted = lessons.length > 0 && lessons.every((l) => progress[l.id]?.passed);
+
   return (
     <main className="bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        {err ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-            {err}
-          </div>
-        ) : null}
-
-        {/* Header (less blocky) */}
-        <header className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500">Training Module</p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{moduleRow.title}</h1>
-              {moduleRow.description ? (
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">{moduleRow.description}</p>
-              ) : null}
-
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                <Pill>{moduleRow.level || 'All levels'}</Pill>
-                <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
-                <Pill>Passing: {passingScore}%</Pill>
-              </div>
-            </div>
-
-            {moduleAllLessonsPassed ? (
-              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                Module completed ✅
-              </span>
-            ) : null}
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Header (neutral, no green “passed”) */}
+        <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
+          {moduleRow.description ? (
+            <p className="mt-1 text-sm text-slate-600">{moduleRow.description}</p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+            <Pill>{moduleRow.level || 'All levels'}</Pill>
+            <Pill>{moduleRow.duration || 'Self-paced'}</Pill>
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Lessons sidebar */}
-          <aside className="rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">Lessons</h2>
-              <span className="text-xs text-slate-500">{lessons.length}</span>
+        {/* Module completed (neutral) */}
+        {moduleCompleted ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Module completed</p>
+            <p className="mt-1 text-sm text-slate-600">
+              You have passed all lessons in this module.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {nextModuleSlug ? (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/training/${nextModuleSlug}`)}
+                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                >
+                  Go to next module
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+              >
+                Back to dashboard
+              </button>
             </div>
+          </div>
+        ) : null}
+
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          {/* Sidebar lessons */}
+          <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900">Lessons</h2>
 
             <div className="mt-3 space-y-2">
               {lessons.map((l) => {
                 const unlocked = unlockedLessonIds.has(l.id);
-                const p = progress[l.id];
+                const done = progress[l.id]?.passed;
                 const active = l.id === selectedLessonId;
 
                 return (
@@ -408,20 +419,19 @@ export default function TrainingModuleClient({ slug }: Props) {
                     onClick={() => onPickLesson(l)}
                     disabled={!unlocked}
                     className={clsx(
-                      'w-full text-left rounded-2xl border px-3 py-3 transition',
-                      active ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200/70 hover:bg-slate-50',
-                      !unlocked && 'opacity-50 cursor-not-allowed hover:bg-transparent'
+                      'w-full text-left rounded-xl border px-3 py-3 transition',
+                      active ? 'border-slate-300 bg-slate-50' : 'border-slate-200 hover:bg-slate-50',
+                      !unlocked && 'opacity-50 cursor-not-allowed hover:bg-white'
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-[11px] text-slate-500">Lesson {l.sort_order}</p>
-                        <p className="truncate text-sm font-medium text-slate-900">{l.title}</p>
+                        <p className="text-xs text-slate-500 whitespace-nowrap">Lesson {l.sort_order}</p>
+                        <p className="text-sm font-medium text-slate-900 break-words">{l.title}</p>
                       </div>
-
                       <div className="flex items-center gap-2">
-                        {p?.passed ? <StatusDot className="bg-emerald-500" /> : p ? <StatusDot className="bg-amber-500" /> : null}
-                        {!unlocked ? <span className="text-[11px] text-slate-500">Locked</span> : null}
+                        {done ? <StatusDot className="bg-slate-700" /> : null}
+                        {!unlocked ? <span className="text-xs text-slate-500 whitespace-nowrap">Locked</span> : null}
                       </div>
                     </div>
                   </button>
@@ -430,134 +440,138 @@ export default function TrainingModuleClient({ slug }: Props) {
             </div>
           </aside>
 
-          {/* Main */}
-          <section className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-sm backdrop-blur">
+          {/* Main lesson content */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             {isSelectedLocked ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm text-slate-700">
-                  This lesson is locked. Pass the previous lesson quiz to unlock it.
+                  This lesson is locked. Pass the previous lesson’s <b>Test your understanding</b> to unlock it.
                 </p>
               </div>
             ) : (
               <>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs text-slate-500">Lesson {selectedLesson.sort_order}</p>
-                    <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">{selectedLesson.title}</h2>
+                    <p className="text-xs text-slate-500 whitespace-nowrap">Lesson {selectedLesson.sort_order}</p>
+                    <h2 className="text-xl font-semibold text-slate-900 break-words">{selectedLesson.title}</h2>
                     {selectedLesson.content ? (
-                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{selectedLesson.content}</p>
+                      <p className="mt-1 text-sm text-slate-600">{selectedLesson.content}</p>
                     ) : null}
                   </div>
 
-                  <Pill
-                    className={clsx(
-                      alreadyPassed
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : selectedProgress
-                          ? 'border-amber-200 bg-amber-50 text-amber-700'
-                          : 'border-slate-200 bg-white text-slate-700'
-                    )}
-                  >
-                    {statusLabel}
-                  </Pill>
+                  {/* Neutral status pill (no green “Passed”) */}
+                  {selectedPassed ? (
+                    <Pill className="border-slate-200 bg-slate-100 text-slate-800 whitespace-nowrap">
+                      Passed • {selectedProgress?.score ?? 0}%
+                    </Pill>
+                  ) : selectedProgress ? (
+                    <Pill className="border-amber-200 bg-amber-50 text-amber-800 whitespace-nowrap">Attempted</Pill>
+                  ) : (
+                    <Pill className="whitespace-nowrap">Not attempted</Pill>
+                  )}
                 </div>
 
                 {/* Video */}
-                <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200/70 bg-black">
+                <div className="mt-5">
                   {videoSrc ? (
-                    <video controls playsInline className="w-full" src={videoSrc} />
+                    <video
+                      controls
+                      playsInline
+                      className="w-full rounded-2xl border border-slate-200 bg-black shadow-sm"
+                      src={videoSrc}
+                    />
                   ) : (
-                    <div className="flex h-56 items-center justify-center bg-slate-900">
-                      <p className="text-sm text-slate-200">Video not available yet.</p>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-sm text-slate-600">No video found for this lesson yet.</p>
                     </div>
                   )}
                 </div>
 
                 {/* Quiz */}
-                <div className="mt-7 border-t border-slate-200/60 pt-6">
-                  <div className="flex items-end justify-between gap-3">
+                <div className="mt-8 border-t border-slate-100 pt-6">
+                  <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900">Test your understanding</h3>
                       <p className="mt-1 text-sm text-slate-600">
-                        You need <b>{passingScore}%</b> to pass.
+                        You need <b>{PASS_PERCENT}%</b> to pass.
                       </p>
                     </div>
 
-                    {alreadyPassed && !retakeMode ? (
+                    {/* If passed, allow optional retake */}
+                    {selectedPassed ? (
                       <button
                         type="button"
-                        onClick={() => setRetakeMode(true)}
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        onClick={resetQuiz}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 whitespace-nowrap"
                       >
                         Retake quiz
                       </button>
                     ) : null}
                   </div>
 
-                  {alreadyPassed && !retakeMode ? (
-                    <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                      <p className="text-sm text-emerald-800">
-                        You already passed this lesson. You can continue, or retake the quiz to improve your score.
+                  {questions.length === 0 ? (
+                    <p className="mt-4 text-sm text-slate-500">No questions yet for this lesson.</p>
+                  ) : selectedPassed && !showQuiz ? (
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-sm font-medium text-slate-900">Lesson passed</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Score: {selectedProgress?.score ?? 0}%
                       </p>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2">
                         {nextLesson ? (
                           <button
                             type="button"
                             onClick={() => onPickLesson(nextLesson)}
-                            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                           >
                             Continue to next lesson
                           </button>
                         ) : (
                           <button
                             type="button"
-                            onClick={() => router.push('/training')}
-                            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                            onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+                            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                           >
-                            Back to dashboard
+                            Finish & go back to dashboard
                           </button>
                         )}
+
+                        <button
+                          type="button"
+                          onClick={resetQuiz}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                        >
+                          Review answers
+                        </button>
                       </div>
                     </div>
-                  ) : questions.length === 0 ? (
-                    <p className="mt-4 text-sm text-slate-500">No questions yet for this lesson.</p>
                   ) : (
-                    <div className="mt-5 space-y-4">
+                    <div className="mt-5 space-y-5">
                       {questions.map((q) => (
-                        <div key={q.id} className="rounded-3xl border border-slate-200/70 bg-white p-4">
-                          <p className="text-sm font-semibold text-slate-900">
+                        <div key={q.id} className="rounded-2xl border border-slate-200 p-4">
+                          <p className="text-sm font-medium text-slate-900">
                             {q.sort_order}. {q.question}
                           </p>
 
                           <div className="mt-3 space-y-2">
                             {q.training_question_choices.map((c) => {
                               const checked = answers[q.id] === c.id;
-                              const showCorrect = result && c.is_correct;
-                              const showWrongPick = result && checked && !c.is_correct;
-
                               return (
                                 <label
                                   key={c.id}
                                   className={clsx(
-                                    'flex items-start gap-3 rounded-2xl border px-3 py-2 cursor-pointer transition',
-                                    result
-                                      ? showCorrect
-                                        ? 'border-emerald-200 bg-emerald-50'
-                                        : showWrongPick
-                                          ? 'border-amber-200 bg-amber-50'
-                                          : 'border-slate-200/70'
-                                      : checked
-                                        ? 'border-emerald-200 bg-emerald-50'
-                                        : 'border-slate-200/70 hover:bg-slate-50'
+                                    'flex items-center gap-3 rounded-xl border px-3 py-2 cursor-pointer transition',
+                                    checked
+                                      ? 'border-slate-300 bg-slate-50'
+                                      : 'border-slate-200 hover:bg-slate-50'
                                   )}
                                 >
                                   <input
                                     type="radio"
                                     name={`q-${q.id}`}
-                                    className="mt-1"
+                                    className="h-4 w-4"
                                     checked={checked}
-                                    disabled={!!result}
                                     onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: c.id }))}
                                   />
                                   <span className="text-sm text-slate-800">{c.choice_text}</span>
@@ -571,33 +585,39 @@ export default function TrainingModuleClient({ slug }: Props) {
                       {result ? (
                         <div
                           className={clsx(
-                            'rounded-3xl border p-4',
-                            result.passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+                            'rounded-2xl border p-4',
+                            result.passed ? 'border-slate-200 bg-slate-50' : 'border-amber-200 bg-amber-50'
                           )}
                         >
-                          <p className={clsx('text-sm font-semibold', result.passed ? 'text-emerald-800' : 'text-amber-800')}>
-                            Score: {result.score}% • {result.passed ? 'Passed ✅' : 'Try again'}
+                          <p className={clsx('text-sm font-medium', result.passed ? 'text-slate-900' : 'text-amber-900')}>
+                            Score: {result.score}% • {result.passed ? 'Passed' : 'Not passed'}
                           </p>
 
                           {!result.passed ? (
-                            <p className="mt-1 text-sm text-amber-800/90">
-                              Watch the video again and retake the quiz.
-                            </p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={resetQuiz}
+                                className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-50 whitespace-nowrap"
+                              >
+                                Try again
+                              </button>
+                            </div>
                           ) : nextLesson ? (
                             <button
                               type="button"
                               onClick={() => onPickLesson(nextLesson)}
-                              className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                             >
                               Continue to next lesson
                             </button>
                           ) : (
                             <button
                               type="button"
-                              onClick={() => router.push('/training')}
-                              className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                              onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                             >
-                              Finish module & go to dashboard
+                              Finish & go back to dashboard
                             </button>
                           )}
                         </div>
@@ -607,24 +627,10 @@ export default function TrainingModuleClient({ slug }: Props) {
                         type="button"
                         disabled={saving || questions.some((q) => !answers[q.id])}
                         onClick={submitTest}
-                        className="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
                       >
                         {saving ? 'Saving…' : 'Submit answers'}
                       </button>
-
-                      {alreadyPassed && retakeMode ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRetakeMode(false);
-                            setAnswers({});
-                            setResult(null);
-                          }}
-                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          Cancel retake
-                        </button>
-                      ) : null}
                     </div>
                   )}
                 </div>
@@ -641,7 +647,7 @@ function Pill({ children, className }: { children: React.ReactNode; className?: 
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium',
+        'inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs whitespace-nowrap',
         className
       )}
     >

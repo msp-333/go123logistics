@@ -17,7 +17,8 @@ type ModuleRow = {
 
 type LessonRow = {
   id: string;
-  module_slug: string;
+  module_id: string;
+  module_slug: string | null;
   sort_order: number | null;
   is_active: boolean;
 };
@@ -48,12 +49,14 @@ function StatusPill({
 }) {
   const base =
     'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap';
+
+  // Neutral “passed” (NOT green)
   const styles =
     variant === 'passed'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      ? 'border-slate-200 bg-slate-100 text-slate-800'
       : variant === 'inprogress'
-        ? 'border-amber-200 bg-amber-50 text-amber-700'
-        : 'border-slate-200 bg-slate-50 text-slate-700';
+        ? 'border-amber-200 bg-amber-50 text-amber-800'
+        : 'border-slate-200 bg-white text-slate-700';
 
   return <span className={`${base} ${styles}`}>{children}</span>;
 }
@@ -99,7 +102,7 @@ export default function TrainingDashboardClient() {
         .order('sort_order', { ascending: true }),
       supabase
         .from('training_lessons')
-        .select('id,module_slug,sort_order,is_active')
+        .select('id,module_id,module_slug,sort_order,is_active')
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
       supabase
@@ -119,7 +122,7 @@ export default function TrainingDashboardClient() {
     }
     if (lessonsRes.error) {
       setError(lessonsRes.error.message);
-      setModules(modsRes.data ?? []);
+      setModules((modsRes.data ?? []) as ModuleRow[]);
       setLessons([]);
       setLessonProgress([]);
       setLoading(false);
@@ -127,8 +130,8 @@ export default function TrainingDashboardClient() {
     }
     if (progRes.error) {
       setError(progRes.error.message);
-      setModules(modsRes.data ?? []);
-      setLessons(lessonsRes.data ?? []);
+      setModules((modsRes.data ?? []) as ModuleRow[]);
+      setLessons((lessonsRes.data ?? []) as LessonRow[]);
       setLessonProgress([]);
       setLoading(false);
       return;
@@ -140,13 +143,12 @@ export default function TrainingDashboardClient() {
     setLoading(false);
   };
 
-  // Initial load + refresh param
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, refresh]);
 
-  // Extra: refresh when user comes back to this tab/page
+  // Refresh when user returns to tab
   useEffect(() => {
     if (!user) return;
 
@@ -165,12 +167,13 @@ export default function TrainingDashboardClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const lessonsByModule = useMemo(() => {
+  // Canonical mapping: module_id -> lessons[]
+  const lessonsByModuleId = useMemo(() => {
     const map = new Map<string, LessonRow[]>();
     for (const l of lessons) {
-      const arr = map.get(l.module_slug) ?? [];
+      const arr = map.get(l.module_id) ?? [];
       arr.push(l);
-      map.set(l.module_slug, arr);
+      map.set(l.module_id, arr);
     }
     for (const [k, arr] of map.entries()) {
       arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -179,7 +182,7 @@ export default function TrainingDashboardClient() {
     return map;
   }, [lessons]);
 
-  const progByLesson = useMemo(() => {
+  const progByLessonId = useMemo(() => {
     const m = new Map<string, LessonProgressRow>();
     for (const p of lessonProgress) m.set(p.lesson_id, p);
     return m;
@@ -187,13 +190,13 @@ export default function TrainingDashboardClient() {
 
   const moduleCards = useMemo(() => {
     return modules.map((m) => {
-      const mLessons = lessonsByModule.get(m.slug) ?? [];
+      const mLessons = lessonsByModuleId.get(m.id) ?? [];
 
-      const attempted = mLessons.filter((l) => progByLesson.has(l.id));
-      const passedCount = mLessons.filter((l) => progByLesson.get(l.id)?.passed).length;
+      const attempted = mLessons.some((l) => progByLessonId.has(l.id));
+      const passedCount = mLessons.filter((l) => progByLessonId.get(l.id)?.passed).length;
 
       const completed = mLessons.length > 0 && passedCount === mLessons.length;
-      const inprogress = !completed && attempted.length > 0;
+      const inprogress = !completed && attempted;
 
       const statusVariant: 'passed' | 'inprogress' | 'notstarted' = completed
         ? 'passed'
@@ -205,7 +208,7 @@ export default function TrainingDashboardClient() {
       let latestScore: number | null = null;
 
       for (const l of mLessons) {
-        const p = progByLesson.get(l.id);
+        const p = progByLessonId.get(l.id);
         if (!p) continue;
         if (!latestDate || new Date(p.completed_at).getTime() > new Date(latestDate).getTime()) {
           latestDate = p.completed_at;
@@ -223,7 +226,7 @@ export default function TrainingDashboardClient() {
         latestScore,
       };
     });
-  }, [modules, lessonsByModule, progByLesson]);
+  }, [modules, lessonsByModuleId, progByLessonId]);
 
   const completedCount = useMemo(
     () => moduleCards.filter((m) => m.completed).length,
@@ -287,7 +290,10 @@ export default function TrainingDashboardClient() {
             </div>
 
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full bg-emerald-600 transition-[width] duration-500 ease-out" style={{ width: `${progressPct}%` }} />
+              <div
+                className="h-full bg-emerald-600 transition-[width] duration-500 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
             </div>
           </div>
 
@@ -320,14 +326,19 @@ export default function TrainingDashboardClient() {
                     ? 'In progress'
                     : 'Not started';
 
-              const actionLabel = m.statusVariant === 'notstarted' ? 'Start' : 'Continue';
+              const actionLabel = m.statusVariant === 'notstarted' ? 'Start module' : 'Continue';
 
               return (
-                <div key={m.id} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div
+                  key={m.id}
+                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-base font-semibold text-slate-900">{m.title}</h2>
+                        <h2 className="min-w-0 text-base font-semibold text-slate-900">
+                          {m.title}
+                        </h2>
                         <StatusPill variant={m.statusVariant}>{label}</StatusPill>
                       </div>
 
@@ -338,11 +349,15 @@ export default function TrainingDashboardClient() {
                       )}
 
                       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                        <span>
+                        <span className="whitespace-nowrap">
                           Lessons: {m.lessonsPassed}/{m.lessonsTotal || 0} passed
                         </span>
-                        {m.latestScore !== null ? <span>• Latest score: {m.latestScore}%</span> : null}
-                        {m.latestDate ? <span>• Last attempt: {formatShortDate(m.latestDate)}</span> : null}
+                        {m.latestScore !== null ? (
+                          <span className="whitespace-nowrap">• Latest score: {m.latestScore}%</span>
+                        ) : null}
+                        {m.latestDate ? (
+                          <span className="whitespace-nowrap">• Last attempt: {formatShortDate(m.latestDate)}</span>
+                        ) : null}
                       </div>
                     </div>
 
