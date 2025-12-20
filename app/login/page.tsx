@@ -37,20 +37,6 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Prevent scrolling while on login page
-  useEffect(() => {
-    const prevHtml = document.documentElement.style.overflow;
-    const prevBody = document.body.style.overflow;
-
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.documentElement.style.overflow = prevHtml;
-      document.body.style.overflow = prevBody;
-    };
-  }, []);
-
   useEffect(() => {
     if (!loading && user) router.replace('/training');
   }, [loading, user, router]);
@@ -86,7 +72,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="fixed inset-0 overflow-hidden bg-slate-50 flex items-center justify-center px-4">
+    // IMPORTANT: no min-h-screen here
+    <div className="flex h-full w-full items-center justify-center bg-slate-50 px-4">
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-slate-900">Agent Login</h1>
         <p className="mt-1 text-sm text-slate-500">Use your assigned credentials to continue.</p>
@@ -164,6 +151,6 @@ export default function LoginPage() {
           </p>
         </form>
       </section>
-    </main>
+    </div>
   );
 }
