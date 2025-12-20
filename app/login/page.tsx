@@ -72,85 +72,90 @@ export default function LoginPage() {
   };
 
   return (
-    // IMPORTANT: no min-h-screen here
-    <div className="flex h-full w-full items-center justify-center bg-slate-50 px-4">
-      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Agent Login</h1>
-        <p className="mt-1 text-sm text-slate-500">Use your assigned credentials to continue.</p>
-
-        {error && (
-          <div
-            role="alert"
-            className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              inputMode="email"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#00986D] focus:ring-4 focus:ring-[#00986D]/15"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@go123.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="password">
-              Password
-            </label>
-            <div className="relative mt-1">
-              <input
-                id="password"
-                type={showPw ? 'text' : 'password'}
-                required
-                autoComplete="current-password"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 pr-12 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#00986D] focus:ring-4 focus:ring-[#00986D]/15"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute inset-y-0 right-2 my-auto inline-flex h-9 items-center justify-center rounded-lg px-2 text-xs font-medium text-slate-600 hover:bg-slate-100"
-                aria-label={showPw ? 'Hide password' : 'Show password'}
-              >
-                {showPw ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#00986D] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#00815D] focus:outline-none focus:ring-4 focus:ring-[#00986D]/20 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? (
-              <>
-                <Spinner />
-                Signing in…
-              </>
-            ) : (
-              'Sign in'
-            )}
-          </button>
-
-          <p className="text-center text-xs text-slate-500">
-            By continuing, you agree to follow company training guidelines.
+    // ✅ fills the layout's <main> only (navbar/footer stay)
+    <div className="h-full">
+      {/* ✅ tighter, more natural spacing under navbar */}
+      <div className="mx-auto flex w-full max-w-5xl justify-center px-4 py-10 sm:py-12">
+        <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-xl font-semibold text-slate-900">Agent Login</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Use your assigned credentials to continue.
           </p>
-        </form>
-      </section>
+
+          {error && (
+            <div
+              role="alert"
+              className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            >
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                inputMode="email"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#00986D] focus:ring-4 focus:ring-[#00986D]/15"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@go123.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700" htmlFor="password">
+                Password
+              </label>
+              <div className="relative mt-1">
+                <input
+                  id="password"
+                  type={showPw ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 pr-12 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#00986D] focus:ring-4 focus:ring-[#00986D]/15"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  className="absolute inset-y-0 right-2 my-auto inline-flex h-9 items-center justify-center rounded-lg px-2 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                >
+                  {showPw ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#00986D] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#00815D] focus:outline-none focus:ring-4 focus:ring-[#00986D]/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? (
+                <>
+                  <Spinner />
+                  Signing in…
+                </>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+
+            <p className="text-center text-xs text-slate-500">
+              By continuing, you agree to follow company training guidelines.
+            </p>
+          </form>
+        </section>
+      </div>
     </div>
   );
 }
