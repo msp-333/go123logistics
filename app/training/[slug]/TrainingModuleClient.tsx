@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { supabase } from '@/lib/supabaseClient';
@@ -24,7 +24,7 @@ type LessonRow = {
   module_slug: string | null;
   title: string;
   sort_order: number;
-  video_path: string | null; // can be storage key OR a full URL (YouTube/mp4)
+  video_path: string | null; // storage key OR full URL (YouTube/mp4)
   content: string | null;
   is_active: boolean;
 };
@@ -50,12 +50,14 @@ type ProgressRow = {
   completed_at?: string | null;
 };
 
-type Props = {
-  slug: string;
-};
+type Props = { slug: string };
 
 const BUCKET = 'training-videos';
 const PASS_PERCENT = 80;
+
+// time tracking
+const HEARTBEAT_SECONDS = 15;
+const IDLE_GRACE_SECONDS = 60;
 
 function clampStyle(lines: number) {
   return {
@@ -72,30 +74,24 @@ function clampStyle(lines: number) {
 function extractYouTubeId(input: string): string | null {
   const raw = (input || '').trim();
 
-  // raw ID
   if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
 
   try {
     const url = new URL(raw);
     const host = url.hostname.replace(/^www\./, '');
 
-    // youtu.be/VIDEO_ID
     if (host === 'youtu.be') {
       return url.pathname.split('/').filter(Boolean)[0] ?? null;
     }
 
-    // youtube.com / youtube-nocookie.com
     if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
-      // youtube.com/watch?v=VIDEO_ID
       const v = url.searchParams.get('v');
       if (v) return v;
 
-      // youtube.com/embed/VIDEO_ID
       const parts = url.pathname.split('/').filter(Boolean);
       const embedIdx = parts.indexOf('embed');
       if (embedIdx >= 0 && parts[embedIdx + 1]) return parts[embedIdx + 1];
 
-      // youtube.com/shorts/VIDEO_ID
       const shortsIdx = parts.indexOf('shorts');
       if (shortsIdx >= 0 && parts[shortsIdx + 1]) return parts[shortsIdx + 1];
     }
@@ -117,36 +113,129 @@ export default function TrainingModuleClient({ slug }: Props) {
   const router = useRouter();
 
   const [moduleRow, setModuleRow] = useState<ModuleRow | null>(null);
+  const [moduleUnlocked, setModuleUnlocked] = useState<boolean | null>(null);
+  const [prevModuleSlug, setPrevModuleSlug] = useState<string | null>(null);
+  const [nextModuleSlug, setNextModuleSlug] = useState<string | null>(null);
+
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
-  // Supports BOTH:
-  // - mp4 signed urls from Supabase OR direct mp4 urls
-  // - youtube urls -> we will embed
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
-
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
-
   const [showQuiz, setShowQuiz] = useState(true);
-  const [nextModuleSlug, setNextModuleSlug] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // time tracking refs
+  const lastTickMsRef = useRef<number>(Date.now());
+  const lastActivityMsRef = useRef<number>(Date.now());
+  const pendingSecondsRef = useRef<number>(0);
+  const completionMarkedRef = useRef<boolean>(false);
+
+  // -----------------------
+  // Derived values (DECLARED ONCE)
+  // -----------------------
+  const selectedLesson = useMemo(
+    () => lessons.find((l) => l.id === selectedLessonId) ?? null,
+    [lessons, selectedLessonId]
+  );
+
+  const selectedProgress = useMemo(
+    () => (selectedLesson ? progress[selectedLesson.id] : undefined),
+    [progress, selectedLesson]
+  );
+
+  const selectedPassed = !!selectedProgress?.passed;
+
+  // Lesson-level locking inside the module
+  const unlockedLessonIds = useMemo(() => {
+    const unlocked = new Set<string>();
+    for (let i = 0; i < lessons.length; i++) {
+      const lesson = lessons[i];
+      if (i === 0) {
+        unlocked.add(lesson.id);
+        continue;
+      }
+      const prev = lessons[i - 1];
+      if (progress[prev.id]?.passed) unlocked.add(lesson.id);
+    }
+    return unlocked;
+  }, [lessons, progress]);
+
+  const isSelectedLocked = useMemo(() => {
+    if (!selectedLesson) return false;
+    return !unlockedLessonIds.has(selectedLesson.id);
+  }, [selectedLesson, unlockedLessonIds]);
+
+  const nextLesson = useMemo(() => {
+    if (!selectedLesson) return null;
+    const idx = lessons.findIndex((l) => l.id === selectedLesson.id);
+    return idx >= 0 ? lessons[idx + 1] ?? null : null;
+  }, [lessons, selectedLesson]);
+
+  const moduleCompleted = useMemo(() => {
+    return lessons.length > 0 && lessons.every((l) => progress[l.id]?.passed);
+  }, [lessons, progress]);
+
+  // -----------------------
+  // Auth redirect
+  // -----------------------
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login');
   }, [authLoading, user, router]);
 
+  // -----------------------
+  // Activity tracking for time spent
+  // -----------------------
+  useEffect(() => {
+    const bump = () => {
+      lastActivityMsRef.current = Date.now();
+    };
+
+    window.addEventListener('mousemove', bump, { passive: true });
+    window.addEventListener('keydown', bump);
+    window.addEventListener('scroll', bump, { passive: true });
+    window.addEventListener('touchstart', bump, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', bump);
+      window.removeEventListener('keydown', bump);
+      window.removeEventListener('scroll', bump);
+      window.removeEventListener('touchstart', bump);
+    };
+  }, []);
+
+  // -----------------------
+  // Load module, check unlock via RPC, then load lessons/progress (RLS enforces too)
+  // -----------------------
   useEffect(() => {
     const run = async () => {
       if (!user || !slug) return;
 
       setLoading(true);
       setErr(null);
+
+      setModuleRow(null);
+      setModuleUnlocked(null);
+      setPrevModuleSlug(null);
+      setNextModuleSlug(null);
+
+      setLessons([]);
+      setProgress({});
+      setSelectedLessonId(null);
+
+      setVideoSrc(null);
+      setQuestions([]);
+      setAnswers({});
+      setResult(null);
+      setShowQuiz(true);
+
+      completionMarkedRef.current = false;
 
       const { data: mod, error: modErr } = await supabase
         .from('training_modules')
@@ -159,7 +248,54 @@ export default function TrainingModuleClient({ slug }: Props) {
         setLoading(false);
         return;
       }
+
       setModuleRow(mod);
+
+      // RPC unlock check (server-side)
+      const { data: unlockedData, error: unlockedErr } = await supabase.rpc('is_module_unlocked', {
+        p_module_id: mod.id,
+      });
+
+      if (unlockedErr) {
+        setErr(unlockedErr.message);
+        setLoading(false);
+        return;
+      }
+
+      const unlocked = !!unlockedData;
+      setModuleUnlocked(unlocked);
+
+      // prev/next module slugs (UX only)
+      const { data: allMods, error: allModsErr } = await supabase
+        .from('training_modules')
+        .select('id, slug, sort_order, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (allModsErr) {
+        setErr(allModsErr.message);
+        setLoading(false);
+        return;
+      }
+
+      if (Array.isArray(allMods)) {
+        const idx = allMods.findIndex((m: any) => m.slug === mod.slug);
+        setPrevModuleSlug(idx > 0 ? allMods[idx - 1]?.slug ?? null : null);
+        setNextModuleSlug(idx >= 0 ? allMods[idx + 1]?.slug ?? null : null);
+      }
+
+      // Mark started + begin time tracking only if unlocked
+      if (unlocked) {
+        const { error: startErr } = await supabase.rpc('ensure_module_started', {
+          p_module_id: mod.id,
+        });
+        if (startErr) console.warn('ensure_module_started failed:', startErr.message);
+      }
+
+      if (!unlocked) {
+        setLoading(false);
+        return;
+      }
 
       const { data: les, error: lesErr } = await supabase
         .from('training_lessons')
@@ -196,51 +332,69 @@ export default function TrainingModuleClient({ slug }: Props) {
         setProgress(map);
       }
 
-      const { data: allMods } = await supabase
-        .from('training_modules')
-        .select('slug, sort_order, is_active')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (allMods && Array.isArray(allMods)) {
-        const idx = allMods.findIndex((m: any) => m.slug === mod.slug);
-        const next = idx >= 0 ? allMods[idx + 1]?.slug ?? null : null;
-        setNextModuleSlug(next);
-      }
-
       setLoading(false);
     };
 
     void run();
   }, [user, slug]);
 
-  const selectedLesson = useMemo(
-    () => lessons.find((l) => l.id === selectedLessonId) ?? null,
-    [lessons, selectedLessonId]
-  );
+  // -----------------------
+  // Time heartbeat -> RPC log_module_time
+  // -----------------------
+  useEffect(() => {
+    const flush = async () => {
+      if (!user || !moduleRow || moduleUnlocked !== true) return;
 
-  const unlockedLessonIds = useMemo(() => {
-    const unlocked = new Set<string>();
-    for (let i = 0; i < lessons.length; i++) {
-      const lesson = lessons[i];
-      if (i === 0) {
-        unlocked.add(lesson.id);
-        continue;
-      }
-      const prev = lessons[i - 1];
-      if (progress[prev.id]?.passed) unlocked.add(lesson.id);
-    }
-    return unlocked;
-  }, [lessons, progress]);
+      const toSend = Math.floor(pendingSecondsRef.current);
+      pendingSecondsRef.current = 0;
 
-  const isSelectedLocked = useMemo(() => {
-    if (!selectedLesson) return false;
-    return !unlockedLessonIds.has(selectedLesson.id);
-  }, [selectedLesson, unlockedLessonIds]);
+      if (toSend <= 0) return;
 
-  const selectedProgress = selectedLesson ? progress[selectedLesson.id] : undefined;
-  const selectedPassed = !!selectedProgress?.passed;
+      const { error } = await supabase.rpc('log_module_time', {
+        p_module_id: moduleRow.id,
+        p_delta_seconds: toSend,
+      });
 
+      if (error) console.warn('log_module_time failed:', error.message);
+    };
+
+    if (!user || !moduleRow || moduleUnlocked !== true) return;
+
+    lastTickMsRef.current = Date.now();
+    pendingSecondsRef.current = 0;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const deltaSeconds = Math.floor((now - lastTickMsRef.current) / 1000);
+      lastTickMsRef.current = now;
+
+      if (deltaSeconds <= 0) return;
+
+      const visible = document.visibilityState === 'visible';
+      const active = now - lastActivityMsRef.current <= IDLE_GRACE_SECONDS * 1000;
+
+      if (!visible || !active) return;
+
+      pendingSecondsRef.current += Math.min(deltaSeconds, HEARTBEAT_SECONDS + 5);
+
+      if (pendingSecondsRef.current >= 30) void flush();
+    }, HEARTBEAT_SECONDS * 1000);
+
+    const onVis = () => {
+      if (document.visibilityState === 'visible') lastTickMsRef.current = Date.now();
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+      void flush();
+    };
+  }, [user, moduleRow, moduleUnlocked]);
+
+  // -----------------------
+  // Reset quiz state when lesson changes / pass state changes
+  // -----------------------
   useEffect(() => {
     setAnswers({});
     setResult(null);
@@ -249,17 +403,18 @@ export default function TrainingModuleClient({ slug }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLessonId, selectedPassed]);
 
+  // -----------------------
+  // Load video + questions for selected lesson (RLS enforced)
+  // -----------------------
   useEffect(() => {
     const run = async () => {
       setVideoSrc(null);
       setQuestions([]);
 
-      if (!user || !selectedLesson || isSelectedLocked) return;
+      if (!user || !selectedLesson || moduleUnlocked !== true || isSelectedLocked) return;
 
       const objectKeyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
 
-      // If it's a URL (YouTube or direct MP4), store it directly.
-      // If it's a storage key, sign it from Supabase.
       if (objectKeyOrUrl) {
         if (/^https?:\/\//i.test(objectKeyOrUrl)) {
           setVideoSrc(objectKeyOrUrl);
@@ -298,8 +453,32 @@ export default function TrainingModuleClient({ slug }: Props) {
     };
 
     void run();
-  }, [user, selectedLessonId, isSelectedLocked, moduleRow?.video_url, selectedLesson]);
+  }, [user, selectedLesson, moduleRow?.video_url, moduleUnlocked, isSelectedLocked]);
 
+  // -----------------------
+  // Mark module completed in SQL when all lessons passed
+  // -----------------------
+  useEffect(() => {
+    const run = async () => {
+      if (!user || !moduleRow || moduleUnlocked !== true) return;
+      if (!moduleCompleted) return;
+      if (completionMarkedRef.current) return;
+
+      completionMarkedRef.current = true;
+
+      const { error } = await supabase.rpc('mark_module_completed', {
+        p_module_id: moduleRow.id,
+      });
+
+      if (error) console.warn('mark_module_completed failed:', error.message);
+    };
+
+    void run();
+  }, [user, moduleRow, moduleUnlocked, moduleCompleted]);
+
+  // -----------------------
+  // Actions
+  // -----------------------
   const onPickLesson = (lesson: LessonRow) => {
     if (!unlockedLessonIds.has(lesson.id)) return;
     setSelectedLessonId(lesson.id);
@@ -365,6 +544,9 @@ export default function TrainingModuleClient({ slug }: Props) {
     setSaving(false);
   };
 
+  // -----------------------
+  // Render states
+  // -----------------------
   if (authLoading || !user) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center">
@@ -403,14 +585,61 @@ export default function TrainingModuleClient({ slug }: Props) {
     );
   }
 
-  if (!moduleRow || !selectedLesson) return null;
+  if (!moduleRow) return null;
 
-  const nextLesson = (() => {
-    const idx = lessons.findIndex((l) => l.id === selectedLesson.id);
-    return idx >= 0 ? lessons[idx + 1] ?? null : null;
-  })();
+  // Module locked (server enforced by RPC + RLS)
+  if (moduleUnlocked === false) {
+    return (
+      <main className="bg-slate-50 px-4 py-10">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-semibold text-slate-900">{moduleRow.title}</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            This module is locked. Complete the previous module to unlock it.
+          </p>
 
-  const moduleCompleted = lessons.length > 0 && lessons.every((l) => progress[l.id]?.passed);
+          <div className="mt-4 flex flex-wrap gap-2">
+            {prevModuleSlug ? (
+              <button
+                type="button"
+                onClick={() => router.push(`/training/${prevModuleSlug}`)}
+                className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Go to previous module
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+            >
+              Back to dashboard
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Unlocked, but no lessons
+  if (!selectedLesson) {
+    return (
+      <main className="bg-slate-50 px-4 py-10">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm text-slate-700">No lessons found for this module.</p>
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => router.push(`/training?refresh=${Date.now()}`)}
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Back to dashboard
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const ytEmbed = videoSrc ? toYouTubeEmbedUrl(videoSrc) : null;
 
@@ -420,14 +649,10 @@ export default function TrainingModuleClient({ slug }: Props) {
         <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold text-slate-900 leading-snug">
-                {moduleRow.title}
-              </h1>
+              <h1 className="text-2xl font-semibold text-slate-900 leading-snug">{moduleRow.title}</h1>
+
               {moduleRow.description ? (
-                <p
-                  className="mt-2 text-sm text-slate-600 leading-relaxed break-words"
-                  style={clampStyle(3)}
-                >
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed break-words" style={clampStyle(3)}>
                   {moduleRow.description}
                 </p>
               ) : null}
@@ -449,9 +674,7 @@ export default function TrainingModuleClient({ slug }: Props) {
         {moduleCompleted ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
             <p className="text-sm font-semibold text-emerald-900">Module completed</p>
-            <p className="mt-1 text-sm text-emerald-900/80">
-              You have passed all lessons in this module.
-            </p>
+            <p className="mt-1 text-sm text-emerald-900/80">You have passed all lessons in this module.</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {nextModuleSlug ? (
@@ -493,9 +716,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                     disabled={!unlocked}
                     className={clsx(
                       'w-full text-left rounded-xl border px-3 py-3 transition',
-                      active
-                        ? 'border-emerald-200 bg-emerald-50'
-                        : 'border-slate-200 hover:bg-slate-50',
+                      active ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 hover:bg-slate-50',
                       !unlocked && 'opacity-50 cursor-not-allowed hover:bg-white'
                     )}
                   >
@@ -656,9 +877,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                                   key={c.id}
                                   className={clsx(
                                     'flex items-start gap-3 rounded-xl border px-3 py-2 cursor-pointer transition',
-                                    checked
-                                      ? 'border-emerald-200 bg-emerald-50'
-                                      : 'border-slate-200 hover:bg-slate-50'
+                                    checked ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 hover:bg-slate-50'
                                   )}
                                 >
                                   <input
@@ -666,13 +885,9 @@ export default function TrainingModuleClient({ slug }: Props) {
                                     name={`q-${q.id}`}
                                     className="mt-1 h-4 w-4"
                                     checked={checked}
-                                    onChange={() =>
-                                      setAnswers((prev) => ({ ...prev, [q.id]: c.id }))
-                                    }
+                                    onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: c.id }))}
                                   />
-                                  <span className="text-sm text-slate-800 leading-relaxed">
-                                    {c.choice_text}
-                                  </span>
+                                  <span className="text-sm text-slate-800 leading-relaxed">{c.choice_text}</span>
                                 </label>
                               );
                             })}
@@ -684,9 +899,7 @@ export default function TrainingModuleClient({ slug }: Props) {
                         <div
                           className={clsx(
                             'rounded-2xl border p-4',
-                            result.passed
-                              ? 'border-emerald-200 bg-emerald-50'
-                              : 'border-amber-200 bg-amber-50'
+                            result.passed ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
                           )}
                         >
                           <p
