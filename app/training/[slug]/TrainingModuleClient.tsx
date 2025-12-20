@@ -66,6 +66,53 @@ function clampStyle(lines: number) {
   };
 }
 
+// --- YouTube helpers ---
+function extractYouTubeId(input: string): string | null {
+  const raw = (input || '').trim();
+
+  // Allow raw video IDs too
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.replace(/^www\./, '');
+
+    // youtu.be/VIDEO_ID
+    if (host === 'youtu.be') {
+      const id = url.pathname.split('/').filter(Boolean)[0] || null;
+      return id && id.length === 11 ? id : id;
+    }
+
+    // youtube.com / youtube-nocookie.com
+    if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
+      // youtube.com/watch?v=VIDEO_ID
+      const v = url.searchParams.get('v');
+      if (v) return v;
+
+      // youtube.com/embed/VIDEO_ID
+      const parts = url.pathname.split('/').filter(Boolean);
+      const embedIdx = parts.indexOf('embed');
+      if (embedIdx >= 0 && parts[embedIdx + 1]) return parts[embedIdx + 1];
+
+      // youtube.com/shorts/VIDEO_ID
+      const shortsIdx = parts.indexOf('shorts');
+      if (shortsIdx >= 0 && parts[shortsIdx + 1]) return parts[shortsIdx + 1];
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function toYouTubeEmbedUrl(input: string): string | null {
+  const id = extractYouTubeId(input);
+  if (!id) return null;
+
+  // privacy-friendly domain
+  return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+}
+
 export default function TrainingModuleClient({ slug }: Props) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -75,7 +122,11 @@ export default function TrainingModuleClient({ slug }: Props) {
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
+  // For MP4s / direct URLs / signed URLs
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  // For YouTube embeds
+  const [youtubeEmbedSrc, setYoutubeEmbedSrc] = useState<string | null>(null);
+
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
@@ -202,6 +253,7 @@ export default function TrainingModuleClient({ slug }: Props) {
   useEffect(() => {
     const run = async () => {
       setVideoSrc(null);
+      setYoutubeEmbedSrc(null);
       setQuestions([]);
 
       if (!user || !selectedLesson || isSelectedLocked) return;
@@ -209,9 +261,17 @@ export default function TrainingModuleClient({ slug }: Props) {
       const objectKeyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
 
       if (objectKeyOrUrl) {
-        if (/^https?:\/\//i.test(objectKeyOrUrl)) {
+        // 1) If it's YouTube -> embed
+        const ytEmbed = toYouTubeEmbedUrl(objectKeyOrUrl);
+        if (ytEmbed) {
+          setYoutubeEmbedSrc(ytEmbed);
+        }
+        // 2) If it's a normal http(s) URL -> use <video> src directly (MP4, etc.)
+        else if (/^https?:\/\//i.test(objectKeyOrUrl)) {
           setVideoSrc(objectKeyOrUrl);
-        } else {
+        }
+        // 3) Otherwise treat it as a Supabase Storage key and sign it
+        else {
           const { data, error } = await supabase.storage
             .from(BUCKET)
             .createSignedUrl(objectKeyOrUrl, 60 * 60 * 24 * 7);
@@ -504,7 +564,18 @@ export default function TrainingModuleClient({ slug }: Props) {
                 </div>
 
                 <div className="mt-5">
-                  {videoSrc ? (
+                  {youtubeEmbedSrc ? (
+                    <div className="aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-sm">
+                      <iframe
+                        className="h-full w-full"
+                        src={youtubeEmbedSrc}
+                        title="Training video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
+                      />
+                    </div>
+                  ) : videoSrc ? (
                     <video
                       controls
                       playsInline
