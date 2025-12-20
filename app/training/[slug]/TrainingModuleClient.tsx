@@ -24,7 +24,7 @@ type LessonRow = {
   module_slug: string | null;
   title: string;
   sort_order: number;
-  video_path: string | null;
+  video_path: string | null; // can be storage key OR a full URL (YouTube/mp4)
   content: string | null;
   is_active: boolean;
 };
@@ -66,11 +66,13 @@ function clampStyle(lines: number) {
   };
 }
 
-// --- YouTube helpers ---
+// -----------------------
+// YouTube helpers
+// -----------------------
 function extractYouTubeId(input: string): string | null {
   const raw = (input || '').trim();
 
-  // Allow raw video IDs too
+  // raw ID
   if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
 
   try {
@@ -79,8 +81,7 @@ function extractYouTubeId(input: string): string | null {
 
     // youtu.be/VIDEO_ID
     if (host === 'youtu.be') {
-      const id = url.pathname.split('/').filter(Boolean)[0] || null;
-      return id && id.length === 11 ? id : id;
+      return url.pathname.split('/').filter(Boolean)[0] ?? null;
     }
 
     // youtube.com / youtube-nocookie.com
@@ -108,8 +109,6 @@ function extractYouTubeId(input: string): string | null {
 function toYouTubeEmbedUrl(input: string): string | null {
   const id = extractYouTubeId(input);
   if (!id) return null;
-
-  // privacy-friendly domain
   return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
 }
 
@@ -122,10 +121,10 @@ export default function TrainingModuleClient({ slug }: Props) {
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
-  // For MP4s / direct URLs / signed URLs
+  // Supports BOTH:
+  // - mp4 signed urls from Supabase OR direct mp4 urls
+  // - youtube urls -> we will embed
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
-  // For YouTube embeds
-  const [youtubeEmbedSrc, setYoutubeEmbedSrc] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -253,25 +252,18 @@ export default function TrainingModuleClient({ slug }: Props) {
   useEffect(() => {
     const run = async () => {
       setVideoSrc(null);
-      setYoutubeEmbedSrc(null);
       setQuestions([]);
 
       if (!user || !selectedLesson || isSelectedLocked) return;
 
       const objectKeyOrUrl = selectedLesson.video_path || moduleRow?.video_url || null;
 
+      // If it's a URL (YouTube or direct MP4), store it directly.
+      // If it's a storage key, sign it from Supabase.
       if (objectKeyOrUrl) {
-        // 1) If it's YouTube -> embed
-        const ytEmbed = toYouTubeEmbedUrl(objectKeyOrUrl);
-        if (ytEmbed) {
-          setYoutubeEmbedSrc(ytEmbed);
-        }
-        // 2) If it's a normal http(s) URL -> use <video> src directly (MP4, etc.)
-        else if (/^https?:\/\//i.test(objectKeyOrUrl)) {
+        if (/^https?:\/\//i.test(objectKeyOrUrl)) {
           setVideoSrc(objectKeyOrUrl);
-        }
-        // 3) Otherwise treat it as a Supabase Storage key and sign it
-        else {
+        } else {
           const { data, error } = await supabase.storage
             .from(BUCKET)
             .createSignedUrl(objectKeyOrUrl, 60 * 60 * 24 * 7);
@@ -420,6 +412,8 @@ export default function TrainingModuleClient({ slug }: Props) {
 
   const moduleCompleted = lessons.length > 0 && lessons.every((l) => progress[l.id]?.passed);
 
+  const ytEmbed = videoSrc ? toYouTubeEmbedUrl(videoSrc) : null;
+
   return (
     <main className="bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -564,11 +558,11 @@ export default function TrainingModuleClient({ slug }: Props) {
                 </div>
 
                 <div className="mt-5">
-                  {youtubeEmbedSrc ? (
+                  {ytEmbed ? (
                     <div className="aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-sm">
                       <iframe
                         className="h-full w-full"
-                        src={youtubeEmbedSrc}
+                        src={ytEmbed}
                         title="Training video"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
