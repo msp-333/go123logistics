@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { publicPath } from '@/lib/publicPath';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/app/providers';
 
 const LOGO_SRC = publicPath('/images/logo.png');
@@ -12,6 +13,10 @@ const LOGO_SRC = publicPath('/images/logo.png');
 export default function TrainingNavbar() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // ✅ admin state
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [checkingAdmin, setCheckingAdmin] = useState<boolean>(false);
 
   // Active path (handles GitHub Pages basePath)
   const rawPath = usePathname() || '/';
@@ -29,6 +34,32 @@ export default function TrainingNavbar() {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
+
+  // ✅ Determine admin status (secure: server-side via RPC)
+  useEffect(() => {
+    const run = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setCheckingAdmin(false);
+        return;
+      }
+
+      setCheckingAdmin(true);
+      const { data, error } = await supabase.rpc('is_admin');
+
+      if (error) {
+        // If something fails, fail closed (hide admin)
+        console.warn('is_admin rpc error:', error.message);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(!!data);
+      }
+
+      setCheckingAdmin(false);
+    };
+
+    void run();
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-100">
@@ -65,6 +96,19 @@ export default function TrainingNavbar() {
           >
             Resources
           </Link>
+
+          {/* ✅ Admin link (only if admin) */}
+          {!authLoading && user && !checkingAdmin && isAdmin ? (
+            <Link
+              href="/admin/progress"
+              className={clsx(
+                'px-3 py-2 rounded-full text-sm hover:bg-slate-50',
+                isActive('/admin/progress') && 'bg-emerald-50 text-emerald-700 font-semibold'
+              )}
+            >
+              Admin
+            </Link>
+          ) : null}
 
           <div className="ml-2 flex items-center gap-2">
             {!authLoading && !user ? (
@@ -112,7 +156,7 @@ export default function TrainingNavbar() {
       <div
         className={clsx(
           'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden bg-white border-t border-slate-100',
-          mobileOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[360px] opacity-100' : 'max-h-0 opacity-0'
         )}
       >
         <div className="container py-3">
@@ -123,7 +167,9 @@ export default function TrainingNavbar() {
                 onClick={close}
                 className={clsx(
                   'block rounded-lg px-3 py-2',
-                  isActive('/training') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
+                  isActive('/training')
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'hover:bg-slate-50'
                 )}
               >
                 Dashboard
@@ -136,12 +182,32 @@ export default function TrainingNavbar() {
                 onClick={close}
                 className={clsx(
                   'block rounded-lg px-3 py-2',
-                  isActive('/training/resources') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
+                  isActive('/training/resources')
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'hover:bg-slate-50'
                 )}
               >
                 Resources
               </Link>
             </li>
+
+            {/* ✅ Admin (mobile) */}
+            {!authLoading && user && !checkingAdmin && isAdmin ? (
+              <li>
+                <Link
+                  href="/admin/progress"
+                  onClick={close}
+                  className={clsx(
+                    'block rounded-lg px-3 py-2',
+                    isActive('/admin/progress')
+                      ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                      : 'hover:bg-slate-50'
+                  )}
+                >
+                  Admin
+                </Link>
+              </li>
+            ) : null}
 
             {!authLoading && !user ? (
               <li className="pt-2">
