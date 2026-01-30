@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useAuth } from '@/app/providers';
 
-const LOGO_SRC = publicPath('/images/logo.png');
+const LOGO_SRC = "/images/logo.png";
 
 export default function Navbar() {
   const { user, loading: authLoading, signOut } = useAuth();

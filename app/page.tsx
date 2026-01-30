@@ -2,7 +2,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import Hero from "@/components/Hero";
-import { publicPath } from "@/lib/publicPath";
 
 /* ---------- Data ---------- */
 const steps = [
@@ -27,7 +26,7 @@ const steps = [
 const posts = [
   {
     title: "LTL vs FTL: What’s Right for Your Shipment?",
-    image: publicPath("/images/blog-1.png"),
+    image: "/images/blog-1.png",
     href: "/blog/ltl-vs-ftl",
     date: "2025-01-12",
     excerpt:
@@ -35,7 +34,7 @@ const posts = [
   },
   {
     title: "SCAC Codes: A Quick Guide for Shippers",
-    image: publicPath("/images/blog-2.png"),
+    image: "/images/blog-2.png",
     href: "/blog/scac-codes-guide",
     date: "2025-01-05",
     excerpt:
@@ -43,7 +42,7 @@ const posts = [
   },
   {
     title: "How to Prevent Damage in Long-Haul Freight",
-    image: publicPath("/images/blog-3.png"),
+    image: "/images/blog-3.png",
     href: "/blog/prevent-freight-damage",
     date: "2024-12-18",
     excerpt:
@@ -59,7 +58,11 @@ export default function HomePage() {
 
       {/* How it works */}
       <Strip>
-        <section id="steps" className="container py-16 scroll-mt-24" aria-labelledby="steps-title">
+        <section
+          id="steps"
+          className="container py-16 scroll-mt-24"
+          aria-labelledby="steps-title"
+        >
           <Kicker>How it works</Kicker>
           <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
 
@@ -73,7 +76,9 @@ export default function HomePage() {
                   {i + 1}
                 </div>
                 <h3 className="text-center font-semibold">{s.title}</h3>
-                <p className="mt-2 text-center text-sm text-slate-600">{s.desc}</p>
+                <p className="mt-2 text-center text-sm text-slate-600">
+                  {s.desc}
+                </p>
               </article>
             ))}
           </div>
@@ -95,16 +100,20 @@ export default function HomePage() {
         <div className="container relative grid items-center gap-10 py-16 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
             <img
-              src={publicPath("/images/logistic-dashboard.png")}
+              src="/images/logistic-dashboard.png"
               alt="Operations dashboard"
               width={1200}
               height={700}
               className="h-auto w-full object-cover"
+              decoding="async"
+              loading="lazy"
             />
           </div>
+
           <div>
             <Kicker>Why choose us</Kicker>
             <Title align="left">Logistics, minus the guesswork</Title>
+
             <ul className="mt-4 grid gap-3 text-slate-700">
               <li>Transparent timelines and proactive updates.</li>
               <li>No-surprise pricing with clear documentation.</li>
@@ -123,11 +132,17 @@ export default function HomePage() {
 
       {/* Blog */}
       <Strip>
-        <section id="blog" className="container py-16" aria-labelledby="blog-title">
+        <section
+          id="blog"
+          className="container py-16"
+          aria-labelledby="blog-title"
+        >
           <div className="flex items-end justify-between">
             <div>
               <Kicker>Insights</Kicker>
-              <Title id="blog-title" align="left">From the Logbook</Title>
+              <Title id="blog-title" align="left">
+                From the Logbook
+              </Title>
             </div>
             <Link
               href="/blog"
@@ -144,15 +159,17 @@ export default function HomePage() {
                 href={p.href}
                 className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft transition-shadow duration-200 hover:shadow-md"
               >
-                <div className="h-44 w-full relative">
+                <div className="relative h-44 w-full">
                   <Image
                     src={p.image}
                     alt={p.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
+                    priority={false}
                   />
                 </div>
+
                 <div className="p-5">
                   <div className="text-xs text-slate-500">
                     {new Date(p.date).toLocaleDateString(undefined, {
@@ -177,7 +194,9 @@ export default function HomePage() {
       <section id="cta" className="container my-16">
         <div className="relative grid items-center overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-soft md:grid-cols-2">
           <div className="p-6 md:p-10">
-            <Title align="left">Ready to elevate your transportation and logistics operations?</Title>
+            <Title align="left">
+              Ready to elevate your transportation and logistics operations?
+            </Title>
             <Link
               href="/shipping-guide#quote"
               className="mt-5 inline-flex items-center rounded-md bg-emerald-600 px-5 py-2.5 font-semibold text-white shadow-soft hover:bg-emerald-700"
@@ -185,15 +204,17 @@ export default function HomePage() {
               Get a Free Quote
             </Link>
           </div>
+
           <div className="relative h-44 md:h-full">
             <Image
-              src={publicPath("/images/cta-truck.png")}
+              src="/images/cta-truck.png"
               alt="Truck"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-contain"
             />
           </div>
+
           <div className="absolute inset-x-0 bottom-0 h-1 bg-emerald-600" />
         </div>
       </section>

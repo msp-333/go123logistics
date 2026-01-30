@@ -1,16 +1,12 @@
 // components/Hero.tsx
-import { publicPath } from '@/lib/publicPath';
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Hero() {
-  const heroSrc = publicPath('/images/hero.png');
+  const heroSrc = "/images/hero.png";
 
   return (
     <section className="relative overflow-hidden">
-      {/* Relative wrapper controls both image and text positioning */}
       <div className="relative w-full min-h-[420px] md:min-h-[520px]">
-
-        {/* Background image */}
         <img
           src={heroSrc}
           alt="Logistics hero"
@@ -21,13 +17,11 @@ export default function Hero() {
           fetchPriority="high"
         />
 
-        {/* Non-blocking overlay (left-to-right fade for readability) */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10"
         />
 
-        {/* Text block — vertically centered inside the hero */}
         <div className="absolute inset-0">
           <div className="container h-full">
             <div className="flex h-full items-center">
