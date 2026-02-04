@@ -121,7 +121,7 @@ export default function HomePage() {
             </ul>
 
             <Link
-              href="/shipping-guide#quote"
+              href="/contact/"
               className="mt-6 inline-flex items-center rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white shadow-soft hover:bg-emerald-700"
             >
               Get a Free Quote
@@ -198,7 +198,7 @@ export default function HomePage() {
               Ready to elevate your transportation and logistics operations?
             </Title>
             <Link
-              href="/shipping-guide#quote"
+              href="/contact/"
               className="mt-5 inline-flex items-center rounded-md bg-emerald-600 px-5 py-2.5 font-semibold text-white shadow-soft hover:bg-emerald-700"
             >
               Get a Free Quote

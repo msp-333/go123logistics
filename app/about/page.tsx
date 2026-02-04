@@ -14,19 +14,19 @@ const card =
 
 export default function AboutPage() {
   const steps = [
-    { t: "Plan", d: "Confirm scope, service level, constraints, and risks." },
-    { t: "Price", d: "Itemized quote—no hidden fees or last-minute upsells." },
-    { t: "Protect", d: "Packing guidance, labels, seals, and photo checkpoints." },
-    { t: "Move", d: "Pickup, linehaul, and milestones with proactive updates." },
-    { t: "Deliver", d: "Appointment, site requirements, and photo-verified handoff." },
-    { t: "Support", d: "Post-delivery check and a clear, documented claims path." },
+    { t: "Plan", d: "Determine needs or clarify needs and confirm scope, service level, constraints, and guarantees." },
+    { t: "Price", d: "Comparative pricing across multiple carries so you can make the best informed decision." },
+    { t: "Protect", d: "Tracking enabled with confirmations at every step—so you can rest easy knowing your freight is in good hands." },
+    { t: "Move", d: "From origin to destination, we manage the move end-to-end and keep you updated throughout—so you don’t have to." },
+    { t: "Deliver", d: "Scheduled appointments, site-requirement coordination, and signed delivery confirmation, have you rest assured your freight arrived exactly as intended." },
+    { t: "Support", d: "On call followup and claims support when needed." },
   ];
 
   const values = [
     { t: "Integrity", d: "Say it clearly. Do it exactly." },
-    { t: "Care", d: "Treat every pallet like it’s ours." },
-    { t: "Transparency", d: "Clear pricing, clear updates, clear ownership." },
-    { t: "Reliability", d: "Processes that withstand real-world variability." },
+    { t: "Care", d: "We treat every shipment as if it were our own." },
+    { t: "Transparency", d: "Clear pricing, clear updates, clear communication." },
+    { t: "Reliability", d: "Our agents serve as your trusted partner—bringing reliability to your logistics needs." },
   ];
 
   return (
@@ -146,8 +146,8 @@ export default function AboutPage() {
 
           <div className="mt-5 space-y-4 text-slate-800 text-[16px] leading-7">
             <p>
-              In <strong>2010</strong>, our family moved from the <strong>Virgin Islands</strong> back
-              to <strong> Lake Tahoe</strong>. We did everything right—palletized, shrink-wrapped,
+              In <strong>2010</strong>, our family moved from the <strong>Caribbean Islands</strong> back
+              to the <strong>United States</strong>. We did everything right—palletized, shrink-wrapped,
               sealed. But once the container reached the U.S., the shipment was taken apart and mixed
               with others. A promised two-week delivery dragged into months.
             </p>
@@ -247,7 +247,7 @@ export default function AboutPage() {
                 Ready to ship with confidence?
               </h3>
               <p className="mt-1 text-slate-700 md:text-base">
-                Get a transparent, itemized plan you can trust—tailored to your lanes and timelines.
+                Build a transparent, step-by-step plan you can trust—tailored to your lanes, timelines, and budget.
               </p>
             </div>
 
@@ -258,9 +258,6 @@ export default function AboutPage() {
               >
                 Get a Free Quote
               </Link>
-              <p className="mt-2 text-xs text-slate-500">
-                Typically replies within 1 business day.
-              </p>
             </div>
           </div>
         </div>

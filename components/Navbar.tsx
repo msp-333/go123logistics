@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { publicPath } from '@/lib/publicPath';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useAuth } from '@/app/providers';
 
-const LOGO_SRC = "/images/logo.png";
+const LOGO_SRC = '/images/logo.png';
 
 export default function Navbar() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -21,14 +20,11 @@ export default function Navbar() {
 
   const rawPath = usePathname() || '/';
   const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
-  const pathname =
-    base && rawPath.startsWith(base) ? rawPath.slice(base.length) || '/' : rawPath;
+  const pathname = base && rawPath.startsWith(base) ? rawPath.slice(base.length) || '/' : rawPath;
 
   const isActive = (paths: string | string[]) => {
     const list = Array.isArray(paths) ? paths : [paths];
-    return list.some((p) =>
-      p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)
-    );
+    return list.some((p) => (p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)));
   };
 
   const closeAllMenus = () => {
@@ -60,10 +56,14 @@ export default function Navbar() {
 
   const desktopLinkClass = (active: boolean) =>
     clsx(
-      'rounded-full px-3 py-1.5 text-sm transition-colors',
-      active
-        ? 'bg-emerald-50 text-emerald-700 font-semibold'
-        : 'text-slate-700 hover:bg-slate-50 hover:text-emerald-700'
+      'rounded-full px-3 py-1.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
+      active ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-700 hover:bg-slate-50 hover:text-emerald-700'
+    );
+
+  const menuItemClass = (active: boolean) =>
+    clsx(
+      'flex items-center justify-between px-3 py-2 rounded-xl transition-colors',
+      active ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50 text-slate-700'
     );
 
   return (
@@ -105,18 +105,14 @@ export default function Navbar() {
               onClick={() => setServicesOpen((o) => !o)}
               className={clsx(
                 desktopLinkClass(isActive(['/services', '/shipping-guide'])),
-                'inline-flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500'
+                'inline-flex items-center gap-1'
               )}
               aria-haspopup="menu"
               aria-expanded={servicesOpen}
               aria-controls="services-menu"
             >
               Services
-              <svg
-                className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')}
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
+              <svg className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
@@ -125,7 +121,7 @@ export default function Navbar() {
               id="services-menu"
               role="menu"
               className={clsx(
-                'absolute right-0 mt-2 w-72 rounded-2xl border border-slate-100 bg-white shadow-soft p-2 origin-top-right transition',
+                'absolute right-0 mt-2 w-[340px] rounded-2xl border border-slate-100 bg-white shadow-soft p-2 origin-top-right transition',
                 servicesOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
               )}
             >
@@ -136,27 +132,35 @@ export default function Navbar() {
                 onClick={onNavigate}
                 aria-current={isActive('/shipping-guide') ? 'page' : undefined}
                 role="menuitem"
-                className={clsx(
-                  'block px-3 py-2 rounded-lg',
-                  isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
-                )}
+                className={menuItemClass(isActive('/shipping-guide'))}
               >
-                Shipping Guide &amp; SCAC Codes
+                <span>Shipping Guide &amp; SCAC Codes</span>
+                <span className="text-xs text-slate-400">Docs</span>
               </Link>
 
-              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">Freight</div>
+              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">Freight Services</div>
+
+              {/* REQUIRED ORDER: Land -> Ocean -> Air */}
+              <Link
+                href="/services/land-freight"
+                onClick={onNavigate}
+                aria-current={isActive('/services/land-freight') ? 'page' : undefined}
+                role="menuitem"
+                className={menuItemClass(isActive('/services/land-freight'))}
+              >
+                <span>Land Freight</span>
+                <span className="text-xs text-slate-400">Road + Rail</span>
+              </Link>
 
               <Link
                 href="/services/ocean-freight"
                 onClick={onNavigate}
                 aria-current={isActive('/services/ocean-freight') ? 'page' : undefined}
                 role="menuitem"
-                className={clsx(
-                  'block px-3 py-2 rounded-lg',
-                  isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
-                )}
+                className={menuItemClass(isActive('/services/ocean-freight'))}
               >
-                Ocean Freight
+                <span>Ocean Freight</span>
+                <span className="text-xs text-slate-400">FCL / LCL</span>
               </Link>
 
               <Link
@@ -164,26 +168,15 @@ export default function Navbar() {
                 onClick={onNavigate}
                 aria-current={isActive('/services/air-freight') ? 'page' : undefined}
                 role="menuitem"
-                className={clsx(
-                  'block px-3 py-2 rounded-lg',
-                  isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
-                )}
+                className={menuItemClass(isActive('/services/air-freight'))}
               >
-                Air Freight
+                <span>Air Freight</span>
+                <span className="text-xs text-slate-400">Express</span>
               </Link>
 
-              <Link
-                href="/services/rail-freight"
-                onClick={onNavigate}
-                aria-current={isActive('/services/rail-freight') ? 'page' : undefined}
-                role="menuitem"
-                className={clsx(
-                  'block px-3 py-2 rounded-lg',
-                  isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
-                )}
-              >
-                Rail Freight
-              </Link>
+              <div className="mt-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
+                End-to-end coordination across carriers, documentation, tracking, and delivery—so shipping stays effortless.
+              </div>
             </div>
           </div>
 
@@ -193,10 +186,8 @@ export default function Navbar() {
               href="/contact"
               onClick={onNavigate}
               className={clsx(
-                'inline-flex items-center rounded-full px-4 py-2 text-sm font-medium shadow-soft transition-colors',
-                isActive('/contact')
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                'inline-flex items-center rounded-full px-4 py-2 text-sm font-medium shadow-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
+                isActive('/contact') ? 'bg-emerald-700 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'
               )}
             >
               Contact Us
@@ -206,7 +197,7 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={onNavigate}
-                className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-emerald-600 text-emerald-700 hover:bg-emerald-50 shadow-soft transition-colors"
+                className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-emerald-600 text-emerald-700 hover:bg-emerald-50 shadow-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
                 Login
               </Link>
@@ -218,7 +209,7 @@ export default function Navbar() {
                   href="/training"
                   onClick={onNavigate}
                   className={clsx(
-                    'inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-soft transition-colors',
+                    'inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
                     isActive('/training') && 'border-emerald-600 text-emerald-700'
                   )}
                 >
@@ -228,7 +219,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={signOut}
-                  className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-soft transition-colors"
+                  className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   Logout
                 </button>
@@ -240,7 +231,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           type="button"
-          className="md:hidden inline-flex items-center justify-center rounded-md p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="md:hidden inline-flex items-center justify-center rounded-xl p-2 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((v) => !v)}
@@ -257,11 +248,11 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile drawer (unchanged, but no underline is used anyway) */}
+      {/* Mobile drawer */}
       <div
         className={clsx(
           'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden bg-white border-t border-slate-100',
-          mobileOpen ? 'max-h-[560px] opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'
         )}
       >
         <div className="container py-3">
@@ -272,7 +263,7 @@ export default function Navbar() {
                 onClick={onNavigate}
                 aria-current={isActive('/') ? 'page' : undefined}
                 className={clsx(
-                  'block rounded-lg px-3 py-2',
+                  'block rounded-xl px-3 py-2 transition-colors',
                   isActive('/') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
                 )}
               >
@@ -286,7 +277,7 @@ export default function Navbar() {
                 onClick={onNavigate}
                 aria-current={isActive('/about') ? 'page' : undefined}
                 className={clsx(
-                  'block rounded-lg px-3 py-2',
+                  'block rounded-xl px-3 py-2 transition-colors',
                   isActive('/about') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
                 )}
               >
@@ -300,7 +291,7 @@ export default function Navbar() {
                 onClick={onNavigate}
                 aria-current={isActive('/blog') ? 'page' : undefined}
                 className={clsx(
-                  'block rounded-lg px-3 py-2',
+                  'block rounded-xl px-3 py-2 transition-colors',
                   isActive('/blog') ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
                 )}
               >
@@ -314,16 +305,12 @@ export default function Navbar() {
                 onClick={() => setMobileServicesOpen((v) => !v)}
                 aria-expanded={mobileServicesOpen}
                 className={clsx(
-                  'w-full inline-flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-50',
+                  'w-full inline-flex items-center justify-between rounded-xl px-3 py-2 hover:bg-slate-50 transition-colors',
                   isActive(['/services', '/shipping-guide']) && 'text-emerald-700 font-semibold'
                 )}
               >
                 <span>Services</span>
-                <svg
-                  className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
+                <svg className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
                   <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
                 </svg>
               </button>
@@ -331,25 +318,37 @@ export default function Navbar() {
               <div
                 className={clsx(
                   'pl-3 border-l border-slate-100 ml-3 mt-1 space-y-1 transition-[max-height,opacity] overflow-hidden',
-                  mobileServicesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  mobileServicesOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0'
                 )}
               >
                 <Link
                   href="/shipping-guide"
                   onClick={onNavigate}
                   className={clsx(
-                    'block rounded-md px-3 py-2',
+                    'block rounded-xl px-3 py-2 transition-colors',
                     isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
                   Shipping Guide &amp; SCAC Codes
                 </Link>
 
+                {/* REQUIRED ORDER: Land -> Ocean -> Air */}
+                <Link
+                  href="/services/land-freight"
+                  onClick={onNavigate}
+                  className={clsx(
+                    'block rounded-xl px-3 py-2 transition-colors',
+                    isActive('/services/land-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                  )}
+                >
+                  Land Freight
+                </Link>
+
                 <Link
                   href="/services/ocean-freight"
                   onClick={onNavigate}
                   className={clsx(
-                    'block rounded-md px-3 py-2',
+                    'block rounded-xl px-3 py-2 transition-colors',
                     isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
@@ -360,22 +359,11 @@ export default function Navbar() {
                   href="/services/air-freight"
                   onClick={onNavigate}
                   className={clsx(
-                    'block rounded-md px-3 py-2',
+                    'block rounded-xl px-3 py-2 transition-colors',
                     isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
                   )}
                 >
                   Air Freight
-                </Link>
-
-                <Link
-                  href="/services/rail-freight"
-                  onClick={onNavigate}
-                  className={clsx(
-                    'block rounded-md px-3 py-2',
-                    isActive('/services/rail-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
-                  )}
-                >
-                  Rail Freight
                 </Link>
               </div>
             </li>
@@ -385,7 +373,7 @@ export default function Navbar() {
                 <Link
                   href="/login"
                   onClick={onNavigate}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-emerald-600 text-emerald-700 px-4 py-2 shadow-soft hover:bg-emerald-50"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-emerald-600 text-emerald-700 px-4 py-2 shadow-soft hover:bg-emerald-50 transition-colors"
                 >
                   Login
                 </Link>
@@ -399,7 +387,7 @@ export default function Navbar() {
                     href="/training"
                     onClick={onNavigate}
                     className={clsx(
-                      'inline-flex w-full items-center justify-center rounded-full border border-slate-300 text-slate-700 px-4 py-2 shadow-soft hover:bg-slate-50',
+                      'inline-flex w-full items-center justify-center rounded-full border border-slate-300 text-slate-700 px-4 py-2 shadow-soft hover:bg-slate-50 transition-colors',
                       isActive('/training') && 'border-emerald-600 text-emerald-700'
                     )}
                   >
@@ -414,7 +402,7 @@ export default function Navbar() {
                       signOut();
                       onNavigate();
                     }}
-                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 text-slate-700 px-4 py-2 shadow-soft hover:bg-slate-50"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 text-slate-700 px-4 py-2 shadow-soft hover:bg-slate-50 transition-colors"
                   >
                     Logout
                   </button>
@@ -426,7 +414,7 @@ export default function Navbar() {
               <Link
                 href="/contact"
                 onClick={onNavigate}
-                className="inline-flex w-full items-center justify-center rounded-full bg-emerald-600 text-white px-4 py-2 shadow-soft hover:bg-emerald-700"
+                className="inline-flex w-full items-center justify-center rounded-full bg-emerald-600 text-white px-4 py-2 shadow-soft hover:bg-emerald-700 transition-colors"
               >
                 Contact Us
               </Link>

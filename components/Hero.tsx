@@ -37,7 +37,7 @@ export default function Hero() {
 
                 <div className="mt-5 sm:mt-6 flex flex-wrap gap-3">
                   <Link
-                    href="/shipping-guide#quote"
+                    href="/contact/"
                     className="inline-flex items-center rounded-lg bg-amber-400 px-5 py-3 font-semibold shadow-soft hover:bg-amber-500"
                   >
                     Get a Free Quote
