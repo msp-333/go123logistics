@@ -13,13 +13,13 @@ const steps = [
   {
     title: "Get a Quote & Confirm",
     desc:
-      "We'll provide a fast, transparent quote. Once confirmed, we'll schedule your shipment right away.",
+      "We’ll do the research and bring you the best options with a transparent quote. Once confirmed, we’ll schedule your shipment to meet your timing.",
   },
   { title: "Track Your Shipment", desc: "Stay updated from pickup to delivery." },
   {
     title: "Receive On-Time Delivery",
     desc:
-      "Your package arrives safely, securely, and right on schedule — every time.",
+      "Your shipment arrives as intended, and we follow up to make sure everything was done as expected.",
   },
 ];
 
@@ -116,7 +116,7 @@ export default function HomePage() {
 
             <ul className="mt-4 grid gap-3 text-slate-700">
               <li>Transparent timelines and proactive updates.</li>
-              <li>No-surprise pricing with clear documentation.</li>
+              <li>No surprise pricing with clear expectations to meet your specific needs.</li>
               <li>End-to-end chain-of-custody, from pickup to delivery.</li>
             </ul>
 

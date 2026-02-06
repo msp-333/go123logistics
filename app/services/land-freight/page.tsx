@@ -8,7 +8,7 @@ export default function RailFreightPage() {
       />
 
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Land Freight</h1>
+        <h1 className="text-3xl font-bold">By Land</h1>
         <p className="text-slate-600 -mt-3">
           Reliable, flexible inland transport—combining rail and over-the-road solutions for seamless regional and cross-border deliveries.
         </p>
@@ -21,14 +21,14 @@ export default function RailFreightPage() {
             and scalable capacity for everything from a single pallet to full truckloads and intermodal containers.
           </p>
           <p className="text-slate-600 mt-3">
-            To keep shipping simple, everything is coordinated end-to-end: planning, scheduling, documentation, visibility,
-            terminal handling (when rail is involved), and final delivery—so you get the best route and service without managing
+            To keep shipping simple, we help coordinate the full workflow end-to-end: planning, scheduling, documentation, visibility,
+            terminal handling (when rail is involved), and final delivery—so you can get the best route and service without managing
             multiple carriers or handoffs.
           </p>
         </div>
 
         <div className="rounded-2xl border border-slate-100 p-6 shadow-soft">
-          <h3 className="font-semibold mb-2">Land Freight Options We Manage</h3>
+          <h3 className="font-semibold mb-2">Land Freight Options We Support</h3>
           <div className="grid sm:grid-cols-2 gap-3 text-sm text-slate-700">
             <div className="rounded-lg border p-4">
               <b>Over-the-Road (OTR) Freight</b>
@@ -60,27 +60,27 @@ export default function RailFreightPage() {
           <h3 className="font-semibold mb-2">How It Works</h3>
           <ol className="list-decimal pl-5 space-y-1 text-slate-700">
             <li>
-              <b>Route & Service Planning</b> — We match your shipment to the best mode (OTR, rail, or intermodal) based on timeline,
+              <b>Route & Service Planning</b> — We research the best mode (OTR, rail, or intermodal) based on timeline,
               budget, cargo type, and delivery requirements.
             </li>
             <li>
-              <b>Pickup & Origin Handling</b> — We coordinate pickup, loading, and scheduling for smooth dispatch.
+              <b>Pickup & Origin Handling</b> — We automate pickup loading and scheduling for a smooth dispatch.
             </li>
             <li>
-              <b>Documentation & Compliance</b> — We handle the required shipping paperwork and cross-border customs coordination when needed.
+              <b>Documentation & Compliance</b> — We support you with the required shipping paperwork and connect you with experts for cross-border requirements when needed.
             </li>
             <li>
               <b>Line-Haul Transport</b> — Your freight moves across the inland network with tracking and milestone updates.
             </li>
             <li>
-              <b>Terminal Handling (If Rail/Intermodal)</b> — We manage terminal transfers, unloading/loading, and release coordination.
+              <b>Terminal Handling (If Rail/Intermodal)</b> — We help coordinate terminal transfers, unloading/loading, and release timing as needed.
             </li>
             <li>
-              <b>Final Delivery</b> — We arrange delivery to the final destination, including appointments, dock scheduling, and special handling.
+              <b>Final Delivery</b> — We help coordinate delivery to the final destination, including appointments, dock scheduling, and special handling.
             </li>
           </ol>
           <p className="text-slate-600 mt-3">
-            One coordinated workflow covers every handoff—so inland shipping stays simple, predictable, and fully managed.
+            One coordinated workflow supports every handoff—so inland shipping stays simple, predictable, and clear.
           </p>
         </div>
 
@@ -143,7 +143,7 @@ export default function RailFreightPage() {
           </div>
 
           <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-4 text-sm text-slate-700">
-            <b>Hands-off, end-to-end:</b> We coordinate carriers, scheduling, documentation, tracking, and delivery—across road, rail,
+            <b>Hands-off, end-to-end:</b> We help coordinate carriers, scheduling, documentation, tracking, and delivery—across road, rail,
             or intermodal—so land freight runs smoothly without extra work on your side.
           </div>
         </div>

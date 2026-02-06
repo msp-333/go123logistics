@@ -14,19 +14,37 @@ const card =
 
 export default function AboutPage() {
   const steps = [
-    { t: "Plan", d: "Determine needs or clarify needs and confirm scope, service level, constraints, and guarantees." },
-    { t: "Price", d: "Comparative pricing across multiple carries so you can make the best informed decision." },
-    { t: "Protect", d: "Tracking enabled with confirmations at every step—so you can rest easy knowing your freight is in good hands." },
-    { t: "Move", d: "From origin to destination, we manage the move end-to-end and keep you updated throughout—so you don’t have to." },
-    { t: "Deliver", d: "Scheduled appointments, site-requirement coordination, and signed delivery confirmation, have you rest assured your freight arrived exactly as intended." },
+    {
+      t: "Plan",
+      d: "Determine needs or clarify needs and confirm scope, service level, constraints, and guarantees.",
+    },
+    {
+      t: "Price",
+      d: "Comparative pricing across multiple carriers so you can make the best informed decision.",
+    },
+    {
+      t: "Protect",
+      d: "Tracking enabled with confirmations at every step—so you can rest easy knowing your freight is moving as it should be.",
+    },
+    {
+      t: "Move",
+      d: "From origin to destination, we manage the move end-to-end and keep you updated throughout—so you don’t have to.",
+    },
+    {
+      t: "Deliver",
+      d: "Scheduled appointments, site-requirement coordination, and signed delivery confirmation, have you rest assured your freight arrived exactly as intended.",
+    },
     { t: "Support", d: "On call followup and claims support when needed." },
   ];
 
   const values = [
-    { t: "Integrity", d: "Say it clearly. Do it exactly." },
+    { t: "Integrity", d: "Say it clearly. Do it as communicated." },
     { t: "Care", d: "We treat every shipment as if it were our own." },
     { t: "Transparency", d: "Clear pricing, clear updates, clear communication." },
-    { t: "Reliability", d: "Our agents serve as your trusted partner—bringing reliability to your logistics needs." },
+    {
+      t: "Reliability",
+      d: "Our agents serve as your trusted partner—bringing reliability to your logistics needs.",
+    },
   ];
 
   return (
@@ -66,8 +84,8 @@ export default function AboutPage() {
 
               <p className="mt-3 text-slate-700 text-[15px] leading-6 max-w-2xl md:max-w-none mx-auto md:mx-0">
                 GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
-                international lanes. Our promise is simple: protect what matters and keep you informed
-                from quote to proof-of-delivery.
+                international lanes. Our promise is simple: protect what matters and keep you
+                informed from quote to proof-of-delivery.
               </p>
 
               {/* Chips */}
@@ -77,12 +95,7 @@ export default function AboutPage() {
                     key={label}
                     className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100"
                   >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
+                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.586l6.543-6.543a1 1 0 011.414 0z" />
                     </svg>
                     {label}
@@ -122,7 +135,10 @@ export default function AboutPage() {
                 {/* Mini caption pill */}
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-slate-900 ring-1 ring-white/60">
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-emerald-500"
+                      aria-hidden="true"
+                    />
                     Photo-verified handling
                   </div>
                 </div>
@@ -137,29 +153,43 @@ export default function AboutPage() {
       {/* ---------- OUR STORY ---------- */}
       <section className={shell} aria-labelledby="story-title">
         <div className="max-w-4xl mx-auto">
-          <h2
-            id="story-title"
-            className="text-center text-2xl md:text-3xl font-bold text-slate-900"
-          >
+          <h2 id="story-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
             Our story
           </h2>
 
           <div className="mt-5 space-y-4 text-slate-800 text-[16px] leading-7">
+            {/* 1) Opening paragraph */}
             <p>
-              In <strong>2010</strong>, our family moved from the <strong>Caribbean Islands</strong> back
-              to the <strong>United States</strong>. We did everything right—palletized, shrink-wrapped,
-              sealed. But once the container reached the U.S., the shipment was taken apart and mixed
-              with others. A promised two-week delivery dragged into months.
+              In <strong>2010</strong>, our family moved from the <strong>Caribbean</strong> to the{" "}
+              <strong>United States</strong>. We prepared everything the right way—fully palletized,
+              shrink-wrapped, and sealed properly—so the container left the origin site correctly.
             </p>
+
+            {/* 2) Problem paragraph */}
             <p>
-              Boxes went missing—about <strong>40</strong>—and what did arrive told the story: smashed,
-              crammed, poorly handled. At delivery we were pressured for extra payment, or the driver
-              would leave with what was left. It was a low point and a clear lesson.
+              But when it arrived in the U.S., the shipping company dismantled the container and
+              mixed our goods with other customers’ freight for their benefit. What was promised as a{" "}
+              <strong>two-week delivery</strong> stretched into months.
             </p>
+
+            {/* 3) Impact paragraph */}
             <p>
-              That day we decided to build a logistics company that treats people and their freight
-              with <strong>integrity</strong>. GO123 Logistics exists so no one else has to learn the
-              hard way.
+              In the end, about <strong>40 boxes</strong> were missing. Other people’s belongings
+              showed up instead, and the boxes we did receive were smashed, crammed, and broken. Then
+              the driver attempted to extort extra payment at delivery. It turned into a standoff—but
+              our family stood their ground.
+            </p>
+
+            {/* 4) Lesson paragraph */}
+            <p>
+              The lesson was clear: integrity isn’t optional. From that moment on, it became
+              non-negotiable.
+            </p>
+
+            {/* 5) Mission paragraph */}
+            <p>
+              GO123 Logistics was built around integrity—treating people and their freight the right
+              way. No one else should have to learn the hard way. <strong>Welcome home!</strong>
             </p>
           </div>
 
@@ -247,7 +277,8 @@ export default function AboutPage() {
                 Ready to ship with confidence?
               </h3>
               <p className="mt-1 text-slate-700 md:text-base">
-                Build a transparent, step-by-step plan you can trust—tailored to your lanes, timelines, and budget.
+                Build a transparent, step-by-step plan you can trust—tailored to your lanes,
+                timelines, and budget.
               </p>
             </div>
 

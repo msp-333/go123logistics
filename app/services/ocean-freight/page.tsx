@@ -24,33 +24,27 @@ export default function OceanFreightPage() {
           <h3 className="font-semibold mb-2">How It Works</h3>
           <ol className="list-decimal pl-5 space-y-1 text-slate-700">
             <li>
-              <b>Booking & Planning</b> — We select the best sailing, carrier, and container option
-              for your cargo, schedule, and budget.
+              <b>Booking & Planning</b> — We research the best sailing carrier and container option for your cargo schedule and budget.
             </li>
             <li>
-              <b>Pickup, Loading & Documentation</b> — We coordinate container loading and handle
-              all required shipping documents for a smooth handoff.
+              <b>Pickup, Loading & Documentation</b> — We help coordinate pickup, loading, and documentation.
             </li>
             <li>
-              <b>Export Clearance</b> — We manage origin customs requirements to avoid delays and
-              ensure compliant departure.
+              <b>Export Clearance</b> — We connect you with experts to manage origin customs requirements to avoid delays and ensure compliant departure.
             </li>
             <li>
               <b>Ocean Transit</b> — Your shipment moves on the confirmed route with tracking and
               milestone visibility.
             </li>
             <li>
-              <b>Import Clearance</b> — We coordinate destination customs and release so your cargo
-              clears quickly and correctly.
+              <b>Import Clearance</b> — We connect you with experts to manage destination customs requirements.
             </li>
             <li>
-              <b>Final Delivery</b> — We arrange delivery to the final destination, including any
-              last-mile requirements.
+              <b>Final Delivery</b> — We help coordinate delivery to the final destination, including last-mile requirements.
             </li>
           </ol>
           <p className="text-slate-600 mt-3">
-            From booking to final delivery, everything is coordinated end-to-end—so you’re not
-            chasing carriers, paperwork, or handoffs.
+            From booking to final delivery, everything is coordinated end-to-end so you’re not chasing carriers or paperwork.
           </p>
         </div>
 

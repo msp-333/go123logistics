@@ -22,32 +22,32 @@ export default function AirFreightPage() {
           <h3 className="font-semibold mb-2">How It Works</h3>
           <ol className="list-decimal pl-5 space-y-1 text-slate-700">
             <li>
-              <b>Booking & Flight Planning</b> — We secure capacity, select the best route, and align schedules
-              to your delivery deadline.
+              <b>Booking & Flight Planning</b> — We help research options so you can secure capacity, select the best route,
+              and align schedules with your delivery deadline.
             </li>
             <li>
-              <b>Documentation & Compliance</b> — We prepare the Air Waybill (AWB) and all export documents to
-              meet airline and customs requirements.
+              <b>Documentation & Compliance</b> — We support you in preparing the Air Waybill (AWB) and all export documents
+              to meet airline and customs requirements.
             </li>
             <li>
-              <b>Security Screening</b> — We coordinate screening and handling based on aviation regulations
-              to ensure smooth acceptance at the airport.
+              <b>Security Screening</b> — We help coordinate screening and handling based on aviation regulations to ensure
+              smooth acceptance at the airport.
             </li>
             <li>
               <b>Air Transit</b> — Your cargo moves on the confirmed flight plan with milestone tracking.
             </li>
             <li>
-              <b>Customs Clearance</b> — We manage import customs coordination so freight releases quickly and
-              correctly.
+              <b>Customs Clearance</b> — We connect you with experts to manage destination customs requirements so freight
+              can be released smoothly.
             </li>
             <li>
-              <b>Final Mile Delivery</b> — We arrange delivery to the consignee, including time-definite and
-              special handling needs.
+              <b>Final Mile Delivery</b> — We help coordinate delivery to the consignee, including time-definite and special
+              handling needs.
             </li>
           </ol>
           <p className="text-slate-600 mt-3">
-            Everything is coordinated end-to-end—capacity, documents, screening, tracking, clearance, and delivery—so
-            you don’t have to manage the moving parts.
+            Everything is coordinated end-to-end—capacity, documents, screening, tracking, clearance, and delivery—so you
+            don’t have to manage the moving parts.
           </p>
         </div>
 

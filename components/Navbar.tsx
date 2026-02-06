@@ -20,11 +20,14 @@ export default function Navbar() {
 
   const rawPath = usePathname() || '/';
   const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
-  const pathname = base && rawPath.startsWith(base) ? rawPath.slice(base.length) || '/' : rawPath;
+  const pathname =
+    base && rawPath.startsWith(base) ? rawPath.slice(base.length) || '/' : rawPath;
 
   const isActive = (paths: string | string[]) => {
     const list = Array.isArray(paths) ? paths : [paths];
-    return list.some((p) => (p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)));
+    return list.some((p) =>
+      p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)
+    );
   };
 
   const closeAllMenus = () => {
@@ -57,7 +60,9 @@ export default function Navbar() {
   const desktopLinkClass = (active: boolean) =>
     clsx(
       'rounded-full px-3 py-1.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
-      active ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-700 hover:bg-slate-50 hover:text-emerald-700'
+      active
+        ? 'bg-emerald-50 text-emerald-700 font-semibold'
+        : 'text-slate-700 hover:bg-slate-50 hover:text-emerald-700'
     );
 
   const menuItemClass = (active: boolean) =>
@@ -86,15 +91,30 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-2">
-          <Link href="/" onClick={onNavigate} aria-current={isActive('/') ? 'page' : undefined} className={desktopLinkClass(isActive('/'))}>
+          <Link
+            href="/"
+            onClick={onNavigate}
+            aria-current={isActive('/') ? 'page' : undefined}
+            className={desktopLinkClass(isActive('/'))}
+          >
             Home
           </Link>
 
-          <Link href="/about" onClick={onNavigate} aria-current={isActive('/about') ? 'page' : undefined} className={desktopLinkClass(isActive('/about'))}>
+          <Link
+            href="/about"
+            onClick={onNavigate}
+            aria-current={isActive('/about') ? 'page' : undefined}
+            className={desktopLinkClass(isActive('/about'))}
+          >
             About
           </Link>
 
-          <Link href="/blog" onClick={onNavigate} aria-current={isActive('/blog') ? 'page' : undefined} className={desktopLinkClass(isActive('/blog'))}>
+          <Link
+            href="/blog"
+            onClick={onNavigate}
+            aria-current={isActive('/blog') ? 'page' : undefined}
+            className={desktopLinkClass(isActive('/blog'))}
+          >
             Blog
           </Link>
 
@@ -103,16 +123,17 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setServicesOpen((o) => !o)}
-              className={clsx(
-                desktopLinkClass(isActive(['/services', '/shipping-guide'])),
-                'inline-flex items-center gap-1'
-              )}
+              className={clsx(desktopLinkClass(isActive(['/services', '/shipping-guide'])), 'inline-flex items-center gap-1')}
               aria-haspopup="menu"
               aria-expanded={servicesOpen}
               aria-controls="services-menu"
             >
               Services
-              <svg className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
@@ -125,7 +146,9 @@ export default function Navbar() {
                 servicesOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
               )}
             >
-              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">Shipment</div>
+              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">
+                Shipment
+              </div>
 
               <Link
                 href="/shipping-guide"
@@ -138,9 +161,11 @@ export default function Navbar() {
                 <span className="text-xs text-slate-400">Docs</span>
               </Link>
 
-              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">Freight Services</div>
+              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">
+                Freight Services
+              </div>
 
-              {/* REQUIRED ORDER: Land -> Ocean -> Air */}
+              {/* Brand phrasing: By land. By air. By sea. */}
               <Link
                 href="/services/land-freight"
                 onClick={onNavigate}
@@ -148,19 +173,8 @@ export default function Navbar() {
                 role="menuitem"
                 className={menuItemClass(isActive('/services/land-freight'))}
               >
-                <span>Land Freight</span>
+                <span>By Land</span>
                 <span className="text-xs text-slate-400">Road + Rail</span>
-              </Link>
-
-              <Link
-                href="/services/ocean-freight"
-                onClick={onNavigate}
-                aria-current={isActive('/services/ocean-freight') ? 'page' : undefined}
-                role="menuitem"
-                className={menuItemClass(isActive('/services/ocean-freight'))}
-              >
-                <span>Ocean Freight</span>
-                <span className="text-xs text-slate-400">FCL / LCL</span>
               </Link>
 
               <Link
@@ -170,13 +184,20 @@ export default function Navbar() {
                 role="menuitem"
                 className={menuItemClass(isActive('/services/air-freight'))}
               >
-                <span>Air Freight</span>
+                <span>By Air</span>
                 <span className="text-xs text-slate-400">Express</span>
               </Link>
 
-              <div className="mt-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-                End-to-end coordination across carriers, documentation, tracking, and delivery—so shipping stays effortless.
-              </div>
+              <Link
+                href="/services/ocean-freight"
+                onClick={onNavigate}
+                aria-current={isActive('/services/ocean-freight') ? 'page' : undefined}
+                role="menuitem"
+                className={menuItemClass(isActive('/services/ocean-freight'))}
+              >
+                <span>By Sea</span>
+                <span className="text-xs text-slate-400">FCL / LCL</span>
+              </Link>
             </div>
           </div>
 
@@ -310,7 +331,11 @@ export default function Navbar() {
                 )}
               >
                 <span>Services</span>
-                <svg className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
                 </svg>
               </button>
@@ -326,33 +351,26 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-xl px-3 py-2 transition-colors',
-                    isActive('/shipping-guide') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/shipping-guide')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
                   Shipping Guide &amp; SCAC Codes
                 </Link>
 
-                {/* REQUIRED ORDER: Land -> Ocean -> Air */}
+                {/* Brand phrasing: By land. By air. By sea. */}
                 <Link
                   href="/services/land-freight"
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-xl px-3 py-2 transition-colors',
-                    isActive('/services/land-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/services/land-freight')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
-                  Land Freight
-                </Link>
-
-                <Link
-                  href="/services/ocean-freight"
-                  onClick={onNavigate}
-                  className={clsx(
-                    'block rounded-xl px-3 py-2 transition-colors',
-                    isActive('/services/ocean-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
-                  )}
-                >
-                  Ocean Freight
+                  By Land
                 </Link>
 
                 <Link
@@ -360,10 +378,25 @@ export default function Navbar() {
                   onClick={onNavigate}
                   className={clsx(
                     'block rounded-xl px-3 py-2 transition-colors',
-                    isActive('/services/air-freight') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-slate-50'
+                    isActive('/services/air-freight')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
                   )}
                 >
-                  Air Freight
+                  By Air
+                </Link>
+
+                <Link
+                  href="/services/ocean-freight"
+                  onClick={onNavigate}
+                  className={clsx(
+                    'block rounded-xl px-3 py-2 transition-colors',
+                    isActive('/services/ocean-freight')
+                      ? 'bg-emerald-50 text-emerald-700 font-medium'
+                      : 'hover:bg-slate-50'
+                  )}
+                >
+                  By Sea
                 </Link>
               </div>
             </li>
