@@ -59,46 +59,56 @@ const publicPath = (p: string) => {
 /* ---------- Page ---------- */
 export default function HomePage() {
   return (
-    <div className="bg-white">
+    <div className="bg-white text-slate-900 antialiased">
       <Hero />
 
-      {/* How it works (DARK like hero) */}
+      {/* How it works (dark, cohesive with hero) */}
       <section
         id="steps"
-        className="relative scroll-mt-24"
+        className="relative scroll-mt-24 overflow-hidden"
         aria-labelledby="steps-title"
       >
-        {/* Dark surface + subtle engineering accent */}
-        <div className="absolute inset-0 bg-[#071018]" />
+        {/* Base */}
+        <div className="absolute inset-0 bg-brand-dark" />
+
+        {/* Controlled overlays (no glow) */}
         <div
           aria-hidden="true"
-          className="absolute inset-0
-          bg-[radial-gradient(900px_520px_at_20%_30%,rgba(16,185,129,0.18),transparent_55%),linear-gradient(to_right,rgba(0,0,0,0.55),rgba(0,0,0,0.35),rgba(0,0,0,0.10))]"
+          className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,17,15,0.92),rgba(0,17,15,0.70),rgba(0,17,15,0.35))]"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-24 opacity-[0.10]
-          bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.85)_0,rgba(255,255,255,0.85)_10px,transparent_10px,transparent_26px)]"
+          className="absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/25 to-transparent"
         />
 
         <div className="relative border-y border-white/10">
-          <div className="container py-16">
+          <div className="container py-20">
             <Kicker dark>How it works</Kicker>
             <Title id="steps-title" dark>
               Seamless Shipping in 4 Easy Steps
             </Title>
 
-            <div className="mt-10 grid gap-6 md:grid-cols-4">
+            <div className="mt-12 grid gap-6 md:grid-cols-4">
               {steps.map((s, i) => (
                 <article
                   key={i}
                   className="
-                    rounded-2xl border border-white/10 bg-white/5 backdrop-blur
-                    p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]
-                    transition-transform duration-200 hover:-translate-y-0.5
+                    rounded-2xl border border-white/12 bg-white/6
+                    p-7 shadow-[0_12px_34px_rgba(0,0,0,0.35)]
+                    transition-all duration-200
+                    hover:-translate-y-1 hover:bg-white/8
                   "
                 >
-                  <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-emerald-400/15 text-emerald-200 font-extrabold">
+                  <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-white/15 bg-white/10 text-white font-semibold">
                     {i + 1}
                   </div>
                   <h3 className="text-center font-semibold text-white">
@@ -111,13 +121,17 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="mt-10 text-center">
+            <div className="mt-12 text-center">
               <Link
                 href="/contact"
                 className="
-                  inline-flex items-center rounded-full bg-emerald-400 px-8 py-3 text-sm font-extrabold text-white
-                  shadow-[0_18px_55px_rgba(16,185,129,0.22)] hover:bg-emerald-300 transition
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40
+                  inline-flex items-center rounded-md
+                  bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
+                  shadow-[0_10px_28px_rgba(0,0,0,0.25)]
+                  transition-all duration-200
+                  hover:-translate-y-0.5 hover:opacity-95
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                  focus-visible:ring-offset-2 focus-visible:ring-offset-black/40
                 "
               >
                 Get a Free Quote
@@ -127,11 +141,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Value prop (lighter, crisp, same system) */}
+      {/* Value prop (light, crisp) */}
       <section id="solutions" className="relative">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(16,185,129,0.06),rgba(15,23,42,0.02),rgba(255,255,255,0))]" />
-        <div className="container relative grid items-center gap-10 py-16 md:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200/70 bg-white shadow-soft overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.06),rgba(255,255,255,0.0),rgba(255,255,255,0.0))]"
+        />
+        <div className="container relative grid items-center gap-12 py-20 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-soft overflow-hidden">
             <img
               src={publicPath("/images/logistic-dashboard.png")}
               alt="Operations dashboard"
@@ -141,26 +158,26 @@ export default function HomePage() {
               decoding="async"
               loading="lazy"
             />
-            <div className="h-1 bg-emerald-600" />
+            <div className="h-1.5 bg-brand-green" />
           </div>
 
           <div>
             <Kicker>Why choose us</Kicker>
             <Title align="left">Logistics, minus the guesswork</Title>
 
-            <ul className="mt-5 grid gap-3 text-slate-700 leading-relaxed">
-              <li className="flex gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-600" />
+            <ul className="mt-6 grid gap-4 text-slate-700 leading-relaxed">
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
                 <span>Transparent timelines and proactive updates.</span>
               </li>
-              <li className="flex gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-600" />
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
                 <span>
                   No surprise pricing with clear expectations to meet your specific needs.
                 </span>
               </li>
-              <li className="flex gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-600" />
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
                 <span>End-to-end chain-of-custody, from pickup to delivery.</span>
               </li>
             </ul>
@@ -168,9 +185,11 @@ export default function HomePage() {
             <Link
               href="/contact/"
               className="
-                mt-7 inline-flex items-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white
-                shadow-soft hover:bg-emerald-700 transition
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500
+                mt-8 inline-flex items-center rounded-md
+                bg-brand-dark px-7 py-3.5 text-sm font-semibold text-white
+                shadow-soft transition-all duration-200
+                hover:-translate-y-0.5 hover:opacity-95
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
               "
             >
               Get a Free Quote
@@ -180,8 +199,12 @@ export default function HomePage() {
       </section>
 
       {/* Blog */}
-      <Strip>
-        <section id="blog" className="container py-16" aria-labelledby="blog-title">
+      <Strip alt>
+        <section
+          id="blog"
+          className="container py-20"
+          aria-labelledby="blog-title"
+        >
           <div className="flex items-end justify-between gap-6">
             <div>
               <Kicker>Insights</Kicker>
@@ -192,20 +215,21 @@ export default function HomePage() {
 
             <Link
               href="/blog"
-              className="text-sm font-extrabold text-emerald-700 hover:underline underline-offset-4"
+              className="text-sm font-semibold text-brand-dark hover:underline underline-offset-4"
             >
               View all posts →
             </Link>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-7 md:grid-cols-3">
             {posts.map((p) => (
               <Link
                 key={p.title}
                 href={p.href}
                 className="
-                  group overflow-hidden rounded-3xl border border-slate-200/70 bg-white
-                  shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
+                  group overflow-hidden rounded-2xl border border-slate-200/80 bg-white
+                  shadow-soft transition-all duration-200
+                  hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
                 "
               >
                 <div className="relative h-44 w-full">
@@ -219,7 +243,7 @@ export default function HomePage() {
                   />
                   <div
                     aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-60"
+                    className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
                   />
                 </div>
 
@@ -231,18 +255,21 @@ export default function HomePage() {
                       year: "numeric",
                     })}
                   </div>
-                  <h3 className="mt-1 text-[17px] font-extrabold text-slate-900">
+                  <h3 className="mt-1 text-[17px] font-semibold text-slate-900">
                     {p.title}
                   </h3>
                   <p className="mt-2 text-sm text-slate-600 leading-relaxed">
                     {p.excerpt}
                   </p>
-                  <span className="mt-4 inline-flex items-center font-extrabold text-emerald-700">
-                    Read more <span className="ml-1 transition-transform group-hover:translate-x-0.5">→</span>
+                  <span className="mt-4 inline-flex items-center font-semibold text-brand-dark">
+                    Read more{" "}
+                    <span className="ml-1 transition-transform group-hover:translate-x-0.5">
+                      →
+                    </span>
                   </span>
                 </div>
 
-                <div className="h-1 bg-emerald-600/90" />
+                <div className="h-1.5 bg-brand-green" />
               </Link>
             ))}
           </div>
@@ -250,15 +277,19 @@ export default function HomePage() {
       </Strip>
 
       {/* Final CTA */}
-      <section id="cta" className="container my-16">
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-soft">
+      <section id="cta" className="container my-20">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft">
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-[radial-gradient(900px_320px_at_20%_30%,rgba(16,185,129,0.12),transparent_60%)]"
+            className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.08),transparent,transparent)]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-px bg-slate-200/70"
           />
 
           <div className="relative grid items-center md:grid-cols-2">
-            <div className="p-7 md:p-10">
+            <div className="p-8 md:p-12">
               <Title align="left">
                 Ready to elevate your transportation and logistics operations?
               </Title>
@@ -266,16 +297,19 @@ export default function HomePage() {
               <Link
                 href="/contact/"
                 className="
-                  mt-6 inline-flex items-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white
-                  shadow-soft hover:bg-emerald-700 transition
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500
+                  mt-7 inline-flex items-center rounded-md
+                  bg-brand-green px-7 py-3.5 text-sm font-semibold text-brand-dark
+                  shadow-[0_10px_28px_rgba(0,0,0,0.10)]
+                  transition-all duration-200
+                  hover:-translate-y-0.5 hover:opacity-95
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
                 "
               >
                 Get a Free Quote
               </Link>
             </div>
 
-            <div className="relative h-44 md:h-full">
+            <div className="relative h-48 md:h-full">
               <Image
                 src="/images/cta-truck.png"
                 alt="Truck"
@@ -285,12 +319,12 @@ export default function HomePage() {
               />
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-emerald-600" />
+            <div className="absolute inset-x-0 bottom-0 h-1.5 bg-brand-green" />
           </div>
         </div>
       </section>
 
-      <div className="h-10" />
+      <div className="h-12" />
     </div>
   );
 }
@@ -306,8 +340,8 @@ function Kicker({
   return (
     <p
       className={cls(
-        "font-semibold tracking-wide uppercase text-xs",
-        dark ? "text-emerald-200/90" : "text-emerald-700"
+        "text-xs font-semibold tracking-wider uppercase",
+        dark ? "text-white/70" : "text-brand-dark/70"
       )}
     >
       {children}
@@ -330,7 +364,7 @@ function Title({
     <h2
       id={id}
       className={cls(
-        "mt-2 font-extrabold tracking-tight",
+        "mt-3 font-semibold tracking-tight leading-tight",
         "text-2xl sm:text-3xl",
         align === "center" ? "text-center" : "text-left",
         dark ? "text-white" : "text-slate-900"
@@ -341,10 +375,18 @@ function Title({
   );
 }
 
-function Strip({ children, alt = false }: { children: React.ReactNode; alt?: boolean }) {
+function Strip({
+  children,
+  alt = false,
+}: {
+  children: React.ReactNode;
+  alt?: boolean;
+}) {
   return (
-    <div className={alt ? "bg-emerald-50/40" : "bg-white"}>
-      <div className="border-y border-slate-100">{children}</div>
+    <div className={alt ? "bg-brand-light" : "bg-white"}>
+      <div className={alt ? "border-y border-slate-200/70" : "border-y border-slate-100"}>
+        {children}
+      </div>
     </div>
   );
 }

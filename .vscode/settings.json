@@ -1,7 +1,5 @@
 {
-  "deno.enablePaths": [
-    "supabase/functions"
-  ],
+  "deno.enablePaths": ["supabase/functions"],
   "deno.lint": true,
   "deno.unstable": [
     "bare-node-builtins",
@@ -20,5 +18,16 @@
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+
+  "files.associations": {
+    "*.css": "postcss"
   }
 }
+
+
+

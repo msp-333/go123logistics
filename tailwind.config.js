@@ -16,6 +16,23 @@ module.exports = {
       boxShadow: {
         soft: "0 10px 30px rgba(0,0,0,0.08)",
       },
+      fontFamily: {
+        sans: [
+          "var(--font-body)",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Arial",
+          "sans-serif",
+        ],
+        heading: [
+          "var(--font-heading)",
+          "var(--font-body)",
+          "system-ui",
+          "sans-serif",
+        ],
+      },
     },
   },
   plugins: [],
