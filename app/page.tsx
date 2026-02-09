@@ -62,84 +62,77 @@ export default function HomePage() {
     <div className="bg-white text-slate-900 antialiased">
       <Hero />
 
-      {/* How it works (dark, cohesive with hero) */}
-      <section
-        id="steps"
-        className="relative scroll-mt-24 overflow-hidden"
-        aria-labelledby="steps-title"
-      >
-        {/* Base */}
-        <div className="absolute inset-0 bg-brand-dark" />
+{/* How it works (LIGHT, cohesive) */}
+<section
+  id="steps"
+  className="relative scroll-mt-24 overflow-hidden"
+  aria-labelledby="steps-title"
+>
+  {/* Light base */}
+  <div aria-hidden className="absolute inset-0 bg-brand-light" />
 
-        {/* Controlled overlays (no glow) */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,17,15,0.92),rgba(0,17,15,0.70),rgba(0,17,15,0.35))]"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)",
-            backgroundSize: "44px 44px",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/25 to-transparent"
-        />
+  {/* Subtle brand accent (no glow) */}
+  <div
+    aria-hidden
+    className="absolute inset-0 bg-[radial-gradient(900px_520px_at_18%_18%,rgba(0,200,83,0.10),transparent_60%),linear-gradient(to_bottom,rgba(255,255,255,0.65),rgba(255,255,255,1))]"
+  />
 
-        <div className="relative border-y border-white/10">
-          <div className="container py-20">
-            <Kicker dark>How it works</Kicker>
-            <Title id="steps-title" dark>
-              Seamless Shipping in 4 Easy Steps
-            </Title>
+  {/* Smooth transition from hero (dark → light) */}
+  <div
+    aria-hidden
+    className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-brand-dark/35 to-transparent"
+  />
 
-            <div className="mt-12 grid gap-6 md:grid-cols-4">
-              {steps.map((s, i) => (
-                <article
-                  key={i}
-                  className="
-                    rounded-2xl border border-white/12 bg-white/6
-                    p-7 shadow-[0_12px_34px_rgba(0,0,0,0.35)]
-                    transition-all duration-200
-                    hover:-translate-y-1 hover:bg-white/8
-                  "
-                >
-                  <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-white/15 bg-white/10 text-white font-semibold">
-                    {i + 1}
-                  </div>
-                  <h3 className="text-center font-semibold text-white">
-                    {s.title}
-                  </h3>
-                  <p className="mt-2 text-center text-sm text-white/75 leading-relaxed">
-                    {s.desc}
-                  </p>
-                </article>
-              ))}
+  <div className="relative border-y border-slate-200/70">
+    <div className="container py-20">
+      <Kicker>How it works</Kicker>
+      <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
+
+      <div className="mt-12 grid gap-6 md:grid-cols-4">
+        {steps.map((s, i) => (
+          <article
+            key={i}
+            className="
+              rounded-2xl border border-slate-200/80 bg-white
+              p-7 shadow-soft
+              transition-all duration-200
+              hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
+            "
+          >
+            <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-brand-light text-brand-dark font-semibold">
+              {i + 1}
             </div>
 
-            <div className="mt-12 text-center">
-              <Link
-                href="/contact"
-                className="
-                  inline-flex items-center rounded-md
-                  bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
-                  shadow-[0_10px_28px_rgba(0,0,0,0.25)]
-                  transition-all duration-200
-                  hover:-translate-y-0.5 hover:opacity-95
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
-                  focus-visible:ring-offset-2 focus-visible:ring-offset-black/40
-                "
-              >
-                Get a Free Quote
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+            <h3 className="text-center font-semibold text-slate-900">
+              {s.title}
+            </h3>
+
+            <p className="mt-2 text-center text-sm text-slate-600 leading-relaxed">
+              {s.desc}
+            </p>
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-12 text-center">
+        <Link
+          href="/contact"
+          className="
+            inline-flex items-center rounded-md
+            bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
+            shadow-[0_10px_28px_rgba(0,0,0,0.10)]
+            transition-all duration-200
+            hover:-translate-y-0.5 hover:opacity-95
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+            focus-visible:ring-offset-2 focus-visible:ring-offset-white
+          "
+        >
+          Get a Free Quote
+        </Link>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Value prop (light, crisp) */}
       <section id="solutions" className="relative">
