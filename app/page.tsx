@@ -56,148 +56,156 @@ const publicPath = (p: string) => {
   return `${base}${path}`;
 };
 
+const formatDate = (iso: string) => {
+  // Avoid timezone-shifting when only a date is provided
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 /* ---------- Page ---------- */
 export default function HomePage() {
   return (
     <div className="bg-white text-slate-900 antialiased">
       <Hero />
 
-{/* How it works (LIGHT, cohesive) */}
-<section
-  id="steps"
-  className="relative scroll-mt-24 overflow-hidden"
-  aria-labelledby="steps-title"
->
-  {/* Light base */}
-  <div aria-hidden className="absolute inset-0 bg-brand-light" />
+      {/* How it works (light, distinct) */}
+      <Strip tone="tint">
+        <section
+          id="steps"
+          className="relative scroll-mt-24 overflow-hidden"
+          aria-labelledby="steps-title"
+        >
+          {/* subtle pattern + gentle top fade (keeps it crisp on light) */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.045]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(15,23,42,.18) 1px, transparent 1px),linear-gradient(90deg, rgba(15,23,42,.18) 1px, transparent 1px)",
+              backgroundSize: "52px 52px",
+            }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/90 to-transparent"
+          />
 
-  {/* Subtle brand accent (no glow) */}
-  <div
-    aria-hidden
-    className="absolute inset-0 bg-[radial-gradient(900px_520px_at_18%_18%,rgba(0,200,83,0.10),transparent_60%),linear-gradient(to_bottom,rgba(255,255,255,0.65),rgba(255,255,255,1))]"
-  />
+          <div className="container relative py-20">
+            <Kicker>How it works</Kicker>
+            <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
 
-  {/* Smooth transition from hero (dark → light) */}
-  <div
-    aria-hidden
-    className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-brand-dark/35 to-transparent"
-  />
+            <div className="mt-12 grid gap-6 md:grid-cols-4">
+              {steps.map((s, i) => (
+                <article
+                  key={i}
+                  className="
+                    rounded-2xl border border-slate-200/80 bg-white
+                    p-7 shadow-soft
+                    transition-all duration-200
+                    hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
+                  "
+                >
+                  <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-brand-dark font-semibold">
+                    {i + 1}
+                  </div>
 
-  <div className="relative border-y border-slate-200/70">
-    <div className="container py-20">
-      <Kicker>How it works</Kicker>
-      <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
+                  <h3 className="text-center font-semibold text-slate-900">
+                    {s.title}
+                  </h3>
 
-      <div className="mt-12 grid gap-6 md:grid-cols-4">
-        {steps.map((s, i) => (
-          <article
-            key={i}
-            className="
-              rounded-2xl border border-slate-200/80 bg-white
-              p-7 shadow-soft
-              transition-all duration-200
-              hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
-            "
-          >
-            <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-brand-light text-brand-dark font-semibold">
-              {i + 1}
+                  <p className="mt-2 text-center text-sm text-slate-600 leading-relaxed">
+                    {s.desc}
+                  </p>
+                </article>
+              ))}
             </div>
 
-            <h3 className="text-center font-semibold text-slate-900">
-              {s.title}
-            </h3>
-
-            <p className="mt-2 text-center text-sm text-slate-600 leading-relaxed">
-              {s.desc}
-            </p>
-          </article>
-        ))}
-      </div>
-
-      <div className="mt-12 text-center">
-        <Link
-          href="/contact"
-          className="
-            inline-flex items-center rounded-md
-            bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
-            shadow-[0_10px_28px_rgba(0,0,0,0.10)]
-            transition-all duration-200
-            hover:-translate-y-0.5 hover:opacity-95
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
-            focus-visible:ring-offset-2 focus-visible:ring-offset-white
-          "
-        >
-          Get a Free Quote
-        </Link>
-      </div>
-    </div>
-  </div>
-</section>
-
-      {/* Value prop (light, crisp) */}
-      <section id="solutions" className="relative">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.06),rgba(255,255,255,0.0),rgba(255,255,255,0.0))]"
-        />
-        <div className="container relative grid items-center gap-12 py-20 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-soft overflow-hidden">
-            <img
-              src={publicPath("/images/logistic-dashboard.png")}
-              alt="Operations dashboard"
-              width={1200}
-              height={700}
-              className="h-auto w-full object-cover"
-              decoding="async"
-              loading="lazy"
-            />
-            <div className="h-1.5 bg-brand-green" />
+            <div className="mt-12 text-center">
+              <Link
+                href="/contact"
+                className="
+                  inline-flex items-center rounded-md
+                  bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
+                  shadow-[0_10px_28px_rgba(0,0,0,0.10)]
+                  transition-all duration-200
+                  hover:-translate-y-0.5 hover:opacity-95
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                  focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                "
+              >
+                Get a Free Quote
+              </Link>
+            </div>
           </div>
+        </section>
+      </Strip>
 
-          <div>
-            <Kicker>Why choose us</Kicker>
-            <Title align="left">Logistics, minus the guesswork</Title>
+      {/* Value prop (white section, still separated by Strip border) */}
+      <Strip tone="white">
+        <section id="solutions" className="relative">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.06),rgba(255,255,255,0.0),rgba(255,255,255,0.0))]"
+          />
+          <div className="container relative grid items-center gap-12 py-20 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-soft overflow-hidden">
+              <img
+                src={publicPath("/images/logistic-dashboard.png")}
+                alt="Operations dashboard"
+                width={1200}
+                height={700}
+                className="h-auto w-full object-cover"
+                decoding="async"
+                loading="lazy"
+              />
+              <div className="h-1.5 bg-brand-green" />
+            </div>
 
-            <ul className="mt-6 grid gap-4 text-slate-700 leading-relaxed">
-              <li className="flex gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
-                <span>Transparent timelines and proactive updates.</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
-                <span>
-                  No surprise pricing with clear expectations to meet your specific needs.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
-                <span>End-to-end chain-of-custody, from pickup to delivery.</span>
-              </li>
-            </ul>
+            <div>
+              <Kicker>Why choose us</Kicker>
+              <Title align="left">Logistics, minus the guesswork</Title>
 
-            <Link
-              href="/contact/"
-              className="
-                mt-8 inline-flex items-center rounded-md
-                bg-brand-dark px-7 py-3.5 text-sm font-semibold text-white
-                shadow-soft transition-all duration-200
-                hover:-translate-y-0.5 hover:opacity-95
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
-              "
-            >
-              Get a Free Quote
-            </Link>
+              <ul className="mt-6 grid gap-4 text-slate-700 leading-relaxed">
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
+                  <span>Transparent timelines and proactive updates.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
+                  <span>
+                    No surprise pricing with clear expectations to meet your specific needs.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
+                  <span>End-to-end chain-of-custody, from pickup to delivery.</span>
+                </li>
+              </ul>
+
+              <Link
+                href="/contact/"
+                className="
+                  mt-8 inline-flex items-center rounded-md
+                  bg-brand-dark px-7 py-3.5 text-sm font-semibold text-white
+                  shadow-soft transition-all duration-200
+                  hover:-translate-y-0.5 hover:opacity-95
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                  focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                "
+              >
+                Get a Free Quote
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Strip>
 
-      {/* Blog */}
-      <Strip alt>
-        <section
-          id="blog"
-          className="container py-20"
-          aria-labelledby="blog-title"
-        >
+      {/* Blog (light-tint section) */}
+      <Strip tone="tint">
+        <section id="blog" className="container py-20" aria-labelledby="blog-title">
           <div className="flex items-end justify-between gap-6">
             <div>
               <Kicker>Insights</Kicker>
@@ -227,7 +235,7 @@ export default function HomePage() {
               >
                 <div className="relative h-44 w-full">
                   <Image
-                    src={p.image}
+                    src={publicPath(p.image)}
                     alt={p.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
@@ -236,18 +244,12 @@ export default function HomePage() {
                   />
                   <div
                     aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
+                    className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"
                   />
                 </div>
 
                 <div className="p-6">
-                  <div className="text-xs text-slate-500">
-                    {new Date(p.date).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </div>
+                  <div className="text-xs text-slate-500">{formatDate(p.date)}</div>
                   <h3 className="mt-1 text-[17px] font-semibold text-slate-900">
                     {p.title}
                   </h3>
@@ -269,53 +271,77 @@ export default function HomePage() {
         </section>
       </Strip>
 
-      {/* Final CTA */}
-      <section id="cta" className="container my-20">
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft">
+      {/* Final CTA (dark background section as requested) */}
+      <Strip tone="dark">
+        <section id="cta" className="relative">
+          {/* subtle dark texture */}
           <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.08),transparent,transparent)]"
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.08]"
+            style={{
+              backgroundImage:
+                "radial-gradient(700px 420px at 18% 20%, rgba(0,200,83,0.35), transparent 55%)",
+            }}
           />
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-px bg-slate-200/70"
-          />
 
-          <div className="relative grid items-center md:grid-cols-2">
-            <div className="p-8 md:p-12">
-              <Title align="left">
-                Ready to elevate your transportation and logistics operations?
-              </Title>
-
-              <Link
-                href="/contact/"
-                className="
-                  mt-7 inline-flex items-center rounded-md
-                  bg-brand-green px-7 py-3.5 text-sm font-semibold text-brand-dark
-                  shadow-[0_10px_28px_rgba(0,0,0,0.10)]
-                  transition-all duration-200
-                  hover:-translate-y-0.5 hover:opacity-95
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
-                "
-              >
-                Get a Free Quote
-              </Link>
-            </div>
-
-            <div className="relative h-48 md:h-full">
-              <Image
-                src="/images/cta-truck.png"
-                alt="Truck"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain"
+          <div className="container relative py-20">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-soft">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.14),transparent,transparent)]"
               />
-            </div>
+              <div className="relative grid items-center md:grid-cols-2">
+                <div className="p-8 md:p-12">
+                  <Kicker dark>Next step</Kicker>
+                  <Title align="left" dark>
+                    Ready to elevate your transportation and logistics operations?
+                  </Title>
 
-            <div className="absolute inset-x-0 bottom-0 h-1.5 bg-brand-green" />
+                  <p className="mt-4 max-w-xl text-sm sm:text-base text-white/70 leading-relaxed">
+                    Get a fast quote, clear timelines, and proactive updates—handled end-to-end by our team.
+                  </p>
+
+                  <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <Link
+                      href="/contact/"
+                      className="
+                        inline-flex items-center justify-center rounded-md
+                        bg-brand-green px-7 py-3.5 text-sm font-semibold text-brand-dark
+                        shadow-[0_10px_28px_rgba(0,0,0,0.25)]
+                        transition-all duration-200
+                        hover:-translate-y-0.5 hover:opacity-95
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                        focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark
+                      "
+                    >
+                      Get a Free Quote
+                    </Link>
+
+                    <Link
+                      href="/shipping-guide"
+                      className="text-sm font-semibold text-white/75 hover:text-white underline underline-offset-4"
+                    >
+                      Shipping Guide →
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="relative h-56 md:h-full">
+                  <Image
+                    src={publicPath("/images/cta-truck.png")}
+                    alt="Truck"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-contain"
+                  />
+                </div>
+
+                <div className="absolute inset-x-0 bottom-0 h-1.5 bg-brand-green" />
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Strip>
 
       <div className="h-12" />
     </div>
@@ -370,16 +396,24 @@ function Title({
 
 function Strip({
   children,
-  alt = false,
+  tone = "white",
 }: {
   children: React.ReactNode;
-  alt?: boolean;
+  tone?: "white" | "tint" | "dark";
 }) {
+  const bg =
+    tone === "dark"
+      ? "bg-brand-dark text-white"
+      : tone === "tint"
+      ? "bg-brand-light"
+      : "bg-white";
+
+  const border =
+    tone === "dark" ? "border-y border-white/10" : "border-y border-slate-200/70";
+
   return (
-    <div className={alt ? "bg-brand-light" : "bg-white"}>
-      <div className={alt ? "border-y border-slate-200/70" : "border-y border-slate-100"}>
-        {children}
-      </div>
+    <div className={bg}>
+      <div className={border}>{children}</div>
     </div>
   );
 }

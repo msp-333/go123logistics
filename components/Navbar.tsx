@@ -60,7 +60,7 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
     };
   }, []);
 
-  // Clean, elegant surface. Over-hero uses translucent white + blur for readability.
+  // Cleaner, more “enterprise logistics” surface (less glowy)
   const headerSurface =
     placement === 'over-hero'
       ? 'bg-white/70 backdrop-blur-xl border-b border-white/25 shadow-[0_8px_28px_rgba(0,0,0,0.10)]'
@@ -88,22 +88,16 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
         headerSurface
       )}
     >
-      {/* Fixed height navbar so it NEVER grows.
-          Logo is sized to be large inside this fixed height. */}
-      <div className="container h-20 md:h-[88px] flex items-center justify-between">
-        {/* Logo: bigger, but header stays fixed height */}
-        <Link
-          href="/"
-          aria-label="Home"
-          className="inline-flex items-center shrink-0"
-          onClick={onNavigate}
-        >
+      {/* Stable height = prevents “cut” look on hero */}
+      <div className="container h-20 md:h-[92px] flex items-center justify-between">
+        {/* Logo stays big, but header is no longer oversized */}
+        <Link href="/" aria-label="Home" className="inline-flex items-center" onClick={onNavigate}>
           <img
             src={publicPath(LOGO_SRC)}
             alt="Company logo"
             width={560}
             height={180}
-            className="h-16 sm:h-[72px] md:h-[82px] w-auto object-contain"
+            className="h-14 sm:h-16 md:h-[72px] w-auto object-contain"
           />
         </Link>
 
@@ -305,8 +299,8 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
       {/* Mobile drawer */}
       <div
         className={clsx(
-          'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden border-t',
-          placement === 'over-hero' ? 'border-white/25 bg-white/75 backdrop-blur-xl' : 'border-slate-200/70 bg-white',
+          'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden border-t border-white/25',
+          placement === 'over-hero' ? 'bg-white/75 backdrop-blur-xl' : 'bg-white',
           mobileOpen ? 'max-h-[720px] opacity-100' : 'max-h-0 opacity-0'
         )}
       >
