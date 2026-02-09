@@ -60,65 +60,82 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
     };
   }, []);
 
-  // Transparent “white” overlay (inverted from black)
-  const headerBg =
-    "bg-[radial-gradient(900px_260px_at_18%_20%,rgba(16,185,129,0.14),transparent_60%),linear-gradient(to_right,rgba(255,255,255,0.92),rgba(255,255,255,0.72),rgba(255,255,255,0.35))]";
+  // Cleaner, more “enterprise logistics” surface (less glowy)
+  const headerSurface =
+    placement === 'over-hero'
+      ? 'bg-white/70 backdrop-blur-xl border-b border-white/25 shadow-[0_8px_28px_rgba(0,0,0,0.10)]'
+      : 'bg-white border-b border-slate-200/70';
 
   const desktopLinkClass = (active: boolean) =>
     clsx(
-      'relative px-2 py-1 text-sm font-medium transition-colors rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
+      'relative px-2.5 py-1.5 text-[15px] lg:text-base font-medium transition-colors rounded-md',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green',
       active ? 'text-slate-900' : 'text-slate-700 hover:text-slate-900'
     );
 
   const menuItemClass = (active: boolean) =>
     clsx(
-      'flex items-center justify-between px-3 py-2 rounded-xl transition-colors',
+      'flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-sm',
       active
-        ? 'bg-emerald-50 text-emerald-700 font-medium'
+        ? 'bg-brand-light text-slate-900 font-medium'
         : 'hover:bg-slate-50 text-slate-700'
     );
 
   return (
     <header
       className={clsx(
-        // IMPORTANT: not sticky, not fixed => NOT floating
-        placement === 'over-hero' ? 'absolute top-0 inset-x-0 z-40' : 'relative z-40',
-        'border-b border-white/40 backdrop-blur-md',
-        headerBg
+        placement === 'over-hero' ? 'absolute top-0 inset-x-0 z-50' : 'relative z-40',
+        headerSurface
       )}
     >
-      <div className="container py-4 md:py-5 min-h-[72px] flex items-center justify-between">
-        {/* Logo: no box + bigger */}
+      {/* Stable height = prevents “cut” look on hero */}
+      <div className="container h-20 md:h-[92px] flex items-center justify-between">
+        {/* Logo stays big, but header is no longer oversized */}
         <Link href="/" aria-label="Home" className="inline-flex items-center" onClick={onNavigate}>
           <img
             src={publicPath(LOGO_SRC)}
             alt="Company logo"
             width={560}
             height={180}
-            className="h-14 sm:h-16 md:h-[88px] w-auto object-contain"
+            className="h-14 sm:h-16 md:h-[72px] w-auto object-contain"
           />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/" onClick={onNavigate} aria-current={isActive('/') ? 'page' : undefined} className={desktopLinkClass(isActive('/'))}>
+        <nav className="hidden md:flex items-center gap-7">
+          <Link
+            href="/"
+            onClick={onNavigate}
+            aria-current={isActive('/') ? 'page' : undefined}
+            className={desktopLinkClass(isActive('/'))}
+          >
             Home
             {isActive('/') ? (
-              <span className="absolute -bottom-2 left-1/2 h-[2px] w-6 -translate-x-1/2 rounded-full bg-emerald-600" />
+              <span className="absolute -bottom-2 left-1/2 h-[2px] w-7 -translate-x-1/2 rounded-full bg-brand-green" />
             ) : null}
           </Link>
 
-          <Link href="/about" onClick={onNavigate} aria-current={isActive('/about') ? 'page' : undefined} className={desktopLinkClass(isActive('/about'))}>
+          <Link
+            href="/about"
+            onClick={onNavigate}
+            aria-current={isActive('/about') ? 'page' : undefined}
+            className={desktopLinkClass(isActive('/about'))}
+          >
             About Us
             {isActive('/about') ? (
-              <span className="absolute -bottom-2 left-1/2 h-[2px] w-6 -translate-x-1/2 rounded-full bg-emerald-600" />
+              <span className="absolute -bottom-2 left-1/2 h-[2px] w-7 -translate-x-1/2 rounded-full bg-brand-green" />
             ) : null}
           </Link>
 
-          <Link href="/blog" onClick={onNavigate} aria-current={isActive('/blog') ? 'page' : undefined} className={desktopLinkClass(isActive('/blog'))}>
+          <Link
+            href="/blog"
+            onClick={onNavigate}
+            aria-current={isActive('/blog') ? 'page' : undefined}
+            className={desktopLinkClass(isActive('/blog'))}
+          >
             Blog
             {isActive('/blog') ? (
-              <span className="absolute -bottom-2 left-1/2 h-[2px] w-6 -translate-x-1/2 rounded-full bg-emerald-600" />
+              <span className="absolute -bottom-2 left-1/2 h-[2px] w-7 -translate-x-1/2 rounded-full bg-brand-green" />
             ) : null}
           </Link>
 
@@ -127,13 +144,20 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
             <button
               type="button"
               onClick={() => setServicesOpen((o) => !o)}
-              className={clsx(desktopLinkClass(isActive(['/services', '/shipping-guide'])), 'inline-flex items-center gap-1')}
+              className={clsx(
+                desktopLinkClass(isActive(['/services', '/shipping-guide'])),
+                'inline-flex items-center gap-1'
+              )}
               aria-haspopup="menu"
               aria-expanded={servicesOpen}
               aria-controls="services-menu"
             >
               Services
-              <svg className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                className={clsx('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
@@ -142,30 +166,58 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
               id="services-menu"
               role="menu"
               className={clsx(
-                'absolute right-0 mt-3 w-[340px] rounded-2xl border border-slate-200/70 bg-white/95 backdrop-blur shadow-soft p-2 origin-top-right transition',
+                'absolute right-0 mt-3 w-[340px] rounded-2xl border border-slate-200/70 bg-white shadow-soft p-2 origin-top-right transition',
                 servicesOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'
               )}
             >
-              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">Shipment</div>
+              <div className="px-3 pt-2 pb-1 text-xs uppercase tracking-wide text-slate-500">
+                Shipment
+              </div>
 
-              <Link href="/shipping-guide" onClick={onNavigate} aria-current={isActive('/shipping-guide') ? 'page' : undefined} role="menuitem" className={menuItemClass(isActive('/shipping-guide'))}>
+              <Link
+                href="/shipping-guide"
+                onClick={onNavigate}
+                aria-current={isActive('/shipping-guide') ? 'page' : undefined}
+                role="menuitem"
+                className={menuItemClass(isActive('/shipping-guide'))}
+              >
                 <span>Shipping Guide &amp; SCAC Codes</span>
                 <span className="text-xs text-slate-400">Docs</span>
               </Link>
 
-              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">Freight Services</div>
+              <div className="px-3 pt-3 pb-1 text-xs uppercase tracking-wide text-slate-500">
+                Freight Services
+              </div>
 
-              <Link href="/services/land-freight" onClick={onNavigate} aria-current={isActive('/services/land-freight') ? 'page' : undefined} role="menuitem" className={menuItemClass(isActive('/services/land-freight'))}>
+              <Link
+                href="/services/land-freight"
+                onClick={onNavigate}
+                aria-current={isActive('/services/land-freight') ? 'page' : undefined}
+                role="menuitem"
+                className={menuItemClass(isActive('/services/land-freight'))}
+              >
                 <span>By Land</span>
                 <span className="text-xs text-slate-400">Road + Rail</span>
               </Link>
 
-              <Link href="/services/air-freight" onClick={onNavigate} aria-current={isActive('/services/air-freight') ? 'page' : undefined} role="menuitem" className={menuItemClass(isActive('/services/air-freight'))}>
+              <Link
+                href="/services/air-freight"
+                onClick={onNavigate}
+                aria-current={isActive('/services/air-freight') ? 'page' : undefined}
+                role="menuitem"
+                className={menuItemClass(isActive('/services/air-freight'))}
+              >
                 <span>By Air</span>
                 <span className="text-xs text-slate-400">Express</span>
               </Link>
 
-              <Link href="/services/ocean-freight" onClick={onNavigate} aria-current={isActive('/services/ocean-freight') ? 'page' : undefined} role="menuitem" className={menuItemClass(isActive('/services/ocean-freight'))}>
+              <Link
+                href="/services/ocean-freight"
+                onClick={onNavigate}
+                aria-current={isActive('/services/ocean-freight') ? 'page' : undefined}
+                role="menuitem"
+                className={menuItemClass(isActive('/services/ocean-freight'))}
+              >
                 <span>By Sea</span>
                 <span className="text-xs text-slate-400">FCL / LCL</span>
               </Link>
@@ -178,8 +230,9 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
               href="/contact"
               onClick={onNavigate}
               className={clsx(
-                'inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
-                'bg-emerald-600 text-white hover:bg-emerald-700'
+                'inline-flex items-center rounded-lg px-4 py-2.5 text-[15px] lg:text-base font-semibold transition-colors',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green',
+                'bg-brand-green text-brand-dark hover:opacity-95'
               )}
             >
               Contact Us
@@ -189,7 +242,7 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
               <Link
                 href="/login"
                 onClick={onNavigate}
-                className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold border border-slate-300 text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                className="inline-flex items-center rounded-lg px-4 py-2.5 text-[15px] lg:text-base font-semibold border border-slate-300 text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
               >
                 Login
               </Link>
@@ -201,8 +254,8 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
                   href="/training"
                   onClick={onNavigate}
                   className={clsx(
-                    'inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold border border-slate-300 text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
-                    isActive('/training') && 'border-emerald-600 text-emerald-700'
+                    'inline-flex items-center rounded-lg px-4 py-2.5 text-[15px] lg:text-base font-semibold border border-slate-300 text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green',
+                    isActive('/training') && 'border-brand-green text-slate-900'
                   )}
                 >
                   Training
@@ -214,7 +267,7 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
                     signOut();
                     onNavigate();
                   }}
-                  className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold border border-slate-300 text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="inline-flex items-center rounded-lg px-4 py-2.5 text-[15px] lg:text-base font-semibold border border-slate-300 text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
                 >
                   Logout
                 </button>
@@ -226,7 +279,7 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
         {/* Mobile hamburger */}
         <button
           type="button"
-          className="md:hidden inline-flex items-center justify-center rounded-xl p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+          className="md:hidden inline-flex items-center justify-center rounded-xl p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green transition-colors"
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((v) => !v)}
@@ -246,8 +299,8 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
       {/* Mobile drawer */}
       <div
         className={clsx(
-          'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden border-t border-white/40',
-          headerBg,
+          'md:hidden transition-[max-height,opacity] duration-200 overflow-hidden border-t border-white/25',
+          placement === 'over-hero' ? 'bg-white/75 backdrop-blur-xl' : 'bg-white',
           mobileOpen ? 'max-h-[720px] opacity-100' : 'max-h-0 opacity-0'
         )}
       >
@@ -259,8 +312,8 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
                 onClick={onNavigate}
                 aria-current={isActive('/') ? 'page' : undefined}
                 className={clsx(
-                  'block rounded-xl px-3 py-2 transition-colors',
-                  isActive('/') ? 'bg-white/60 text-slate-900 font-semibold' : 'hover:bg-white/50 text-slate-800'
+                  'block rounded-xl px-3 py-2.5 transition-colors text-[15px] font-medium',
+                  isActive('/') ? 'bg-brand-light text-slate-900' : 'hover:bg-slate-50 text-slate-800'
                 )}
               >
                 Home
@@ -273,8 +326,8 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
                 onClick={onNavigate}
                 aria-current={isActive('/about') ? 'page' : undefined}
                 className={clsx(
-                  'block rounded-xl px-3 py-2 transition-colors',
-                  isActive('/about') ? 'bg-white/60 text-slate-900 font-semibold' : 'hover:bg-white/50 text-slate-800'
+                  'block rounded-xl px-3 py-2.5 transition-colors text-[15px] font-medium',
+                  isActive('/about') ? 'bg-brand-light text-slate-900' : 'hover:bg-slate-50 text-slate-800'
                 )}
               >
                 About Us
@@ -287,8 +340,8 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
                 onClick={onNavigate}
                 aria-current={isActive('/blog') ? 'page' : undefined}
                 className={clsx(
-                  'block rounded-xl px-3 py-2 transition-colors',
-                  isActive('/blog') ? 'bg-white/60 text-slate-900 font-semibold' : 'hover:bg-white/50 text-slate-800'
+                  'block rounded-xl px-3 py-2.5 transition-colors text-[15px] font-medium',
+                  isActive('/blog') ? 'bg-brand-light text-slate-900' : 'hover:bg-slate-50 text-slate-800'
                 )}
               >
                 Blog
@@ -301,33 +354,37 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
                 onClick={() => setMobileServicesOpen((v) => !v)}
                 aria-expanded={mobileServicesOpen}
                 className={clsx(
-                  'w-full inline-flex items-center justify-between rounded-xl px-3 py-2 transition-colors',
-                  'hover:bg-white/50 text-slate-800',
-                  isActive(['/services', '/shipping-guide']) && 'text-emerald-700 font-semibold'
+                  'w-full inline-flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors text-[15px] font-medium',
+                  'hover:bg-slate-50 text-slate-800',
+                  isActive(['/services', '/shipping-guide']) && 'text-slate-900'
                 )}
               >
                 <span>Services</span>
-                <svg className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')} viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className={clsx('h-4 w-4 transition-transform', mobileServicesOpen && 'rotate-180')}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
                 </svg>
               </button>
 
               <div
                 className={clsx(
-                  'pl-3 border-l border-white/50 ml-3 mt-1 space-y-1 transition-[max-height,opacity] overflow-hidden',
+                  'pl-3 border-l border-slate-200 ml-3 mt-1 space-y-1 transition-[max-height,opacity] overflow-hidden',
                   mobileServicesOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0'
                 )}
               >
-                <Link href="/shipping-guide" onClick={onNavigate} className="block rounded-xl px-3 py-2 hover:bg-white/50 transition-colors text-slate-800">
+                <Link href="/shipping-guide" onClick={onNavigate} className="block rounded-xl px-3 py-2.5 hover:bg-slate-50 transition-colors text-slate-800">
                   Shipping Guide &amp; SCAC Codes
                 </Link>
-                <Link href="/services/land-freight" onClick={onNavigate} className="block rounded-xl px-3 py-2 hover:bg-white/50 transition-colors text-slate-800">
+                <Link href="/services/land-freight" onClick={onNavigate} className="block rounded-xl px-3 py-2.5 hover:bg-slate-50 transition-colors text-slate-800">
                   By Land
                 </Link>
-                <Link href="/services/air-freight" onClick={onNavigate} className="block rounded-xl px-3 py-2 hover:bg-white/50 transition-colors text-slate-800">
+                <Link href="/services/air-freight" onClick={onNavigate} className="block rounded-xl px-3 py-2.5 hover:bg-slate-50 transition-colors text-slate-800">
                   By Air
                 </Link>
-                <Link href="/services/ocean-freight" onClick={onNavigate} className="block rounded-xl px-3 py-2 hover:bg-white/50 transition-colors text-slate-800">
+                <Link href="/services/ocean-freight" onClick={onNavigate} className="block rounded-xl px-3 py-2.5 hover:bg-slate-50 transition-colors text-slate-800">
                   By Sea
                 </Link>
               </div>
@@ -337,7 +394,7 @@ export default function Navbar({ placement = 'static' }: NavbarProps) {
               <Link
                 href="/contact"
                 onClick={onNavigate}
-                className="inline-flex w-full items-center justify-center rounded-full bg-emerald-600 text-white px-4 py-2 font-semibold hover:bg-emerald-700 transition-colors"
+                className="inline-flex w-full items-center justify-center rounded-lg bg-brand-green text-brand-dark px-4 py-2.5 font-semibold hover:opacity-95 transition-colors"
               >
                 Contact Us
               </Link>
