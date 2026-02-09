@@ -42,54 +42,52 @@ export default function Hero() {
           }}
         />
 
-        {/* Hero content */}
-        <div className="relative z-10">
-          <div className="container">
-            <div className="pt-28 md:pt-36 pb-20 md:pb-24">
-              <div className="mx-auto max-w-4xl text-center md:text-left">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-white/85">
-                  <span className="inline-block h-2 w-2 rounded-full bg-brand-green" />
-                  End-to-end freight support — fast quotes, clear tracking
-                </div>
+        {/* Hero content (centered) */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <div className="container w-full py-16 md:py-20">
+            <div className="mx-auto max-w-4xl text-center">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-white/85">
+                <span className="inline-block h-2 w-2 rounded-full bg-brand-green" />
+                End-to-end freight support — fast quotes, clear tracking
+              </div>
 
-                {/* Headline */}
-                <h1 className="mt-7 text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white leading-tight">
-                  <span className="block">Cut Shipping Costs</span>
-                  <span className="block">Without Cutting Corners</span>
-                </h1>
+              {/* Headline */}
+              <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white leading-tight">
+                <span className="block">Cut Shipping Costs</span>
+                <span className="block">Without Cutting Corners</span>
+              </h1>
 
-                {/* Paragraph */}
-                <p className="mt-6 mx-auto md:mx-0 max-w-2xl text-sm sm:text-base md:text-lg text-white/75 leading-relaxed">
-                  We plan, book, and move your cargo with transparent rates and proactive updates
-                  <br className="hidden sm:block" />
-                  so your deliveries stay on schedule.
-                </p>
+              {/* Paragraph */}
+              <p className="mt-5 mx-auto max-w-2xl text-sm sm:text-base md:text-lg text-white/75 leading-relaxed">
+                We plan, book, and move your cargo with transparent rates and proactive updates
+                <br className="hidden sm:block" />
+                so your deliveries stay on schedule.
+              </p>
 
-                {/* CTA */}
-                <div className="mt-10 flex flex-col items-center md:items-start gap-3">
-                  <Link
-                    href="/contact/"
-                    className="
-                      inline-flex items-center justify-center rounded-md
-                      bg-brand-green px-8 py-3.5 text-sm font-semibold text-brand-dark
-                      shadow-[0_10px_28px_rgba(0,0,0,0.25)]
-                      transition-all duration-200
-                      hover:-translate-y-0.5 hover:opacity-95
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
-                      focus-visible:ring-offset-2 focus-visible:ring-offset-black/40
-                    "
-                  >
-                    Get a Free Quote
-                  </Link>
+              {/* CTA */}
+              <div className="mt-8 flex flex-col items-center gap-3">
+                <Link
+                  href="/contact/"
+                  className="
+                    inline-flex items-center justify-center rounded-md
+                    bg-brand-green px-8 py-3.5 text-sm font-semibold text-brand-dark
+                    shadow-[0_10px_28px_rgba(0,0,0,0.25)]
+                    transition-all duration-200
+                    hover:-translate-y-0.5 hover:opacity-95
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                    focus-visible:ring-offset-2 focus-visible:ring-offset-black/40
+                  "
+                >
+                  Get a Free Quote
+                </Link>
 
-                  <Link
-                    href="/shipping-guide"
-                    className="text-sm text-white/70 hover:text-white underline underline-offset-4 transition"
-                  >
-                    Shipping Guide
-                  </Link>
-                </div>
+                <Link
+                  href="/shipping-guide"
+                  className="text-sm text-white/70 hover:text-white underline underline-offset-4 transition"
+                >
+                  Shipping Guide
+                </Link>
               </div>
             </div>
           </div>
