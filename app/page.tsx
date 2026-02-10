@@ -23,6 +23,33 @@ const steps = [
   },
 ];
 
+const services = [
+  {
+    title: "Land Freight",
+    bestFor: "Best for regional & cross-border moves (LTL/FTL, road + rail).",
+    href: "/services/land-freight",
+    tag: "Land",
+  },
+  {
+    title: "Air Freight",
+    bestFor: "Best for time-critical, high-value, or perishable shipments.",
+    href: "/services/air-freight",
+    tag: "Air",
+  },
+  {
+    title: "Ocean Freight",
+    bestFor: "Best for international FCL/LCL when cost efficiency matters.",
+    href: "/services/ocean-freight",
+    tag: "Ocean",
+  },
+  {
+    title: "Final-mile Delivery",
+    bestFor: "Best for liftgate, appointments, residential & inside delivery.",
+    href: "/shipping-guide",
+    tag: "Final-mile",
+  },
+];
+
 const posts = [
   {
     title: "LTL vs FTL: What’s Right for Your Shipment?",
@@ -70,6 +97,72 @@ export default function HomePage() {
   return (
     <div className="bg-white text-slate-900 antialiased">
       <Hero />
+
+      {/* Services at a glance */}
+      <Strip tone="white">
+        <section
+          id="services"
+          className="container py-20"
+          aria-labelledby="services-title"
+        >
+          <div className="text-center">
+            <Kicker>Freight services</Kicker>
+            <Title id="services-title">Services at a Glance</Title>
+            <p className="mt-4 mx-auto max-w-2xl text-sm sm:text-base text-slate-600 leading-relaxed">
+              Choose the mode that matches your timeline, budget, and handling
+              needs—with clear expectations from quote to delivery.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-4 auto-rows-fr">
+            {services.map((s) => (
+              <Link
+                key={s.title}
+                href={s.href}
+                className="
+                  group relative h-full overflow-hidden rounded-2xl
+                  border border-slate-200/80 bg-white p-6 md:p-7
+                  shadow-soft transition-all duration-200
+                  hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                  focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                "
+              >
+                {/* top accent */}
+                <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-brand-green/80" />
+
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
+                    {s.title}
+                  </h3>
+
+                  <span
+                    className="
+                      inline-flex shrink-0 items-center rounded-full
+                      border border-slate-200 bg-brand-light px-2.5 py-1
+                      text-[11px] font-semibold text-brand-dark
+                    "
+                    aria-label={`${s.tag} service`}
+                  >
+                    {s.tag}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+                  {s.bestFor}
+                </p>
+
+                <span className="mt-5 inline-flex items-center text-sm font-semibold text-brand-dark">
+                  Learn more
+                  <span className="ml-1 transition-transform group-hover:translate-x-0.5">
+                    →
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </Strip>
 
       {/* How it works (simple + consistent spacing) */}
       <Strip tone="tint">
@@ -188,7 +281,8 @@ export default function HomePage() {
                 <li className="flex gap-3">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-green" />
                   <span>
-                    No surprise pricing with clear expectations to meet your specific needs.
+                    No surprise pricing with clear expectations to meet your
+                    specific needs.
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -310,7 +404,8 @@ export default function HomePage() {
                   </Title>
 
                   <p className="mt-4 max-w-xl text-sm sm:text-base text-white/70 leading-relaxed">
-                    Get a fast quote, clear timelines, and proactive updates, handled end-to-end by our team.
+                    Get a fast quote, clear timelines, and proactive updates, handled
+                    end-to-end by our team.
                   </p>
 
                   <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3">
