@@ -12,7 +12,7 @@ const ContactSchema = z.object({
 
 type Contact = z.infer<typeof ContactSchema>;
 
-const WHATSAPP_NUMBER = 'PHONE_NUMBER'; // e.g. "15551234567" (no +, no spaces)
+const WHATSAPP_NUMBER = '17758701999'; // e.g. "15551234567" (no +, no spaces)
 // Your Supabase Edge Function endpoint (you’ll create this)
 const CONTACT_FUNCTION_URL = "https://YOUR_PROJECT_REF.functions.supabase.co/contact-submit";
 
