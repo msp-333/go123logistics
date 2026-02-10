@@ -12,7 +12,7 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden bg-brand-dark">
-      <div className="relative w-full min-h-[600px] md:min-h-[700px]">
+      <div className="relative w-full min-h-[520px] md:min-h-[620px]">
         {/* Background image */}
         <img
           src={publicPath(heroSrc)}
@@ -24,7 +24,7 @@ export default function Hero() {
           fetchPriority="high"
         />
 
-        {/* Elegant overlay (no glow) */}
+        {/* Elegant overlay */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0
@@ -44,7 +44,7 @@ export default function Hero() {
 
         {/* Hero content (centered) */}
         <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="container w-full py-16 md:py-20">
+          <div className="container w-full py-12 md:py-14">
             <div className="mx-auto max-w-4xl text-center">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-white/85">
@@ -53,22 +53,22 @@ export default function Hero() {
               </div>
 
               {/* Headline */}
-              <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white leading-tight">
+              <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white leading-tight">
                 <span className="block">Cut Shipping Costs</span>
                 <span className="block">Without Cutting Corners</span>
               </h1>
 
               {/* Paragraph */}
-              <p className="mt-5 mx-auto max-w-2xl text-sm sm:text-base md:text-lg text-white/75 leading-relaxed">
+              <p className="mt-4 mx-auto max-w-2xl text-sm sm:text-base md:text-lg text-white/75 leading-relaxed">
                 We plan, book, and move your cargo with transparent rates and proactive updates
                 <br className="hidden sm:block" />
                 so your deliveries stay on schedule.
               </p>
 
               {/* CTA */}
-              <div className="mt-8 flex flex-col items-center gap-3">
+              <div className="mt-7 flex flex-col items-center gap-3">
                 <Link
-                  href="/contact/"
+                  href="/contact"
                   className="
                     inline-flex items-center justify-center rounded-md
                     bg-brand-green px-8 py-3.5 text-sm font-semibold text-brand-dark
@@ -93,10 +93,10 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Soft bottom fade */}
+        {/* Bottom fade (reduced) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-black/30"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-black/30"
         />
       </div>
     </section>
