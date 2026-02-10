@@ -71,65 +71,6 @@ export default function HomePage() {
     <div className="bg-white text-slate-900 antialiased">
       <Hero />
 
-      {/* Services at a Glance (clean, left copy + dark 3-card block) */}
-      <Strip tone="white">
-        <section
-          id="services"
-          className="container py-16 sm:py-20"
-          aria-labelledby="services-title"
-        >
-          <div className="grid items-start gap-10 lg:grid-cols-12">
-            {/* Left content */}
-            <div className="lg:col-span-5">
-              <Kicker>Freight services</Kicker>
-              <Title id="services-title" align="left">
-                Services at a Glance
-              </Title>
-              <p className="mt-4 max-w-prose text-sm sm:text-base text-slate-600 leading-relaxed">
-                Choose the mode that matches your timeline, budget, and handling
-                needs—with clear expectations from quote to delivery.
-              </p>
-            </div>
-
-            {/* Right: dark container with 3 simple cards */}
-            <div className="lg:col-span-7">
-              <div className="relative overflow-hidden rounded-3xl bg-brand-dark text-white shadow-soft">
-                {/* subtle texture */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 opacity-[0.18]"
-                  style={{
-                    backgroundImage:
-                      "radial-gradient(700px 340px at 18% 25%, rgba(0,200,83,0.30), transparent 60%)",
-                  }}
-                />
-
-                <div className="relative grid gap-3 p-3 sm:p-4 md:grid-cols-3">
-                  <ServiceCard
-                    href="/services/land-freight"
-                    title="Land Freight"
-                    desc="Best for regional & cross-border moves (LTL/FTL, road + rail)."
-                    icon={<IconTruck />}
-                  />
-                  <ServiceCard
-                    href="/services/air-freight"
-                    title="Air Freight"
-                    desc="Best for time-critical, high-value, or perishable shipments."
-                    icon={<IconPlane />}
-                  />
-                  <ServiceCard
-                    href="/services/ocean-freight"
-                    title="Ocean Freight"
-                    desc="Best for international FCL/LCL when cost efficiency matters."
-                    icon={<IconShip />}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </Strip>
-
       {/* How it works (systematic stepper; no noisy patterns) */}
       <Strip tone="tint">
         <section
