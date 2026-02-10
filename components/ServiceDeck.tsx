@@ -5,13 +5,13 @@ import clsx from 'clsx';
 
 type Section = {
   id: string;
-  title: string; // short tab label (1 word)
+  title: string; // one-word: Overview / Options / Process / Services / Tracking / Specs
   content: React.ReactNode;
 };
 
 export default function ServiceDeck({
   sections,
-  heightClass = 'h-auto md:h-[560px]',
+  heightClass = 'h-auto md:h-[520px]', // contain on desktop, natural on mobile
 }: {
   sections: Section[];
   heightClass?: string;
@@ -25,18 +25,17 @@ export default function ServiceDeck({
   return (
     <div
       className={clsx(
-        'rounded-2xl border border-slate-200 bg-white',
-        'shadow-[0_1px_0_rgba(15,23,42,0.04),0_14px_40px_rgba(15,23,42,0.06)]',
+        'rounded-2xl border border-app-border bg-app-surface shadow-soft',
         'flex flex-col overflow-hidden min-h-0',
         heightClass
       )}
     >
-      {/* Tabs (short labels, wrap instead of scroll) */}
-      <div className="border-b border-slate-200 bg-slate-50/70">
+      {/* Tabs (centered) */}
+      <div className="border-b border-app-border bg-app-muted/60">
         <div
           role="tablist"
           aria-label="Service sections"
-          className="flex flex-wrap gap-2 p-3"
+          className="flex flex-wrap justify-center gap-2 p-3"
         >
           {sections.map((s, idx) => {
             const isActive = idx === activeIdx;
@@ -50,11 +49,12 @@ export default function ServiceDeck({
                 type="button"
                 onClick={() => setActiveIdx(idx)}
                 className={clsx(
-                  'rounded-full px-2.5 py-1 text-sm transition whitespace-nowrap',
-                  'border focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2',
+                  'rounded-full px-3 py-1.5 text-sm leading-none whitespace-nowrap',
+                  'border transition',
+                  'focus:outline-none focus:ring-2 focus:ring-app-border focus:ring-offset-2',
                   isActive
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                    ? 'bg-app-text text-white border-app-text'
+                    : 'bg-white text-app-mutedText border-app-border hover:border-slate-300'
                 )}
               >
                 {s.title}
@@ -64,28 +64,28 @@ export default function ServiceDeck({
         </div>
       </div>
 
-      {/* Content panel: desktop inner scroll; mobile normal flow */}
+      {/* Content (desktop: inner scroll to keep deck tidy) */}
       <div
         role="tabpanel"
         id={`panel-${active.id}`}
         aria-labelledby={`tab-${active.id}`}
-        className="flex-1 min-h-0 p-6 sm:p-7 md:overflow-auto"
+        className="flex-1 min-h-0 p-6 sm:p-7 md:overflow-auto text-[15px] leading-relaxed text-app-mutedText"
       >
         {active.content}
       </div>
 
-      {/* Footer controls */}
-      <div className="border-t border-slate-200 bg-white px-4 py-3 flex items-center justify-between">
+      {/* Footer */}
+      <div className="border-t border-app-border bg-app-surface px-4 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={goPrev}
           disabled={activeIdx === 0}
           className={clsx(
             'rounded-lg border px-3 py-1.5 text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2',
+            'focus:outline-none focus:ring-2 focus:ring-app-border focus:ring-offset-2',
             activeIdx === 0
-              ? 'border-slate-200 text-slate-400 cursor-not-allowed'
-              : 'border-slate-200 text-slate-700 hover:border-slate-300'
+              ? 'border-app-border text-slate-400 cursor-not-allowed'
+              : 'border-app-border text-app-mutedText hover:border-slate-300'
           )}
         >
           Prev
@@ -101,10 +101,10 @@ export default function ServiceDeck({
           disabled={activeIdx === sections.length - 1}
           className={clsx(
             'rounded-lg border px-3 py-1.5 text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2',
+            'focus:outline-none focus:ring-2 focus:ring-app-border focus:ring-offset-2',
             activeIdx === sections.length - 1
-              ? 'border-slate-200 text-slate-400 cursor-not-allowed'
-              : 'border-slate-200 text-slate-700 hover:border-slate-300'
+              ? 'border-app-border text-slate-400 cursor-not-allowed'
+              : 'border-app-border text-app-mutedText hover:border-slate-300'
           )}
         >
           Next

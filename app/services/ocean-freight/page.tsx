@@ -4,28 +4,35 @@ export default function OceanFreightPage() {
   const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   return (
-    <section className="container py-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-      <div className="md:sticky md:top-24">
-        <img
-          src={`${base}/images/ocean.png`}
-          alt="Ocean freight"
-          className="w-full h-[220px] sm:h-[300px] md:h-[560px] object-cover rounded-2xl border border-slate-100 shadow-soft"
-        />
-      </div>
+    <section className="container py-12">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="relative overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-soft">
+          <img
+            src={`${base}/images/ocean.png`}
+            alt="Ocean freight"
+            className="h-[220px] sm:h-[280px] w-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        </div>
 
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-slate-900">Ocean Freight</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Ocean Freight</h1>
+          <p className="text-[15px] leading-relaxed text-app-mutedText">
+            Cost-efficient global shipping for high-volume cargo using secure containerized ocean transport—built for predictable planning and long-haul value.
+          </p>
+        </header>
 
         <ServiceDeck
-          heightClass="h-auto md:h-[560px]"
           sections={[
             {
               id: 'what',
               title: 'Overview',
               content: (
                 <div>
-                  <h2 className="text-xl font-semibold mb-3">What is Ocean Freight?</h2>
-                  <p className="text-slate-600">
+                  <h2 className="text-lg font-semibold mb-3 text-app-text">What is Ocean Freight?</h2>
+                  <p>
                     Ocean freight is the most efficient way to move large shipments internationally—using
                     secure, standardized containers on reliable ocean carriers. It delivers the best value
                     for high-volume cargo over long distances, with flexible options for everything from
@@ -41,8 +48,8 @@ export default function OceanFreightPage() {
               title: 'Process',
               content: (
                 <div>
-                  <h3 className="font-semibold mb-2">How It Works</h3>
-                  <ol className="list-decimal pl-5 space-y-1 text-slate-700">
+                  <h3 className="text-app-text font-semibold mb-3">How It Works</h3>
+                  <ol className="list-decimal pl-5 space-y-2">
                     <li>
                       <b>Booking & Planning</b> — We research the best sailing carrier and container option for your cargo schedule and budget.
                     </li>
@@ -53,8 +60,7 @@ export default function OceanFreightPage() {
                       <b>Export Clearance</b> — We connect you with experts to manage origin customs requirements to avoid delays and ensure compliant departure.
                     </li>
                     <li>
-                      <b>Ocean Transit</b> — Your shipment moves on the confirmed route with tracking and
-                      milestone visibility.
+                      <b>Ocean Transit</b> — Your shipment moves on the confirmed route with tracking and milestone visibility.
                     </li>
                     <li>
                       <b>Import Clearance</b> — We connect you with experts to manage destination customs requirements.
@@ -63,7 +69,7 @@ export default function OceanFreightPage() {
                       <b>Final Delivery</b> — We help coordinate delivery to the final destination, including last-mile requirements.
                     </li>
                   </ol>
-                  <p className="text-slate-600 mt-3">
+                  <p className="mt-3">
                     From booking to final delivery, everything is coordinated end-to-end so you’re not chasing carriers or paperwork.
                   </p>
                 </div>
@@ -74,59 +80,58 @@ export default function OceanFreightPage() {
               title: 'Specs',
               content: (
                 <div>
-                  <h3 className="font-semibold mb-2">Ideal Shipping Weight & Needs</h3>
+                  <h3 className="text-app-text font-semibold mb-3">Ideal Shipping Weight & Needs</h3>
 
-                  <div className="overflow-auto">
+                  <div className="overflow-auto rounded-xl border border-app-border bg-white">
                     <table className="w-full text-sm min-w-[680px]">
-                      <thead className="bg-slate-50">
+                      <thead className="bg-app-muted">
                         <tr>
-                          <th className="text-left p-2">Container Type</th>
-                          <th className="text-left p-2">Volume</th>
-                          <th className="text-left p-2">Max Weight</th>
-                          <th className="text-left p-2">Best For</th>
+                          <th className="text-left p-3">Container Type</th>
+                          <th className="text-left p-3">Volume</th>
+                          <th className="text-left p-3">Max Weight</th>
+                          <th className="text-left p-3">Best For</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="odd:bg-white even:bg-slate-50">
-                          <td className="p-2">20ft Container</td>
-                          <td className="p-2">33 cubic meters</td>
-                          <td className="p-2">24,000kg</td>
-                          <td className="p-2">Dense, heavy cargo (machinery, raw materials)</td>
+                        <tr className="odd:bg-white even:bg-app-muted/40">
+                          <td className="p-3">20ft Container</td>
+                          <td className="p-3">33 cubic meters</td>
+                          <td className="p-3">24,000kg</td>
+                          <td className="p-3">Dense, heavy cargo (machinery, raw materials)</td>
                         </tr>
-                        <tr className="odd:bg-white even:bg-slate-50">
-                          <td className="p-2">40ft Container</td>
-                          <td className="p-2">67 cubic meters</td>
-                          <td className="p-2">30,480kg</td>
-                          <td className="p-2">High-volume shipments (consumer goods, retail stock)</td>
+                        <tr className="odd:bg-white even:bg-app-muted/40">
+                          <td className="p-3">40ft Container</td>
+                          <td className="p-3">67 cubic meters</td>
+                          <td className="p-3">30,480kg</td>
+                          <td className="p-3">High-volume shipments (consumer goods, retail stock)</td>
                         </tr>
-                        <tr className="odd:bg-white even:bg-slate-50">
-                          <td className="p-2">Reefer Container</td>
-                          <td className="p-2">Varies</td>
-                          <td className="p-2">Varies</td>
-                          <td className="p-2">Temperature-controlled goods (food, pharma)</td>
+                        <tr className="odd:bg-white even:bg-app-muted/40">
+                          <td className="p-3">Reefer Container</td>
+                          <td className="p-3">Varies</td>
+                          <td className="p-3">Varies</td>
+                          <td className="p-3">Temperature-controlled goods (food, pharma)</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-3 mt-4 text-sm text-slate-700">
-                    <div className="rounded-lg border p-3">
+                  <div className="grid sm:grid-cols-2 gap-3 mt-4 text-[15px]">
+                    <div className="rounded-xl border border-app-border p-4 bg-white">
                       <b>Transit Time:</b> Typically weeks, based on route and port schedules
                     </div>
-                    <div className="rounded-lg border p-3">
+                    <div className="rounded-xl border border-app-border p-4 bg-white">
                       <b>Cost Efficiency:</b> Best value for large shipments over long distances
                     </div>
-                    <div className="rounded-lg border p-3">
+                    <div className="rounded-xl border border-app-border p-4 bg-white">
                       <b>Special Requirements:</b> Ocean-ready packaging, proper labeling, container sealing
                     </div>
-                    <div className="rounded-lg border p-3">
+                    <div className="rounded-xl border border-app-border p-4 bg-white">
                       <b>Vessel Types:</b> Container ships, bulk carriers, tankers, and specialized vessels
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-4 text-sm text-slate-700">
-                    <b>Built for simplicity:</b> One coordinated process, one clear plan, and full shipment
-                    oversight—so you don’t have to manage multiple vendors, documents, or checkpoints.
+                  <div className="mt-4 rounded-xl bg-app-muted border border-app-border p-4 text-[15px] text-slate-700">
+                    <b>Built for simplicity:</b> One coordinated process, one clear plan, and full shipment oversight—so you don’t have to manage multiple vendors, documents, or checkpoints.
                   </div>
                 </div>
               ),
