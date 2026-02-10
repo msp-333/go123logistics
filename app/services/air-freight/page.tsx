@@ -32,7 +32,7 @@ export default function AirFreightPage() {
               content: (
                 <div>
                   <h2 className="text-lg font-semibold mb-3 text-app-text">What is Air Freight?</h2>
-                  <p>
+                  <p className="text-app-mutedText">
                     Air freight is the fastest way to move cargo internationally—designed for shipments where speed,
                     reliability, and control matter most. It’s ideal for time-critical orders, high-value products,
                     perishables, and production-sensitive inventory. With the right carrier strategy, routing, and
@@ -47,7 +47,7 @@ export default function AirFreightPage() {
               content: (
                 <div>
                   <h3 className="text-app-text font-semibold mb-3">How It Works</h3>
-                  <ol className="list-decimal pl-5 space-y-2">
+                  <ol className="list-decimal pl-5 space-y-2 text-app-mutedText">
                     <li>
                       <b>Booking & Flight Planning</b> — We help research options so you can secure capacity, select the best route,
                       and align schedules with your delivery deadline.
@@ -72,7 +72,7 @@ export default function AirFreightPage() {
                       handling needs.
                     </li>
                   </ol>
-                  <p className="mt-3">
+                  <p className="mt-3 text-app-mutedText">
                     Everything is coordinated end-to-end—capacity, documents, screening, tracking, clearance, and delivery—so you don’t have to manage the moving parts.
                   </p>
                 </div>
@@ -84,21 +84,21 @@ export default function AirFreightPage() {
               content: (
                 <div>
                   <h3 className="text-app-text font-semibold mb-3">Tracking & Visibility</h3>
-                  <ul className="list-disc pl-5 space-y-2">
+                  <ul className="list-disc pl-5 space-y-2 text-app-mutedText">
                     <li>Air Waybill (AWB) tracking with real-time milestones</li>
                     <li>Airline and IATA tracking portals for flight movement visibility</li>
                     <li>Electronic Data Interchange (EDI) updates for status continuity</li>
                     <li>Digital proof-of-delivery for end-to-end confirmation</li>
                   </ul>
-                  <p className="mt-3">
+                  <p className="mt-3 text-app-mutedText">
                     You get clear shipment visibility from pickup to delivery, with proactive updates when timing matters.
                   </p>
                 </div>
               ),
             },
             {
-              id: 'ideal',
-              title: 'Specs',
+              id: 'services',
+              title: 'Services',
               content: (
                 <div>
                   <h3 className="text-app-text font-semibold mb-3">Ideal Shipping Weight & Needs</h3>
@@ -136,7 +136,7 @@ export default function AirFreightPage() {
                     </table>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-3 mt-4 text-[15px]">
+                  <div className="grid sm:grid-cols-2 gap-3 mt-4 text-[15px] text-app-mutedText">
                     <div className="rounded-xl border border-app-border p-4 bg-white">
                       <b>Transit Time:</b> Typically 1–5 days, depending on route and connections
                     </div>

@@ -32,7 +32,7 @@ export default function OceanFreightPage() {
               content: (
                 <div>
                   <h2 className="text-lg font-semibold mb-3 text-app-text">What is Ocean Freight?</h2>
-                  <p>
+                  <p className="text-app-mutedText">
                     Ocean freight is the most efficient way to move large shipments internationally—using
                     secure, standardized containers on reliable ocean carriers. It delivers the best value
                     for high-volume cargo over long distances, with flexible options for everything from
@@ -49,7 +49,7 @@ export default function OceanFreightPage() {
               content: (
                 <div>
                   <h3 className="text-app-text font-semibold mb-3">How It Works</h3>
-                  <ol className="list-decimal pl-5 space-y-2">
+                  <ol className="list-decimal pl-5 space-y-2 text-app-mutedText">
                     <li>
                       <b>Booking & Planning</b> — We research the best sailing carrier and container option for your cargo schedule and budget.
                     </li>
@@ -69,15 +69,15 @@ export default function OceanFreightPage() {
                       <b>Final Delivery</b> — We help coordinate delivery to the final destination, including last-mile requirements.
                     </li>
                   </ol>
-                  <p className="mt-3">
+                  <p className="mt-3 text-app-mutedText">
                     From booking to final delivery, everything is coordinated end-to-end so you’re not chasing carriers or paperwork.
                   </p>
                 </div>
               ),
             },
             {
-              id: 'ideal',
-              title: 'Specs',
+              id: 'services',
+              title: 'Services',
               content: (
                 <div>
                   <h3 className="text-app-text font-semibold mb-3">Ideal Shipping Weight & Needs</h3>
@@ -115,7 +115,7 @@ export default function OceanFreightPage() {
                     </table>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-3 mt-4 text-[15px]">
+                  <div className="grid sm:grid-cols-2 gap-3 mt-4 text-[15px] text-app-mutedText">
                     <div className="rounded-xl border border-app-border p-4 bg-white">
                       <b>Transit Time:</b> Typically weeks, based on route and port schedules
                     </div>
