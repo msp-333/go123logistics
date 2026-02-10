@@ -5,7 +5,7 @@ export default function RailFreightPage() {
 
   return (
     <section className="container py-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-      {/* Left image (sticks on desktop, normal flow on mobile) */}
+      {/* Left image */}
       <div className="md:sticky md:top-24">
         <img
           src={`${base}/images/rail.png`}
@@ -21,13 +21,12 @@ export default function RailFreightPage() {
           Reliable, flexible inland transport—combining rail and over-the-road solutions for seamless regional and cross-border deliveries.
         </p>
 
-        {/* Deck: auto height on mobile, fixed height + inner scroll on desktop */}
         <ServiceDeck
           heightClass="h-auto md:h-[560px]"
           sections={[
             {
               id: 'what',
-              title: 'What is Land Freight?',
+              title: 'Overview',
               content: (
                 <div>
                   <h2 className="text-xl font-semibold mb-3">What is Land Freight?</h2>
@@ -44,14 +43,12 @@ export default function RailFreightPage() {
                 </div>
               ),
             },
-
             {
               id: 'options',
-              title: 'Land Freight Options We Support',
+              title: 'Options',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">Land Freight Options We Support</h3>
-
                   <div className="grid sm:grid-cols-2 gap-3 text-sm text-slate-700">
                     <div className="rounded-lg border p-4">
                       <b>Over-the-Road (OTR) Freight</b>
@@ -80,10 +77,9 @@ export default function RailFreightPage() {
                 </div>
               ),
             },
-
             {
               id: 'how',
-              title: 'How It Works',
+              title: 'Process',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">How It Works</h3>
@@ -114,14 +110,12 @@ export default function RailFreightPage() {
                 </div>
               ),
             },
-
             {
-              id: 'levels',
-              title: 'Service Levels: LTL, FTL, and Rail Options',
+              id: 'services',
+              title: 'Services',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">Service Levels: LTL, FTL, and Rail Options</h3>
-
                   <div className="overflow-auto">
                     <table className="w-full text-sm min-w-[680px]">
                       <thead className="bg-slate-50">

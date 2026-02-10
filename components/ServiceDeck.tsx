@@ -5,7 +5,7 @@ import clsx from 'clsx';
 
 type Section = {
   id: string;
-  title: string;
+  title: string; // short tab label (1 word)
   content: React.ReactNode;
 };
 
@@ -27,18 +27,16 @@ export default function ServiceDeck({
       className={clsx(
         'rounded-2xl border border-slate-200 bg-white',
         'shadow-[0_1px_0_rgba(15,23,42,0.04),0_14px_40px_rgba(15,23,42,0.06)]',
-        'flex flex-col overflow-hidden',
-        // Important for nested scroll to work inside flex
-        'min-h-0',
+        'flex flex-col overflow-hidden min-h-0',
         heightClass
       )}
     >
-      {/* Tabs (normal flow, no sticky) */}
+      {/* Tabs (short labels, wrap instead of scroll) */}
       <div className="border-b border-slate-200 bg-slate-50/70">
         <div
           role="tablist"
           aria-label="Service sections"
-          className="deck-tabs flex gap-2 overflow-x-auto p-3 [scrollbar-width:none] [-ms-overflow-style:none]"
+          className="flex flex-wrap gap-2 p-3"
         >
           {sections.map((s, idx) => {
             const isActive = idx === activeIdx;
@@ -52,7 +50,7 @@ export default function ServiceDeck({
                 type="button"
                 onClick={() => setActiveIdx(idx)}
                 className={clsx(
-                  'whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition',
+                  'rounded-full px-2.5 py-1 text-sm transition whitespace-nowrap',
                   'border focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2',
                   isActive
                     ? 'bg-slate-900 text-white border-slate-900'
@@ -64,18 +62,9 @@ export default function ServiceDeck({
             );
           })}
         </div>
-
-        <style jsx>{`
-          .deck-tabs::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
       </div>
 
-      {/* Content
-          - mobile: normal (no inner scroll)
-          - desktop: inner scroll
-      */}
+      {/* Content panel: desktop inner scroll; mobile normal flow */}
       <div
         role="tabpanel"
         id={`panel-${active.id}`}

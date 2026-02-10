@@ -5,7 +5,6 @@ export default function OceanFreightPage() {
 
   return (
     <section className="container py-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-      {/* Left image (sticks on desktop, normal flow on mobile) */}
       <div className="md:sticky md:top-24">
         <img
           src={`${base}/images/ocean.png`}
@@ -14,17 +13,15 @@ export default function OceanFreightPage() {
         />
       </div>
 
-      {/* Right side */}
       <div className="space-y-4">
         <h1 className="text-xl font-semibold text-slate-900">Ocean Freight</h1>
 
-        {/* Deck: auto height on mobile, fixed height + inner scroll on desktop */}
         <ServiceDeck
           heightClass="h-auto md:h-[560px]"
           sections={[
             {
               id: 'what',
-              title: 'What is Ocean Freight?',
+              title: 'Overview',
               content: (
                 <div>
                   <h2 className="text-xl font-semibold mb-3">What is Ocean Freight?</h2>
@@ -39,10 +36,9 @@ export default function OceanFreightPage() {
                 </div>
               ),
             },
-
             {
               id: 'how',
-              title: 'How It Works',
+              title: 'Process',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">How It Works</h3>
@@ -73,10 +69,9 @@ export default function OceanFreightPage() {
                 </div>
               ),
             },
-
             {
               id: 'ideal',
-              title: 'Ideal Shipping Weight & Needs',
+              title: 'Specs',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">Ideal Shipping Weight & Needs</h3>

@@ -4,26 +4,24 @@ export default function AirFreightPage() {
   const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   return (
-    <section className="container py-10 grid md:grid-cols-2 gap-8 items-start">
-      {/* Left image — fixed size + sticky so it never leaves empty space */}
+    <section className="container py-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
       <div className="md:sticky md:top-24">
         <img
           src={`${base}/images/air.png`}
           alt="Air freight"
-          className="w-full md:h-[560px] object-cover rounded-2xl border border-slate-100 shadow-soft"
+          className="w-full h-[220px] sm:h-[300px] md:h-[560px] object-cover rounded-2xl border border-slate-100 shadow-soft"
         />
       </div>
 
-      {/* Right deck — same height as image */}
       <div className="space-y-4">
         <h1 className="text-xl font-semibold text-slate-900">Air Freight</h1>
 
         <ServiceDeck
-          heightClass="md:h-[560px]"
+          heightClass="h-auto md:h-[560px]"
           sections={[
             {
               id: 'what',
-              title: 'What is Air Freight?',
+              title: 'Overview',
               content: (
                 <div>
                   <h2 className="text-xl font-semibold mb-3">What is Air Freight?</h2>
@@ -38,11 +36,11 @@ export default function AirFreightPage() {
             },
             {
               id: 'how',
-              title: 'How It Works',
+              title: 'Process',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">How It Works</h3>
-                  <ol className="list-decimal pl-5 space-y-2 text-slate-700">
+                  <ol className="list-decimal pl-5 space-y-1 text-slate-700">
                     <li>
                       <b>Booking & Flight Planning</b> — We help research options so you can secure capacity, select the best route,
                       and align schedules with your delivery deadline.
@@ -76,11 +74,11 @@ export default function AirFreightPage() {
             },
             {
               id: 'tracking',
-              title: 'Tracking & Visibility',
+              title: 'Tracking',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">Tracking & Visibility</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700">
                     <li>Air Waybill (AWB) tracking with real-time milestones</li>
                     <li>Airline and IATA tracking portals for flight movement visibility</li>
                     <li>Electronic Data Interchange (EDI) updates for status continuity</li>
@@ -94,7 +92,7 @@ export default function AirFreightPage() {
             },
             {
               id: 'ideal',
-              title: 'Ideal Shipping Weight & Needs',
+              title: 'Specs',
               content: (
                 <div>
                   <h3 className="font-semibold mb-2">Ideal Shipping Weight & Needs</h3>
