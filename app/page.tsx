@@ -71,149 +71,58 @@ export default function HomePage() {
     <div className="bg-white text-slate-900 antialiased">
       <Hero />
 
-      {/* Services at a glance (left aligned copy + 3 simple dark cards w/ icons) */}
+      {/* Services at a Glance (clean, left copy + dark 3-card block) */}
       <Strip tone="white">
         <section
           id="services"
-          className="container py-20"
+          className="container py-16 sm:py-20"
           aria-labelledby="services-title"
         >
-          <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
-            {/* Left copy */}
-            <div className="lg:col-span-4">
+          <div className="grid items-start gap-10 lg:grid-cols-12">
+            {/* Left content */}
+            <div className="lg:col-span-5">
               <Kicker>Freight services</Kicker>
               <Title id="services-title" align="left">
                 Services at a Glance
               </Title>
-              <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed">
+              <p className="mt-4 max-w-prose text-sm sm:text-base text-slate-600 leading-relaxed">
                 Choose the mode that matches your timeline, budget, and handling
                 needs—with clear expectations from quote to delivery.
               </p>
             </div>
 
-            {/* Right: dark container */}
-            <div className="lg:col-span-8">
-              <div className="rounded-3xl bg-brand-dark text-white shadow-soft overflow-hidden">
-                <div className="grid md:grid-cols-3 divide-y divide-white/10 md:divide-y-0 md:divide-x">
-                  {/* Land */}
-                  <Link
+            {/* Right: dark container with 3 simple cards */}
+            <div className="lg:col-span-7">
+              <div className="relative overflow-hidden rounded-3xl bg-brand-dark text-white shadow-soft">
+                {/* subtle texture */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 opacity-[0.18]"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(700px 340px at 18% 25%, rgba(0,200,83,0.30), transparent 60%)",
+                  }}
+                />
+
+                <div className="relative grid gap-3 p-3 sm:p-4 md:grid-cols-3">
+                  <ServiceCard
                     href="/services/land-freight"
-                    className="
-                      group p-7 md:p-8 transition-colors
-                      hover:bg-white/5 focus:outline-none
-                      focus-visible:ring-2 focus-visible:ring-brand-green
-                      focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark
-                    "
-                  >
-                    <div className="flex items-start gap-4">
-                      <span
-                        className="
-                          grid h-11 w-11 shrink-0 place-items-center rounded-2xl
-                          bg-white/10 text-white transition-colors
-                          group-hover:bg-white/15
-                        "
-                        aria-hidden="true"
-                      >
-                        <IconTruck />
-                      </span>
-
-                      <div>
-                        <h3 className="text-[15px] font-semibold leading-snug">
-                          Land Freight
-                        </h3>
-                        <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                          Best for regional &amp; cross-border moves (LTL/FTL, road + rail).
-                        </p>
-
-                        <span className="mt-4 inline-flex items-center text-sm font-semibold text-brand-green">
-                          Learn more
-                          <span className="ml-1 transition-transform group-hover:translate-x-0.5">
-                            →
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Air */}
-                  <Link
+                    title="Land Freight"
+                    desc="Best for regional & cross-border moves (LTL/FTL, road + rail)."
+                    icon={<IconTruck />}
+                  />
+                  <ServiceCard
                     href="/services/air-freight"
-                    className="
-                      group p-7 md:p-8 transition-colors
-                      hover:bg-white/5 focus:outline-none
-                      focus-visible:ring-2 focus-visible:ring-brand-green
-                      focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark
-                    "
-                  >
-                    <div className="flex items-start gap-4">
-                      <span
-                        className="
-                          grid h-11 w-11 shrink-0 place-items-center rounded-2xl
-                          bg-white/10 text-white transition-colors
-                          group-hover:bg-white/15
-                        "
-                        aria-hidden="true"
-                      >
-                        <IconPlane />
-                      </span>
-
-                      <div>
-                        <h3 className="text-[15px] font-semibold leading-snug">
-                          Air Freight
-                        </h3>
-                        <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                          Best for time-critical, high-value, or perishable shipments.
-                        </p>
-
-                        <span className="mt-4 inline-flex items-center text-sm font-semibold text-brand-green">
-                          Learn more
-                          <span className="ml-1 transition-transform group-hover:translate-x-0.5">
-                            →
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Ocean */}
-                  <Link
+                    title="Air Freight"
+                    desc="Best for time-critical, high-value, or perishable shipments."
+                    icon={<IconPlane />}
+                  />
+                  <ServiceCard
                     href="/services/ocean-freight"
-                    className="
-                      group p-7 md:p-8 transition-colors
-                      hover:bg-white/5 focus:outline-none
-                      focus-visible:ring-2 focus-visible:ring-brand-green
-                      focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark
-                    "
-                  >
-                    <div className="flex items-start gap-4">
-                      <span
-                        className="
-                          grid h-11 w-11 shrink-0 place-items-center rounded-2xl
-                          bg-white/10 text-white transition-colors
-                          group-hover:bg-white/15
-                        "
-                        aria-hidden="true"
-                      >
-                        <IconShip />
-                      </span>
-
-                      <div>
-                        <h3 className="text-[15px] font-semibold leading-snug">
-                          Ocean Freight
-                        </h3>
-                        <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                          Best for international FCL/LCL when cost efficiency matters.
-                        </p>
-
-                        <span className="mt-4 inline-flex items-center text-sm font-semibold text-brand-green">
-                          Learn more
-                          <span className="ml-1 transition-transform group-hover:translate-x-0.5">
-                            →
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
+                    title="Ocean Freight"
+                    desc="Best for international FCL/LCL when cost efficiency matters."
+                    icon={<IconShip />}
+                  />
                 </div>
               </div>
             </div>
@@ -221,85 +130,90 @@ export default function HomePage() {
         </section>
       </Strip>
 
-      {/* How it works (simple + consistent spacing) */}
+      {/* How it works (systematic stepper; no noisy patterns) */}
       <Strip tone="tint">
         <section
           id="steps"
-          className="relative scroll-mt-24 overflow-hidden"
+          className="relative scroll-mt-24"
           aria-labelledby="steps-title"
         >
-          {/* subtle pattern + gentle top fade */}
+          {/* subtle clean background wash */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.045]"
+            className="pointer-events-none absolute inset-0"
             style={{
-              backgroundImage:
-                "linear-gradient(rgba(15,23,42,.18) 1px, transparent 1px),linear-gradient(90deg, rgba(15,23,42,.18) 1px, transparent 1px)",
-              backgroundSize: "52px 52px",
+              background:
+                "radial-gradient(900px 420px at 12% 15%, rgba(0,200,83,0.12), transparent 55%), radial-gradient(800px 420px at 92% 35%, rgba(15,23,42,0.06), transparent 60%)",
             }}
           />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/90 to-transparent"
-          />
 
-          <div className="container relative py-20">
-            <Kicker>How it works</Kicker>
-            <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
-
-            {/* Cards: equal height on desktop + consistent internal margins */}
-            <div className="mt-12 grid gap-6 md:grid-cols-4 auto-rows-fr">
-              {steps.map((s, i) => (
-                <article
-                  key={s.title}
-                  className="
-                    relative h-full rounded-2xl border border-slate-200/80 bg-white
-                    p-6 md:p-7 shadow-soft
-                    transition-all duration-200
-                    hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
-                  "
-                >
-                  {/* top accent */}
-                  <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-brand-green/80" />
-
-                  <div className="flex items-start gap-3">
-                    <div
-                      className="
-                        mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full
-                        border border-slate-200 bg-white text-brand-dark font-semibold
-                      "
-                      aria-hidden="true"
-                    >
-                      {i + 1}
-                    </div>
-
-                    <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
-                      {s.title}
-                    </h3>
-                  </div>
-
-                  <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-                    {s.desc}
-                  </p>
-                </article>
-              ))}
+          <div className="container relative py-16 sm:py-20">
+            <div className="text-center">
+              <Kicker>How it works</Kicker>
+              <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
+              <p className="mt-4 mx-auto max-w-2xl text-sm sm:text-base text-slate-600 leading-relaxed">
+                A clear process built around transparency, proactive updates, and
+                on-time delivery.
+              </p>
             </div>
 
-            <div className="mt-10 text-center">
-              <Link
-                href="/contact"
-                className="
-                  inline-flex items-center rounded-md
-                  bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
-                  shadow-[0_10px_28px_rgba(0,0,0,0.10)]
-                  transition-all duration-200
-                  hover:-translate-y-0.5 hover:opacity-95
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
-                  focus-visible:ring-offset-2 focus-visible:ring-offset-white
-                "
-              >
-                Get a Free Quote
-              </Link>
+            <div className="mt-10 sm:mt-12">
+              <div className="relative rounded-3xl border border-slate-200/80 bg-white shadow-soft p-6 sm:p-8">
+                {/* connector line (desktop) */}
+                <div
+                  aria-hidden
+                  className="hidden md:block absolute left-10 right-10 top-12 h-px bg-slate-200"
+                />
+
+                <ol className="grid gap-6 md:grid-cols-4">
+                  {steps.map((s, i) => (
+                    <li key={s.title} className="relative">
+                      <div className="flex items-start gap-4 md:flex-col md:gap-3">
+                        {/* Number node */}
+                        <div className="relative z-10">
+                          <div
+                            className="
+                              grid h-10 w-10 place-items-center rounded-full
+                              bg-white border border-slate-200
+                              text-brand-dark font-semibold
+                              shadow-[0_10px_22px_rgba(0,0,0,0.08)]
+                            "
+                            aria-hidden="true"
+                          >
+                            {i + 1}
+                          </div>
+                        </div>
+
+                        <div className="md:pt-1">
+                          <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
+                            {s.title}
+                          </h3>
+                          <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                            {s.desc}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="mt-8 sm:mt-10 flex justify-center">
+                  <Link
+                    href="/contact"
+                    className="
+                      inline-flex items-center justify-center rounded-md
+                      bg-brand-green px-9 py-3.5 text-sm font-semibold text-brand-dark
+                      shadow-[0_10px_28px_rgba(0,0,0,0.10)]
+                      transition-all duration-200
+                      hover:-translate-y-0.5 hover:opacity-95
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green
+                      focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                    "
+                  >
+                    Get a Free Quote
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -312,7 +226,7 @@ export default function HomePage() {
             aria-hidden="true"
             className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,200,83,0.06),rgba(255,255,255,0.0),rgba(255,255,255,0.0))]"
           />
-          <div className="container relative grid items-center gap-12 py-20 md:grid-cols-2">
+          <div className="container relative grid items-center gap-12 py-16 sm:py-20 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200/80 bg-white shadow-soft overflow-hidden">
               <img
                 src={publicPath("/images/logistic-dashboard.png")}
@@ -367,7 +281,7 @@ export default function HomePage() {
 
       {/* Blog */}
       <Strip tone="tint">
-        <section id="blog" className="container py-20" aria-labelledby="blog-title">
+        <section id="blog" className="container py-16 sm:py-20" aria-labelledby="blog-title">
           <div className="flex items-end justify-between gap-6">
             <div>
               <Kicker>Insights</Kicker>
@@ -436,7 +350,6 @@ export default function HomePage() {
       {/* Final CTA (dark) */}
       <Strip tone="dark">
         <section id="cta" className="relative">
-          {/* subtle dark texture */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-[0.08]"
@@ -446,7 +359,7 @@ export default function HomePage() {
             }}
           />
 
-          <div className="container relative py-20">
+          <div className="container relative py-16 sm:py-20">
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-soft">
               <div
                 aria-hidden="true"
@@ -498,6 +411,57 @@ export default function HomePage() {
         </section>
       </Strip>
     </div>
+  );
+}
+
+/* ---------- Services card ---------- */
+function ServiceCard({
+  href,
+  title,
+  desc,
+  icon,
+}: {
+  href: string;
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="
+        group block rounded-2xl bg-white/6 p-6 sm:p-7
+        transition-all duration-200
+        hover:bg-white/10 hover:-translate-y-0.5
+        focus:outline-none
+        focus-visible:ring-2 focus-visible:ring-brand-green
+        focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark
+      "
+    >
+      <div className="flex items-start gap-4">
+        <span
+          className="
+            grid h-11 w-11 shrink-0 place-items-center rounded-2xl
+            bg-white/10 text-white
+          "
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-semibold leading-snug">{title}</h3>
+          <p className="mt-2 text-sm text-white/75 leading-relaxed">{desc}</p>
+
+          <span className="mt-4 inline-flex items-center text-sm font-semibold text-brand-green">
+            Learn more
+            <span className="ml-1 transition-transform group-hover:translate-x-0.5">
+              →
+            </span>
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -575,7 +539,7 @@ function cls(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-/* ---------- Icons (Services) ---------- */
+/* ---------- Icons (simple, consistent) ---------- */
 function IconTruck() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
