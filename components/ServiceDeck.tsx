@@ -1,4 +1,3 @@
-// components/ServiceDeck.tsx
 'use client';
 
 import * as React from 'react';
@@ -13,13 +12,9 @@ type Section = {
 export default function ServiceDeck({
   sections,
   heightClass = 'h-auto md:h-[560px]',
-  stickyOffsetClass = 'md:top-24',
 }: {
   sections: Section[];
-  /** Mobile should be auto height; desktop can be fixed to match the image */
   heightClass?: string;
-  /** If you use a sticky nav, adjust this to match your navbar height */
-  stickyOffsetClass?: string;
 }) {
   const [activeIdx, setActiveIdx] = React.useState(0);
   const active = sections[activeIdx];
@@ -27,38 +22,24 @@ export default function ServiceDeck({
   const goPrev = () => setActiveIdx((i) => Math.max(0, i - 1));
   const goNext = () => setActiveIdx((i) => Math.min(sections.length - 1, i + 1));
 
-  // Helps screen readers announce tab changes
-  const tablistId = React.useId();
-
   return (
     <div
       className={clsx(
         'rounded-2xl border border-slate-200 bg-white',
         'shadow-[0_1px_0_rgba(15,23,42,0.04),0_14px_40px_rgba(15,23,42,0.06)]',
         'flex flex-col overflow-hidden',
+        // Important for nested scroll to work inside flex
+        'min-h-0',
         heightClass
       )}
     >
-      {/* Tabs (scrollable on mobile). Sticky on desktop if you want it inside the panel. */}
-      <div
-        className={clsx(
-          'border-b border-slate-200 bg-slate-50/70',
-          // Optional: keep tabs visible while content scrolls on desktop
-          'md:sticky',
-          stickyOffsetClass,
-          'z-10'
-        )}
-      >
+      {/* Tabs (normal flow, no sticky) */}
+      <div className="border-b border-slate-200 bg-slate-50/70">
         <div
           role="tablist"
           aria-label="Service sections"
-          aria-labelledby={tablistId}
-          className="flex gap-2 overflow-x-auto p-3 [scrollbar-width:none] [-ms-overflow-style:none]"
+          className="deck-tabs flex gap-2 overflow-x-auto p-3 [scrollbar-width:none] [-ms-overflow-style:none]"
         >
-          <span id={tablistId} className="sr-only">
-            Service sections
-          </span>
-
           {sections.map((s, idx) => {
             const isActive = idx === activeIdx;
             return (
@@ -84,23 +65,22 @@ export default function ServiceDeck({
           })}
         </div>
 
-        {/* Hide scrollbar (WebKit) */}
         <style jsx>{`
-          div[role='tablist']::-webkit-scrollbar {
+          .deck-tabs::-webkit-scrollbar {
             display: none;
           }
         `}</style>
       </div>
 
-      {/* Content panel
-          - Mobile: natural page scroll (no inner scroll)
-          - Desktop: inner scroll to keep the whole deck same height as the image
+      {/* Content
+          - mobile: normal (no inner scroll)
+          - desktop: inner scroll
       */}
       <div
         role="tabpanel"
         id={`panel-${active.id}`}
         aria-labelledby={`tab-${active.id}`}
-        className="flex-1 p-6 sm:p-7 md:overflow-auto"
+        className="flex-1 min-h-0 p-6 sm:p-7 md:overflow-auto"
       >
         {active.content}
       </div>
