@@ -55,90 +55,72 @@ export default function AboutPage() {
 
   return (
     <article className="py-10 sm:py-12 lg:py-14 bg-white">
-      {/* ---------- HERO ---------- */}
+      {/* ---------- HERO (no outer pill) ---------- */}
       <section className={shell} aria-labelledby="about-hero">
-        <div
-          className={[
-            "relative overflow-hidden",
-            "rounded-3xl border border-emerald-100 shadow-soft",
-            "bg-gradient-to-br from-emerald-50 via-white to-teal-50",
-          ].join(" ")}
-        >
-          {/* Subtle texture */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-[0.35]"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, rgba(16,185,129,0.18), transparent 45%), radial-gradient(circle at 80% 30%, rgba(20,184,166,0.12), transparent 50%)",
-            }}
-          />
+        <div className="grid gap-8 md:grid-cols-12 items-center py-2 md:py-4">
+          {/* Text */}
+          <div className="md:col-span-7 lg:col-span-7 text-center md:text-left">
+            <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
+              About Us
+            </p>
 
-          <div className="relative grid gap-6 md:grid-cols-12 items-center px-6 py-7 md:px-8 md:py-10">
-            {/* Text */}
-            <div className="md:col-span-7 lg:col-span-7 text-center md:text-left">
-              <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
-                About Us
-              </p>
+            <h1
+              id="about-hero"
+              className="mt-2 text-3xl lg:text-[34px] font-extrabold text-slate-900 leading-tight tracking-tight"
+            >
+              Built after a move went wrong—so yours doesn’t.
+            </h1>
 
-              <h1
-                id="about-hero"
-                className="mt-1 text-3xl lg:text-[34px] font-extrabold text-slate-900 leading-tight tracking-tight"
+            <p className="mt-4 text-slate-700 text-[15px] leading-6 max-w-2xl md:max-w-none mx-auto md:mx-0">
+              GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
+              international lanes. Our promise is simple: protect what matters and keep you
+              informed from quote to proof-of-delivery.
+            </p>
+
+            {/* Chips */}
+            <ul className="mt-5 flex flex-wrap justify-center md:justify-start gap-2">
+              {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
+                <li
+                  key={label}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.586l6.543-6.543a1 1 0 011.414 0z" />
+                  </svg>
+                  {label}
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA row */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-5 py-2.5 font-semibold hover:bg-emerald-700 shadow-soft"
               >
-                Built after a move went wrong—so yours doesn’t.
-              </h1>
-
-              <p className="mt-3 text-slate-700 text-[15px] leading-6 max-w-2xl md:max-w-none mx-auto md:mx-0">
-                GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
-                international lanes. Our promise is simple: protect what matters and keep you
-                informed from quote to proof-of-delivery.
-              </p>
-
-              {/* Chips */}
-              <ul className="mt-5 flex flex-wrap justify-center md:justify-start gap-2">
-                {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
-                  <li
-                    key={label}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100"
-                  >
-                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.586l6.543-6.543a1 1 0 011.414 0z" />
-                    </svg>
-                    {label}
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA row */}
-              <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-5 py-2.5 font-semibold hover:bg-emerald-700 shadow-soft"
-                >
-                  Get a Free Quote
-                </Link>
-                <Link
-                  href="/shipping-guide"
-                  className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 shadow-soft"
-                >
-                  Shipping Guide
-                </Link>
-              </div>
+                Get a Free Quote
+              </Link>
+              <Link
+                href="/shipping-guide"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 shadow-soft"
+              >
+                Shipping Guide
+              </Link>
             </div>
+          </div>
 
-            {/* Visual (right) */}
-            <div className="md:col-span-5 lg:col-span-5">
-              <div className="relative h-44 sm:h-56 md:h-[240px] rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-soft bg-white">
-                <img
-                  src={publicPath("/images/aboutus-1.png")}
-                  alt="Secure freight loaded inside a trailer"
-                  className="absolute inset-0 h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/35 via-black/10 to-transparent pointer-events-none" />
-                {/* ✅ pill removed */}
-              </div>
+          {/* Visual (right) */}
+          <div className="md:col-span-5 lg:col-span-5">
+            <div className="relative h-44 sm:h-56 md:h-[260px] rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-soft bg-white">
+              <img
+                src={publicPath("/images/aboutus-1.png")}
+                alt="Secure freight loaded inside a trailer"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/35 via-black/10 to-transparent pointer-events-none" />
+              {/* ✅ photo pill removed */}
             </div>
           </div>
         </div>
