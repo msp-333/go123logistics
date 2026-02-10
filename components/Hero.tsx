@@ -49,7 +49,7 @@ export default function Hero() {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-white/85">
                 <span className="inline-block h-2 w-2 rounded-full bg-brand-green" />
-                End-to-end freight support — fast quotes, clear tracking
+                Move your freight with confidence
               </div>
 
               {/* Headline */}
@@ -60,9 +60,7 @@ export default function Hero() {
 
               {/* Paragraph */}
               <p className="mt-4 mx-auto max-w-2xl text-sm sm:text-base md:text-lg text-white/75 leading-relaxed">
-                We plan, book, and move your cargo with transparent rates and proactive updates
-                <br className="hidden sm:block" />
-                so your deliveries stay on schedule.
+                We plan, book, and move your cargo with transparent rates and proactive updates so your deliveries stay on schedule.
               </p>
 
               {/* CTA */}

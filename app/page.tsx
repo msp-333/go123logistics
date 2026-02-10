@@ -71,7 +71,7 @@ export default function HomePage() {
     <div className="bg-white text-slate-900 antialiased">
       <Hero />
 
-      {/* How it works (light, distinct) */}
+      {/* How it works (simple + consistent spacing) */}
       <Strip tone="tint">
         <section
           id="steps"
@@ -93,76 +93,46 @@ export default function HomePage() {
             className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/90 to-transparent"
           />
 
-          <div className="container relative py-16 md:py-18">
+          <div className="container relative py-20">
             <Kicker>How it works</Kicker>
             <Title id="steps-title">Seamless Shipping in 4 Easy Steps</Title>
 
-            {/* Connected stepper */}
-            <div className="mt-12 relative">
-              {/* route line behind nodes (desktop) */}
-              <div
-                aria-hidden
-                className="hidden md:block absolute left-8 right-8 top-[34px] h-px bg-slate-200/90"
-              />
-              {/* dotted overlay */}
-              <div
-                aria-hidden
-                className="hidden md:block absolute left-8 right-8 top-[34px] h-px opacity-40
-                [background-image:repeating-linear-gradient(90deg,rgba(0,0,0,0.0)_0,rgba(0,0,0,0.0)_10px,rgba(15,23,42,0.15)_10px,rgba(15,23,42,0.15)_12px)]"
-              />
+            {/* Cards: equal height on desktop + consistent internal margins */}
+            <div className="mt-12 grid gap-6 md:grid-cols-4 auto-rows-fr">
+              {steps.map((s, i) => (
+                <article
+                  key={s.title}
+                  className="
+                    relative h-full rounded-2xl border border-slate-200/80 bg-white
+                    p-6 md:p-7 shadow-soft
+                    transition-all duration-200
+                    hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
+                  "
+                >
+                  {/* top accent */}
+                  <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-brand-green/80" />
 
-              <div className="grid gap-6 md:grid-cols-4">
-                {steps.map((s, i) => (
-                  <article
-                    key={s.title}
-                    className="
-                      group relative rounded-2xl border border-slate-200/80 bg-white
-                      p-6 shadow-soft
-                      transition-all duration-200
-                      hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]
-                    "
-                  >
-                    {/* top accent */}
-                    <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-brand-green/80" />
-
-                    <div className="relative">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="
-                            relative z-10 grid h-11 w-11 place-items-center rounded-full
-                            bg-white text-brand-dark font-semibold
-                            border border-slate-200
-                            shadow-[0_8px_20px_rgba(0,0,0,0.08)]
-                            transition-transform duration-200
-                            group-hover:scale-[1.03]
-                          "
-                        >
-                          {i + 1}
-                        </div>
-
-                        <span className="text-xs font-semibold tracking-wide text-slate-500">
-                          STEP {i + 1}
-                        </span>
-                      </div>
-
-                      <h3 className="mt-4 text-[15px] font-semibold text-slate-900 leading-snug">
-                        {s.title}
-                      </h3>
-
-                      <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                        {s.desc}
-                      </p>
-
-                      <div className="mt-5 h-px bg-slate-100" />
-
-                      <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-brand-dark/60">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-green" />
-                        <span>Clear, guided process</span>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="
+                        mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full
+                        border border-slate-200 bg-white text-brand-dark font-semibold
+                      "
+                      aria-hidden="true"
+                    >
+                      {i + 1}
                     </div>
-                  </article>
-                ))}
-              </div>
+
+                    <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
+                      {s.title}
+                    </h3>
+                  </div>
+
+                  <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+                    {s.desc}
+                  </p>
+                </article>
+              ))}
             </div>
 
             <div className="mt-10 text-center">
@@ -316,6 +286,7 @@ export default function HomePage() {
       {/* Final CTA (dark) */}
       <Strip tone="dark">
         <section id="cta" className="relative">
+          {/* subtle dark texture */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-[0.08]"
@@ -335,11 +306,11 @@ export default function HomePage() {
                 <div className="p-8 md:p-12">
                   <Kicker dark>Next step</Kicker>
                   <Title align="left" dark>
-                    Ready to elevate your transportation and logistics operations?
+                    Elevate your transportation and logistics operations
                   </Title>
 
                   <p className="mt-4 max-w-xl text-sm sm:text-base text-white/70 leading-relaxed">
-                    Get a fast quote, clear timelines, and proactive updates—handled end-to-end by our team.
+                    Get a fast quote, clear timelines, and proactive updates, handled end-to-end by our team.
                   </p>
 
                   <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -356,13 +327,6 @@ export default function HomePage() {
                       "
                     >
                       Get a Free Quote
-                    </Link>
-
-                    <Link
-                      href="/shipping-guide"
-                      className="text-sm font-semibold text-white/75 hover:text-white underline underline-offset-4"
-                    >
-                      Shipping Guide →
                     </Link>
                   </div>
                 </div>
