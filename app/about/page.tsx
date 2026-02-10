@@ -12,6 +12,12 @@ const shell = "mx-auto max-w-6xl px-4 sm:px-6";
 const card =
   "rounded-2xl border border-slate-100 bg-white shadow-soft transition-shadow hover:shadow-md";
 
+const publicPath = (p: string) => {
+  const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const path = p.startsWith("/") ? p : `/${p}`;
+  return `${base}${path}`;
+};
+
 export default function AboutPage() {
   const steps = [
     {
@@ -86,7 +92,7 @@ export default function AboutPage() {
                 ))}
               </ul>
 
-              {/* CTA row (same primary as home/contact) */}
+              {/* CTA row */}
               <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <Link
                   href="/contact"
@@ -105,177 +111,206 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* subtle divider to emphasize distinction into white "Our story" */}
         <div className="border-b border-slate-200/60" />
       </section>
 
-      {/* ---------- OUR STORY (white background for distinction) ---------- */}
-      <section className="bg-white">
-        <div className="py-10 sm:py-12 lg:py-14">
+      {/* ---------- OUR STORY (image background + gradient overlay) ---------- */}
+      <section className="relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${publicPath("/images/aboutus-1.png")})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0
+            bg-[linear-gradient(to_bottom,rgba(255,255,255,0.70),rgba(255,255,255,0.92),rgba(255,255,255,0.98))]"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.06] mix-blend-multiply"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(15,23,42,.20) 1px, transparent 1px),linear-gradient(90deg, rgba(15,23,42,.20) 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+          }}
+        />
+
+        <div className="relative py-10 sm:py-12 lg:py-14">
           <section className={shell} aria-labelledby="story-title">
             <div className="max-w-4xl mx-auto">
-              <h2
-                id="story-title"
-                className="text-center text-2xl md:text-3xl font-bold text-slate-900"
-              >
-                Our story
-              </h2>
+              <div className="rounded-3xl border border-white/60 bg-white/85 backdrop-blur shadow-soft p-6 sm:p-8">
+                <h2
+                  id="story-title"
+                  className="text-center text-2xl md:text-3xl font-bold text-slate-900"
+                >
+                  Our story
+                </h2>
 
-              <div className="mt-5 space-y-4 text-slate-800 text-[16px] leading-7">
-                <p>
-                  In <strong>2010</strong>, our family moved from the <strong>Caribbean</strong> to the{" "}
-                  <strong>United States</strong>. We prepared everything the right way—fully palletized,
-                  shrink-wrapped, and sealed properly—so the container left the origin site correctly.
-                </p>
+                <div className="mt-5 space-y-4 text-slate-800 text-[16px] leading-7">
+                  <p>
+                    In <strong>2010</strong>, our family moved from the <strong>Caribbean</strong> to the{" "}
+                    <strong>United States</strong>. We prepared everything the right way—fully palletized,
+                    shrink-wrapped, and sealed properly—so the container left the origin site correctly.
+                  </p>
 
-                <p>
-                  But when it arrived in the U.S., the shipping company dismantled the container and
-                  mixed our goods with other customers’ freight for their benefit. What was promised as a{" "}
-                  <strong>two-week delivery</strong> stretched into months.
-                </p>
+                  <p>
+                    But when it arrived in the U.S., the shipping company dismantled the container and
+                    mixed our goods with other customers’ freight for their benefit. What was promised as a{" "}
+                    <strong>two-week delivery</strong> stretched into months.
+                  </p>
 
-                <p>
-                  In the end, about <strong>40 boxes</strong> were missing. Other people’s belongings
-                  showed up instead, and the boxes we did receive were smashed, crammed, and broken. Then
-                  the driver attempted to extort extra payment at delivery. It turned into a standoff—but
-                  our family stood their ground.
-                </p>
+                  <p>
+                    In the end, about <strong>40 boxes</strong> were missing. Other people’s belongings
+                    showed up instead, and the boxes we did receive were smashed, crammed, and broken. Then
+                    the driver attempted to extort extra payment at delivery. It turned into a standoff—but
+                    our family stood their ground.
+                  </p>
 
-                <p>
-                  The lesson was clear: integrity isn’t optional. From that moment on, it became
-                  non-negotiable.
-                </p>
+                  <p>
+                    The lesson was clear: integrity isn’t optional. From that moment on, it became
+                    non-negotiable.
+                  </p>
 
-                <p>
-                  GO123 Logistics was built around integrity—treating people and their freight the right
-                  way. No one else should have to learn the hard way. <strong>Welcome home!</strong>
-                </p>
-              </div>
-
-              {/* Story highlight */}
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:p-6">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Stat label="Founded on" value="Integrity" />
-                  <Stat label="Focus" value="Protected freight" />
-                  <Stat label="Promise" value="Proactive updates" />
+                  <p>
+                    GO123 Logistics was built around integrity—treating people and their freight the right
+                    way. No one else should have to learn the hard way. <strong>Welcome home!</strong>
+                  </p>
                 </div>
-              </div>
-            </div>
-          </section>
 
-          <SectionDivider />
-
-          {/* ---------- HOW WE WORK ---------- */}
-          <section className={shell} aria-labelledby="work-title">
-            <h2
-              id="work-title"
-              className="text-center text-2xl md:text-3xl font-bold text-slate-900"
-            >
-              How we work
-            </h2>
-            <p className="mt-3 text-center text-slate-600 max-w-2xl mx-auto">
-              A repeatable process that keeps you informed, protects your freight, and prevents surprises.
-            </p>
-
-            <ol className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-              {steps.map((s, i) => (
-                <li key={i} className={`${card} p-5 md:p-6`}>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums ring-4 ring-emerald-50"
-                      aria-hidden="true"
-                    >
-                      {i + 1}
-                    </span>
-                    <h3 className="text-base md:text-lg font-semibold text-slate-900">{s.t}</h3>
-                  </div>
-                  <p className="mt-2 text-slate-600 text-[15px] leading-6">{s.d}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <SectionDivider />
-
-          {/* ---------- VALUES ---------- */}
-          <section className={shell} aria-labelledby="values-title">
-            <h2
-              id="values-title"
-              className="text-center text-2xl md:text-3xl font-bold text-slate-900"
-            >
-              Values we live by
-            </h2>
-
-            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {values.map((v, i) => (
-                <div key={i} className={`${card} p-5 md:p-6 text-center`}>
-                  <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                    <svg
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </div>
-
-                  <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
-                    {v.t}
-                  </div>
-                  <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <SectionDivider />
-
-          {/* ---------- CTA (match home/contact hero style) ---------- */}
-          <section className={shell} aria-labelledby="cta-title">
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-brand-dark shadow-soft">
-              {/* same structural accents as home */}
-              <div
-                aria-hidden
-                className="absolute inset-0
-                  bg-[radial-gradient(700px_420px_at_18%_20%,rgba(0,200,83,0.35),transparent_55%),linear-gradient(to_right,rgba(0,0,0,0.55),rgba(0,0,0,0.35),rgba(0,0,0,0.10))]"
-              />
-              <div
-                aria-hidden
-                className="absolute inset-x-0 bottom-0 h-24 opacity-[0.10]
-                  bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.85)_0,rgba(255,255,255,0.85)_10px,transparent_10px,transparent_26px)]"
-              />
-
-              <div className="relative p-6 md:p-8">
-                <div className="grid md:grid-cols-5 items-center gap-6">
-                  <div className="md:col-span-3 text-center md:text-left">
-                    <h3 id="cta-title" className="text-xl md:text-2xl font-semibold text-white">
-                      Ready to ship with confidence?
-                    </h3>
-                    <p className="mt-1 text-white/75 md:text-base">
-                      Build a transparent, step-by-step plan you can trust—tailored to your lanes,
-                      timelines, and budget.
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-2 md:justify-self-end text-center md:text-right">
-                    <Link
-                      href="/contact"
-                      className="inline-flex items-center justify-center rounded-lg bg-brand-green text-brand-dark px-5 py-2.5 font-semibold hover:opacity-95 shadow-soft"
-                    >
-                      Get a Free Quote
-                    </Link>
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Stat label="Founded on" value="Integrity" />
+                    <Stat label="Focus" value="Protected freight" />
+                    <Stat label="Promise" value="Proactive updates" />
                   </div>
                 </div>
               </div>
-
-              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-brand-green" />
             </div>
           </section>
         </div>
+
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-white"
+        />
       </section>
+
+      <SectionDivider />
+
+      {/* ---------- HOW WE WORK ---------- */}
+      <section className={shell} aria-labelledby="work-title">
+        <h2 id="work-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
+          How we work
+        </h2>
+        <p className="mt-3 text-center text-slate-600 max-w-2xl mx-auto">
+          A repeatable process that keeps you informed, protects your freight, and prevents surprises.
+        </p>
+
+        <ol className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+          {steps.map((s, i) => (
+            <li key={i} className={`${card} p-5 md:p-6`}>
+              <div className="flex items-center gap-3">
+                <span
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums ring-4 ring-emerald-50"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <h3 className="text-base md:text-lg font-semibold text-slate-900">{s.t}</h3>
+              </div>
+              <p className="mt-2 text-slate-600 text-[15px] leading-6">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <SectionDivider />
+
+      {/* ---------- VALUES ---------- */}
+      <section className={shell} aria-labelledby="values-title">
+        <h2 id="values-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
+          Values we live by
+        </h2>
+
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {values.map((v, i) => (
+            <div key={i} className={`${card} p-5 md:p-6 text-center`}>
+              <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </div>
+
+              <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                {v.t}
+              </div>
+              <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <SectionDivider />
+
+      {/* ---------- CTA (fixed pattern issue) ---------- */}
+      <section className={shell} aria-labelledby="cta-title">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-brand-dark shadow-soft">
+          {/* Background glow + gradient */}
+          <div
+            aria-hidden
+            className="absolute inset-0 z-0
+              bg-[radial-gradient(700px_420px_at_18%_20%,rgba(0,200,83,0.32),transparent_58%),linear-gradient(to_right,rgba(0,0,0,0.62),rgba(0,0,0,0.40),rgba(0,0,0,0.18))]"
+          />
+
+          {/* Bottom pattern (shorter + faded so it doesn't run behind text) */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 z-0 h-12 opacity-[0.10]
+              bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.85)_0,rgba(255,255,255,0.85)_10px,transparent_10px,transparent_26px)]
+              [mask-image:linear-gradient(to_top,transparent,black)]
+              [-webkit-mask-image:linear-gradient(to_top,transparent,black)]"
+          />
+
+          <div className="relative z-10 p-6 md:p-8">
+            <div className="grid md:grid-cols-5 items-center gap-6">
+              <div className="md:col-span-3 text-center md:text-left">
+                <h3 id="cta-title" className="text-xl md:text-2xl font-semibold text-white">
+                  Ready to ship with confidence?
+                </h3>
+                <p className="mt-1 text-white/75 md:text-base">
+                  Build a transparent, step-by-step plan you can trust—tailored to your lanes,
+                  timelines, and budget.
+                </p>
+              </div>
+
+              <div className="md:col-span-2 md:justify-self-end text-center md:text-right">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center rounded-lg bg-brand-green text-brand-dark px-5 py-2.5 font-semibold hover:opacity-95 shadow-soft"
+                >
+                  Get a Free Quote
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 h-1.5 bg-brand-green" />
+        </div>
+      </section>
+
+      <div className="h-10" />
     </article>
   );
 }
