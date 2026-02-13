@@ -13,19 +13,11 @@ const ContactSchema = z.object({
 
 type Contact = z.infer<typeof ContactSchema>;
 
-// Digits only, include country code, no +, no spaces.
+// Puerto Rico WhatsApp Business number (digits only, include country code 1, no +, spaces, dashes)
 const WHATSAPP_NUMBER = '17758701999';
 
-function buildMessage(values: Contact) {
-  return (
-    `Hi Go123 Logistics — I’d like help with:\n\n` +
-    `Name: ${values.name || '-'}\n` +
-    `Phone: ${values.phone || '-'}\n` +
-    `Email: ${values.email || '-'}\n` +
-    `Subject: ${values.subject || '-'}\n\n` +
-    `Message:\n${values.message || '-'}`
-  );
-}
+// Your Formspree endpoint (confirmed)
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mojnenep';
 
 function isLikelyMobile() {
   if (typeof window === 'undefined') return false;
@@ -33,18 +25,15 @@ function isLikelyMobile() {
   return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
 }
 
-// Avoid wa.me completely (your DNS/network can’t resolve it)
-// - Mobile: api.whatsapp.com (hands off to app more reliably)
-// - Desktop: web.whatsapp.com (opens WhatsApp Web)
-function buildWhatsAppUrl(values: Contact) {
-  const text = encodeURIComponent(buildMessage(values));
-  const phone = WHATSAPP_NUMBER;
-
-  if (isLikelyMobile()) {
-    return `https://api.whatsapp.com/send/?phone=${phone}&text=${text}&type=phone_number&app_absent=0`;
+// Avoid wa.me (you saw DNS issues). Use api.whatsapp.com on mobile, web.whatsapp.com on desktop.
+function buildWhatsAppUrl() {
+  const text = encodeURIComponent('Hi GO123 Logistics — I have a question.');
+  if (typeof window === 'undefined') {
+    return `https://api.whatsapp.com/send/?phone=${WHATSAPP_NUMBER}&text=${text}&type=phone_number&app_absent=0`;
   }
-
-  return `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
+  return isLikelyMobile()
+    ? `https://api.whatsapp.com/send/?phone=${WHATSAPP_NUMBER}&text=${text}&type=phone_number&app_absent=0`
+    : `https://web.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${text}`;
 }
 
 export default function ContactPage() {
@@ -56,15 +45,25 @@ export default function ContactPage() {
     message: '',
   });
 
+  // Honeypot anti-spam field (hidden)
+  const [company, setCompany] = useState('');
+
   const [result, setResult] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const whatsappUrl = useMemo(() => buildWhatsAppUrl(values), [values]);
+  const whatsappUrl = useMemo(() => buildWhatsAppUrl(), []);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setResult(null);
+
+    // If bot filled honeypot, silently succeed
+    if (company.trim().length > 0) {
+      setResult('Thanks! Your message was received.');
+      setValues({ name: '', phone: '', email: '', subject: '', message: '' });
+      return;
+    }
 
     const parsed = ContactSchema.safeParse(values);
     if (!parsed.success) {
@@ -80,26 +79,36 @@ export default function ContactPage() {
     setErrors({});
     setIsSubmitting(true);
 
-    // Open WhatsApp with the prefilled message
-    // Same-tab navigation is most reliable across mobile + in-app browsers
     try {
-      const url = buildWhatsAppUrl(values);
-      window.location.href = url;
+      const payload = {
+        ...values,
+        page_url: typeof window !== 'undefined' ? window.location.href : null,
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      };
 
-      // Optional: if navigation is blocked, user still sees something helpful
-      setResult('Opening WhatsApp… If nothing happens, use the WhatsApp button below or copy the message.');
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || 'Failed to submit');
+      }
+
+      setResult('Thanks! Your message was sent. We’ll get back to you soon.');
+      setValues({ name: '', phone: '', email: '', subject: '', message: '' });
+    } catch (err: any) {
+      console.error(err);
+      setResult(
+        'Something went wrong while sending your message. Please try again or message us on WhatsApp.'
+      );
     } finally {
-      // If the browser navigates, this won’t matter; if it doesn’t, we re-enable the button.
-      setTimeout(() => setIsSubmitting(false), 1200);
-    }
-  };
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(buildMessage(values));
-      setResult('Copied! Now paste it into WhatsApp.');
-    } catch {
-      setResult('Could not copy automatically. Please select the text and copy manually.');
+      setIsSubmitting(false);
     }
   };
 
@@ -126,13 +135,15 @@ export default function ContactPage() {
         <div>
           <h1 className="text-3xl font-bold mb-3">Contact Us</h1>
           <p className="max-w-2xl text-slate-600 mb-6">
-            Send us a message via WhatsApp and we’ll respond as soon as possible.
+            Send us a message and we’ll respond as soon as possible.
           </p>
         </div>
 
-        {/* WhatsApp icon button */}
+        {/* WhatsApp icon only */}
         <a
           href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           aria-label="Chat with us on WhatsApp"
           title="Chat with us on WhatsApp"
           className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-50"
@@ -145,6 +156,19 @@ export default function ContactPage() {
       </div>
 
       <form onSubmit={onSubmit} className="grid md:grid-cols-2 gap-4 max-w-3xl">
+        {/* Honeypot (hidden) */}
+        <div className="hidden" aria-hidden="true">
+          <label>
+            Company
+            <input
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              autoComplete="off"
+              tabIndex={-1}
+            />
+          </label>
+        </div>
+
         {field('name', { placeholder: 'Name *', autoComplete: 'name' })}
         {field('phone', {
           placeholder: 'Phone Number *',
@@ -152,18 +176,14 @@ export default function ContactPage() {
           inputMode: 'tel',
           autoComplete: 'tel',
         })}
-        {field('email', {
-          placeholder: 'Email *',
-          type: 'email',
-          autoComplete: 'email',
-        })}
+        {field('email', { placeholder: 'Email *', type: 'email', autoComplete: 'email' })}
         {field('subject', { placeholder: 'Subject *' })}
 
         <div className="md:col-span-2 flex flex-col gap-1">
           <textarea
             value={values.message}
             onChange={(e) => setValues({ ...values, message: e.target.value })}
-            placeholder="Question *"
+            placeholder="Message *"
             rows={6}
             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
@@ -176,20 +196,10 @@ export default function ContactPage() {
             disabled={isSubmitting}
             className="inline-flex items-center rounded-lg bg-emerald-600 text-white px-5 py-2 font-semibold shadow-soft hover:bg-emerald-700 disabled:opacity-60"
           >
-            {isSubmitting ? 'Opening WhatsApp…' : 'Send via WhatsApp'}
+            {isSubmitting ? 'Sending…' : 'Submit'}
           </button>
 
-          <a href={whatsappUrl} className="text-sm font-semibold text-emerald-700 hover:underline">
-            Open WhatsApp
-          </a>
-
-          <button
-            type="button"
-            onClick={copyToClipboard}
-            className="text-sm font-semibold text-slate-700 hover:underline"
-          >
-            Copy message
-          </button>
+          <span className="text-sm text-slate-600">Prefer chat? Use the WhatsApp icon.</span>
         </div>
 
         {result && <p className="md:col-span-2 mt-1 text-emerald-700">{result}</p>}
