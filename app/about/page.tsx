@@ -96,28 +96,9 @@ export default function AboutPage() {
                 </li>
               ))}
             </ul>
-
-            {/* CTA row */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center md:justify-end">
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-lg bg-brand-green text-brand-dark px-6 py-3 font-semibold shadow-soft hover:opacity-95"
-              >
-                Get a Free Quote
-              </Link>
-              <Link
-                href="/shipping-guide"
-                className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 shadow-soft"
-              >
-                Shipping Guide
-              </Link>
-            </div>
           </div>
         </div>
-      </section>
 
-      {/* ---------- VALUES ---------- */}
-      <section className={`${sectionPad} bg-slate-50`}>
         <div className={shell} aria-labelledby="values-title">
           <h2 id="values-title" className={title}>
             Values we live by
