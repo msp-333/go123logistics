@@ -12,7 +12,8 @@ const shell = "mx-auto max-w-6xl px-4 sm:px-6 lg:px-8";
 const sectionPad = "py-12 sm:py-16";
 const title =
   "text-center text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight";
-const lead = "mt-3 text-center text-slate-600 max-w-2xl mx-auto text-[15px] sm:text-base leading-6 sm:leading-7";
+const lead =
+  "mt-3 text-center text-slate-600 max-w-2xl mx-auto text-[15px] sm:text-base leading-6 sm:leading-7";
 const card =
   "rounded-2xl border border-slate-100 bg-white shadow-soft transition-shadow hover:shadow-md";
 
@@ -59,10 +60,11 @@ export default function AboutPage() {
 
   return (
     <article className="bg-white">
-      {/* ---------- HERO (simple, white) ---------- */}
+      {/* ---------- HERO (right-aligned content on desktop) ---------- */}
       <section aria-labelledby="about-hero" className={sectionPad}>
         <div className={shell}>
-          <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left">
+          {/* keep centered on mobile, align to the right on md+ */}
+          <div className="max-w-3xl mx-auto md:ml-auto md:mr-0 text-center md:text-right">
             <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
               About Us
             </p>
@@ -74,14 +76,14 @@ export default function AboutPage() {
               Built after a move went wrong—so yours doesn’t.
             </h1>
 
-            <p className="mt-4 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl">
+            <p className="mt-4 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl md:ml-auto">
               GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
               international lanes. Our promise is simple: protect what matters and keep you informed
               from quote to proof-of-delivery.
             </p>
 
             {/* Chips */}
-            <ul className="mt-6 flex flex-wrap justify-center md:justify-start gap-2">
+            <ul className="mt-6 flex flex-wrap justify-center md:justify-end gap-2">
               {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
                 <li
                   key={label}
@@ -96,7 +98,7 @@ export default function AboutPage() {
             </ul>
 
             {/* CTA row */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center md:justify-end">
               <Link
                 href="/contact"
                 className="inline-flex items-center justify-center rounded-lg bg-brand-green text-brand-dark px-6 py-3 font-semibold shadow-soft hover:opacity-95"
@@ -167,7 +169,7 @@ export default function AboutPage() {
 
             <div className="relative p-6 sm:p-10">
               <div className="max-w-4xl mx-auto">
-                <h2 id="story-title" className={`${title} text-center`}>
+                <h2 id="story-title" className={title}>
                   Our story
                 </h2>
 
@@ -236,7 +238,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ---------- CTA (clean, balanced) ---------- */}
+      {/* ---------- CTA ---------- */}
       <section className={`${sectionPad} pb-16`}>
         <div className={shell} aria-labelledby="cta-title">
           <div className="relative overflow-hidden rounded-3xl bg-brand-dark shadow-soft">

@@ -134,19 +134,7 @@ export default function ContactPage() {
         <div className="mb-7">
           <h1 className="text-3xl font-bold tracking-tight">Contact Us</h1>
           <p className="mt-2 max-w-2xl text-slate-600">
-            Send us a message and we’ll respond as soon as possible.
-            <span className="ml-2">
-              Or{' '}
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-emerald-700 hover:underline"
-              >
-                click WhatsApp to chat
-              </a>
-              .
-            </span>
+            Send us your inquiries and we'll reply right away.
           </p>
         </div>
 
@@ -211,15 +199,15 @@ export default function ContactPage() {
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Click WhatsApp to chat"
-        title="Click WhatsApp to chat"
+        aria-label="WhatsApp"
+        title="WhatsApp"
         className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-3 rounded-full px-4 py-3 text-white shadow-lg transition hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-emerald-200"
         style={{ backgroundColor: '#25D366' }}
       >
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
           <WhatsAppIcon className="h-6 w-6" />
         </span>
-        <span className="hidden sm:block text-sm font-semibold">Click WhatsApp to chat</span>
+        <span className="hidden sm:block text-sm font-semibold">WhatsApp</span>
       </a>
     </>
   );
