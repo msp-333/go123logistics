@@ -59,55 +59,55 @@ export default function AboutPage() {
   ];
 
   return (
-    <article className="relative bg-[radial-gradient(900px_520px_at_50%_-8%,rgba(16,185,129,0.12),transparent_60%),linear-gradient(to_bottom,#f8fafc,white)]">
-      {/* ---------- HERO (right-aligned content on desktop) ---------- */}
+    <article className="relative bg-[radial-gradient(900px_520px_at_50%_-8%,rgba(0,200,83,0.10),transparent_60%),linear-gradient(to_bottom,#f8fafc,white)]">
+      {/* ---------- HERO (left-aligned now) ---------- */}
       <section
         aria-labelledby="about-hero"
-        className={`${sectionPad} relative overflow-hidden`}
+        className="relative overflow-hidden py-8 sm:py-10"
       >
-        {/* Decorative background (no content) */}
+        {/* Decorative background (subtle, using brand.green) */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-28 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-emerald-200/25 blur-3xl" />
-          <div className="absolute -bottom-40 right-[-6rem] h-80 w-80 rounded-full bg-emerald-100/60 blur-3xl" />
+          <div className="absolute -top-32 left-1/2 h-56 w-[34rem] -translate-x-1/2 rounded-full bg-brand-green/10 blur-3xl" />
+          <div className="absolute -bottom-40 right-[-7rem] h-64 w-64 rounded-full bg-brand-green/5 blur-3xl" />
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/70 to-transparent" />
         </div>
 
         <div className={shell}>
-          {/* keep centered on mobile, align to the right on md+ */}
-          <div className="max-w-3xl mx-auto md:ml-auto md:mr-0 text-center md:text-right">
-            <p className="inline-flex items-center justify-center md:justify-end gap-2 text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden />
+          {/* left aligned on all breakpoints */}
+          <div className="max-w-2xl text-left">
+            <p className="inline-flex items-center justify-start gap-2 text-brand-green font-semibold tracking-widest uppercase text-[11px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-green" aria-hidden />
               About Us
             </p>
 
             <h1
               id="about-hero"
-              className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight"
+              className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight"
             >
               <span className="relative">
                 <span
                   aria-hidden
-                  className="absolute -inset-x-2 -inset-y-1 -z-10 rounded-2xl bg-emerald-50/70"
+                  className="absolute -inset-x-2 -inset-y-1 -z-10 rounded-2xl bg-brand-light/70"
                 />
                 Built after a move went wrong—so yours doesn’t.
               </span>
             </h1>
 
-            <p className="mt-5 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl md:ml-auto">
+            <p className="mt-3 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-xl">
               GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
               international lanes. Our promise is simple: protect what matters and keep you informed
               from quote to proof-of-delivery.
             </p>
 
-            {/* Chips */}
-            <ul className="mt-6 flex flex-wrap justify-center md:justify-end gap-2">
+            {/* Chips (left aligned) */}
+            <ul className="mt-5 flex flex-wrap justify-start gap-2">
               {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
                 <li
                   key={label}
-                  className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100 shadow-sm transition hover:bg-emerald-50 focus-within:ring-2 focus-within:ring-emerald-400/40"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-light/80 px-3 py-1.5 text-[13px] font-medium text-brand-dark ring-1 ring-brand-green/15 shadow-sm transition hover:bg-brand-light focus-within:ring-2 focus-within:ring-brand-green/30"
                 >
                   <svg
-                    className="h-4 w-4"
+                    className="h-4 w-4 text-brand-green"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                     aria-hidden="true"
@@ -120,8 +120,11 @@ export default function AboutPage() {
             </ul>
           </div>
         </div>
+      </section>
 
-        <div className={`${shell} mt-12 sm:mt-14`} aria-labelledby="values-title">
+      {/* Values */}
+      <section aria-labelledby="values-title" className={`${sectionPad} pt-8 sm:pt-10`}>
+        <div className={shell}>
           <div className="rounded-3xl border border-slate-100/80 bg-white/70 backdrop-blur shadow-soft p-6 sm:p-10">
             <h2 id="values-title" className={title}>
               Values we live by
@@ -130,7 +133,7 @@ export default function AboutPage() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {values.map((v, i) => (
                 <div key={i} className={`${card} p-6 text-center`}>
-                  <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 transition group-hover:scale-[1.02]">
+                  <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-brand-light text-brand-green ring-1 ring-brand-green/15 transition group-hover:scale-[1.02]">
                     <svg
                       className="h-5 w-5"
                       viewBox="0 0 24 24"
@@ -143,7 +146,7 @@ export default function AboutPage() {
                     </svg>
                   </div>
 
-                  <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                  <div className="text-xs uppercase tracking-wide text-brand-green font-semibold">
                     {v.t}
                   </div>
                   <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
@@ -173,7 +176,7 @@ export default function AboutPage() {
             />
             <div
               aria-hidden
-              className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500/70 via-emerald-300/50 to-transparent"
+              className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-green/70 via-brand-green/30 to-transparent"
             />
 
             <div className="relative p-6 sm:p-10">
@@ -233,11 +236,11 @@ export default function AboutPage() {
               <li key={i} className={`${card} relative overflow-hidden p-6`}>
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-600/80 via-emerald-400/60 to-transparent"
+                  className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-green/80 via-brand-green/35 to-transparent"
                 />
                 <div className="flex items-center gap-3">
                   <span
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums ring-4 ring-emerald-50 transition group-hover:scale-[1.03]"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-green text-white text-[13px] font-semibold tabular-nums ring-4 ring-brand-light transition group-hover:scale-[1.03]"
                     aria-hidden="true"
                   >
                     {i + 1}
