@@ -1,3 +1,5 @@
+import ServiceDeck from '@/components/ServiceDeck';
+
 export default function RailFreightPage() {
   return (
     <section className="container py-10 grid md:grid-cols-2 gap-8 items-start">
