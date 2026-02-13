@@ -13,10 +13,7 @@ const ContactSchema = z.object({
 
 type Contact = z.infer<typeof ContactSchema>;
 
-// Puerto Rico WhatsApp Business number (digits only, include country code 1)
 const WHATSAPP_NUMBER = '17758701999';
-
-// Formspree endpoint
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mojnenep';
 
 function isLikelyMobile() {
@@ -25,7 +22,6 @@ function isLikelyMobile() {
   return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
 }
 
-// Avoid wa.me (DNS issue). Use api.whatsapp.com on mobile, web.whatsapp.com on desktop.
 function buildWhatsAppUrl() {
   const text = encodeURIComponent('Hi GO123 Logistics — I have a question.');
   if (typeof window === 'undefined') {
@@ -54,9 +50,7 @@ export default function ContactPage() {
     message: '',
   });
 
-  // Honeypot anti-spam (hidden)
   const [company, setCompany] = useState('');
-
   const [result, setResult] = useState<string | null>(null);
   const [resultKind, setResultKind] = useState<'success' | 'error' | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -69,7 +63,6 @@ export default function ContactPage() {
     setResult(null);
     setResultKind(null);
 
-    // bot trap
     if (company.trim().length > 0) {
       setResult('Thanks! Your message was received.');
       setResultKind('success');
@@ -142,6 +135,18 @@ export default function ContactPage() {
           <h1 className="text-3xl font-bold tracking-tight">Contact Us</h1>
           <p className="mt-2 max-w-2xl text-slate-600">
             Send us a message and we’ll respond as soon as possible.
+            <span className="ml-2">
+              Or{' '}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-emerald-700 hover:underline"
+              >
+                click WhatsApp to chat
+              </a>
+              .
+            </span>
           </p>
         </div>
 
@@ -201,17 +206,20 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Single WhatsApp CTA (non-redundant): Floating button */}
+      {/* Floating WhatsApp button with label (so it's obvious) */}
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Chat with us on WhatsApp"
-        title="Chat with us on WhatsApp"
-        className="fixed bottom-6 right-6 z-50 inline-flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+        aria-label="Click WhatsApp to chat"
+        title="Click WhatsApp to chat"
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-3 rounded-full px-4 py-3 text-white shadow-lg transition hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-emerald-200"
         style={{ backgroundColor: '#25D366' }}
       >
-        <WhatsAppIcon className="h-8 w-8" />
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
+          <WhatsAppIcon className="h-6 w-6" />
+        </span>
+        <span className="hidden sm:block text-sm font-semibold">Click WhatsApp to chat</span>
       </a>
     </>
   );
