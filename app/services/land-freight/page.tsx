@@ -20,7 +20,7 @@ export default function RailFreightPage() {
 
         {/* Title + intro */}
         <header className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">By Land</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Land Freight</h1>
           <p className="text-[15px] leading-relaxed text-app-mutedText">
             Reliable, flexible inland transport—combining rail and over-the-road solutions for seamless regional and cross-border deliveries.
           </p>
