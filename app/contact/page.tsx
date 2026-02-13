@@ -16,7 +16,7 @@ type Contact = z.infer<typeof ContactSchema>;
 // Puerto Rico WhatsApp Business number (digits only, include country code 1)
 const WHATSAPP_NUMBER = '17758701999';
 
-// Formspree endpoint (confirmed)
+// Formspree endpoint
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mojnenep';
 
 function isLikelyMobile() {
@@ -25,7 +25,7 @@ function isLikelyMobile() {
   return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
 }
 
-// Avoid wa.me (DNS issues). Use api.whatsapp.com on mobile, web.whatsapp.com on desktop.
+// Avoid wa.me (DNS issue). Use api.whatsapp.com on mobile, web.whatsapp.com on desktop.
 function buildWhatsAppUrl() {
   const text = encodeURIComponent('Hi GO123 Logistics — I have a question.');
   if (typeof window === 'undefined') {
@@ -54,7 +54,7 @@ export default function ContactPage() {
     message: '',
   });
 
-  // Honeypot anti-spam field (hidden)
+  // Honeypot anti-spam (hidden)
   const [company, setCompany] = useState('');
 
   const [result, setResult] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export default function ContactPage() {
     setResult(null);
     setResultKind(null);
 
-    // If bot filled honeypot, silently succeed
+    // bot trap
     if (company.trim().length > 0) {
       setResult('Thanks! Your message was received.');
       setResultKind('success');
@@ -81,8 +81,7 @@ export default function ContactPage() {
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => {
-        const key = i.path[0] as string;
-        errs[key] = i.message;
+        errs[i.path[0] as string] = i.message;
       });
       setErrors(errs);
       return;
@@ -100,10 +99,7 @@ export default function ContactPage() {
 
       const res = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -115,7 +111,7 @@ export default function ContactPage() {
       setResult('Thanks! Your message was sent. We’ll get back to you soon.');
       setResultKind('success');
       setValues({ name: '', phone: '', email: '', subject: '', message: '' });
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setResult('Something went wrong while sending your message. Please try again.');
       setResultKind('error');
@@ -127,10 +123,7 @@ export default function ContactPage() {
   const inputClass =
     'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500';
 
-  const field = (
-    id: keyof Contact,
-    props: React.InputHTMLAttributes<HTMLInputElement>
-  ) => (
+  const field = (id: keyof Contact, props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <div className="flex flex-col gap-1">
       <input
         value={values[id] as string}
@@ -143,143 +136,83 @@ export default function ContactPage() {
   );
 
   return (
-    <section className="container py-12">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+    <>
+      <section className="container py-12">
+        <div className="mb-7">
           <h1 className="text-3xl font-bold tracking-tight">Contact Us</h1>
           <p className="mt-2 max-w-2xl text-slate-600">
             Send us a message and we’ll respond as soon as possible.
           </p>
         </div>
 
-        {/* Bigger, green WhatsApp icon button */}
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Chat with us on WhatsApp"
-          title="Chat with us on WhatsApp"
-          className="inline-flex items-center gap-3 self-start rounded-2xl border border-emerald-200 bg-white px-4 py-3 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:self-auto"
-        >
-          <span
-            className="inline-flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-sm"
-            style={{ backgroundColor: '#25D366' }} // WhatsApp green
-          >
-            <WhatsAppIcon className="h-7 w-7" />
-          </span>
-          <span className="hidden sm:flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-slate-900">WhatsApp</span>
-            <span className="text-xs text-slate-600">Chat with us</span>
-          </span>
-        </a>
-      </div>
-
-      {/* Content */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* Left info card */}
-        <aside className="lg:col-span-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-base font-semibold text-slate-900">Fast response</p>
-                <p className="mt-1 text-sm text-slate-600">
-                  For urgent requests, use WhatsApp. For detailed inquiries, submit the form and we’ll follow up.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                style={{ backgroundColor: '#25D366' }}
-              >
-                <WhatsAppIcon className="h-5 w-5" />
-                Chat on WhatsApp
-              </a>
-
-              <p className="text-xs text-slate-500">
-                WhatsApp opens in a new tab. If you’re on mobile, it should switch to the app.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Form card */}
-        <div className="lg:col-span-8">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
-            <form onSubmit={onSubmit} className="grid md:grid-cols-2 gap-4">
-              {/* Honeypot (hidden) */}
-              <div className="hidden" aria-hidden="true">
-                <label>
-                  Company
-                  <input
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    autoComplete="off"
-                    tabIndex={-1}
-                  />
-                </label>
-              </div>
-
-              {field('name', { placeholder: 'Name *', autoComplete: 'name' })}
-              {field('phone', {
-                placeholder: 'Phone Number *',
-                type: 'tel',
-                inputMode: 'tel',
-                autoComplete: 'tel',
-              })}
-              {field('email', { placeholder: 'Email *', type: 'email', autoComplete: 'email' })}
-              {field('subject', { placeholder: 'Subject *' })}
-
-              <div className="md:col-span-2 flex flex-col gap-1">
-                <textarea
-                  value={values.message}
-                  onChange={(e) => setValues({ ...values, message: e.target.value })}
-                  placeholder="Message *"
-                  rows={7}
-                  className={inputClass}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8 max-w-4xl">
+          <form onSubmit={onSubmit} className="grid md:grid-cols-2 gap-4">
+            {/* Honeypot (hidden) */}
+            <div className="hidden" aria-hidden="true">
+              <label>
+                Company
+                <input
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  autoComplete="off"
+                  tabIndex={-1}
                 />
-                {errors.message && <span className="text-sm text-rose-600">{errors.message}</span>}
+              </label>
+            </div>
+
+            {field('name', { placeholder: 'Name *', autoComplete: 'name' })}
+            {field('phone', { placeholder: 'Phone Number *', type: 'tel', inputMode: 'tel', autoComplete: 'tel' })}
+            {field('email', { placeholder: 'Email *', type: 'email', autoComplete: 'email' })}
+            {field('subject', { placeholder: 'Subject *' })}
+
+            <div className="md:col-span-2 flex flex-col gap-1">
+              <textarea
+                value={values.message}
+                onChange={(e) => setValues({ ...values, message: e.target.value })}
+                placeholder="Message *"
+                rows={7}
+                className={inputClass}
+              />
+              {errors.message && <span className="text-sm text-rose-600">{errors.message}</span>}
+            </div>
+
+            <div className="md:col-span-2 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center rounded-xl bg-emerald-600 text-white px-6 py-3 text-sm font-semibold shadow-soft transition hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {isSubmitting ? 'Sending…' : 'Submit'}
+              </button>
+            </div>
+
+            {result && (
+              <div
+                className={`md:col-span-2 mt-1 rounded-xl border px-4 py-3 text-sm ${
+                  resultKind === 'success'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-rose-200 bg-rose-50 text-rose-800'
+                }`}
+              >
+                {result}
               </div>
-
-              <div className="md:col-span-2 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 text-white px-6 py-3 text-sm font-semibold shadow-soft transition hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {isSubmitting ? 'Sending…' : 'Submit'}
-                </button>
-
-                <span className="text-sm text-slate-600">
-                  Prefer chat? Use the WhatsApp button above.
-                </span>
-              </div>
-
-              {result && (
-                <div
-                  className={`md:col-span-2 mt-2 rounded-xl border px-4 py-3 text-sm ${
-                    resultKind === 'success'
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                      : 'border-rose-200 bg-rose-50 text-rose-800'
-                  }`}
-                >
-                  {result}
-                </div>
-              )}
-            </form>
-          </div>
+            )}
+          </form>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Single WhatsApp CTA (non-redundant): Floating button */}
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat with us on WhatsApp"
+        title="Chat with us on WhatsApp"
+        className="fixed bottom-6 right-6 z-50 inline-flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+        style={{ backgroundColor: '#25D366' }}
+      >
+        <WhatsAppIcon className="h-8 w-8" />
+      </a>
+    </>
   );
 }
