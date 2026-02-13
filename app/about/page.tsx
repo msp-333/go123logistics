@@ -15,7 +15,7 @@ const title =
 const lead =
   "mt-3 text-center text-slate-600 max-w-2xl mx-auto text-[15px] sm:text-base leading-6 sm:leading-7";
 const card =
-  "rounded-2xl border border-slate-100 bg-white shadow-soft transition-shadow hover:shadow-md";
+  "group rounded-2xl border border-slate-100/80 bg-white/85 backdrop-blur shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-md";
 
 const publicPath = (p: string) => {
   const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -59,24 +59,41 @@ export default function AboutPage() {
   ];
 
   return (
-    <article className="bg-white">
+    <article className="relative bg-[radial-gradient(900px_520px_at_50%_-8%,rgba(16,185,129,0.12),transparent_60%),linear-gradient(to_bottom,#f8fafc,white)]">
       {/* ---------- HERO (right-aligned content on desktop) ---------- */}
-      <section aria-labelledby="about-hero" className={sectionPad}>
+      <section
+        aria-labelledby="about-hero"
+        className={`${sectionPad} relative overflow-hidden`}
+      >
+        {/* Decorative background (no content) */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-emerald-200/25 blur-3xl" />
+          <div className="absolute -bottom-40 right-[-6rem] h-80 w-80 rounded-full bg-emerald-100/60 blur-3xl" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/70 to-transparent" />
+        </div>
+
         <div className={shell}>
           {/* keep centered on mobile, align to the right on md+ */}
           <div className="max-w-3xl mx-auto md:ml-auto md:mr-0 text-center md:text-right">
-            <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
+            <p className="inline-flex items-center justify-center md:justify-end gap-2 text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden />
               About Us
             </p>
 
             <h1
               id="about-hero"
-              className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight"
+              className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight"
             >
-              Built after a move went wrong—so yours doesn’t.
+              <span className="relative">
+                <span
+                  aria-hidden
+                  className="absolute -inset-x-2 -inset-y-1 -z-10 rounded-2xl bg-emerald-50/70"
+                />
+                Built after a move went wrong—so yours doesn’t.
+              </span>
             </h1>
 
-            <p className="mt-4 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl md:ml-auto">
+            <p className="mt-5 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl md:ml-auto">
               GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
               international lanes. Our promise is simple: protect what matters and keep you informed
               from quote to proof-of-delivery.
@@ -87,9 +104,14 @@ export default function AboutPage() {
               {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
                 <li
                   key={label}
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100"
+                  className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100 shadow-sm transition hover:bg-emerald-50 focus-within:ring-2 focus-within:ring-emerald-400/40"
                 >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
                     <path d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.586l6.543-6.543a1 1 0 011.414 0z" />
                   </svg>
                   {label}
@@ -99,33 +121,35 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <div className={shell} aria-labelledby="values-title">
-          <h2 id="values-title" className={title}>
-            Values we live by
-          </h2>
+        <div className={`${shell} mt-12 sm:mt-14`} aria-labelledby="values-title">
+          <div className="rounded-3xl border border-slate-100/80 bg-white/70 backdrop-blur shadow-soft p-6 sm:p-10">
+            <h2 id="values-title" className={title}>
+              Values we live by
+            </h2>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map((v, i) => (
-              <div key={i} className={`${card} p-6 text-center`}>
-                <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {values.map((v, i) => (
+                <div key={i} className={`${card} p-6 text-center`}>
+                  <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 transition group-hover:scale-[1.02]">
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </div>
 
-                <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
-                  {v.t}
+                  <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                    {v.t}
+                  </div>
+                  <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
                 </div>
-                <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -133,7 +157,7 @@ export default function AboutPage() {
       {/* ---------- OUR STORY ---------- */}
       <section className={sectionPad}>
         <div className={shell} aria-labelledby="story-title">
-          <div className="relative overflow-hidden rounded-3xl">
+          <div className="relative overflow-hidden rounded-3xl ring-1 ring-slate-200/70 shadow-soft">
             <div
               aria-hidden
               className="absolute inset-0"
@@ -145,7 +169,11 @@ export default function AboutPage() {
             />
             <div
               aria-hidden
-              className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.78),rgba(255,255,255,0.92),rgba(255,255,255,0.98))]"
+              className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.72),rgba(255,255,255,0.90),rgba(255,255,255,0.98))]"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500/70 via-emerald-300/50 to-transparent"
             />
 
             <div className="relative p-6 sm:p-10">
@@ -202,10 +230,14 @@ export default function AboutPage() {
 
           <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {steps.map((s, i) => (
-              <li key={i} className={`${card} p-6`}>
+              <li key={i} className={`${card} relative overflow-hidden p-6`}>
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-600/80 via-emerald-400/60 to-transparent"
+                />
                 <div className="flex items-center gap-3">
                   <span
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums ring-4 ring-emerald-50"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[13px] font-semibold tabular-nums ring-4 ring-emerald-50 transition group-hover:scale-[1.03]"
                     aria-hidden="true"
                   >
                     {i + 1}
@@ -222,13 +254,14 @@ export default function AboutPage() {
       {/* ---------- CTA ---------- */}
       <section className={`${sectionPad} pb-16`}>
         <div className={shell} aria-labelledby="cta-title">
-          <div className="relative overflow-hidden rounded-3xl bg-brand-dark shadow-soft">
+          <div className="relative overflow-hidden rounded-3xl bg-brand-dark shadow-soft ring-1 ring-white/10">
             <div
               aria-hidden
               className="absolute inset-0
                 bg-[radial-gradient(900px_520px_at_18%_20%,rgba(0,200,83,0.30),transparent_60%),linear-gradient(to_right,rgba(0,0,0,0.70),rgba(0,0,0,0.42),rgba(0,0,0,0.22))]"
             />
             <div aria-hidden className="absolute inset-x-0 bottom-0 h-1.5 bg-brand-green" />
+            <div aria-hidden className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-green/15 blur-3xl" />
 
             <div className="relative p-6 sm:p-10">
               <div className="grid md:grid-cols-5 items-center gap-6">
@@ -245,7 +278,7 @@ export default function AboutPage() {
                 <div className="md:col-span-2 md:justify-self-end text-center md:text-right">
                   <Link
                     href="/contact"
-                    className="inline-flex items-center justify-center rounded-lg bg-brand-green text-brand-dark px-5 py-2.5 font-semibold hover:opacity-95 shadow-soft"
+                    className="inline-flex items-center justify-center rounded-lg bg-brand-green text-brand-dark px-5 py-2.5 font-semibold hover:opacity-95 shadow-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark"
                   >
                     Get a Free Quote
                   </Link>
