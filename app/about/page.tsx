@@ -55,23 +55,40 @@ export default function AboutPage() {
 
   return (
     <article className="bg-white">
-      {/* ---------- HERO (light bluish-green background, no image) ---------- */}
-      <section aria-labelledby="about-hero" className="bg-brand-light">
+      {/* ---------- HERO (DARK) ---------- */}
+      <section aria-labelledby="about-hero" className="relative overflow-hidden bg-brand-dark">
+        {/* Soft glow + gradient */}
+        <div
+          aria-hidden
+          className="absolute inset-0
+            bg-[radial-gradient(900px_520px_at_18%_20%,rgba(0,200,83,0.28),transparent_60%),linear-gradient(to_right,rgba(0,0,0,0.78),rgba(0,0,0,0.46),rgba(0,0,0,0.24))]"
+        />
+        {/* Subtle grid texture */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.06] mix-blend-screen"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+          }}
+        />
+
         <div className={shell}>
-          <div className="py-12 sm:py-14 lg:py-16">
+          <div className="relative py-12 sm:py-14 lg:py-16">
             <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left">
-              <p className="text-emerald-700 font-semibold tracking-widest uppercase text-[11px]">
+              <p className="text-brand-green font-semibold tracking-widest uppercase text-[11px]">
                 About Us
               </p>
 
               <h1
                 id="about-hero"
-                className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight"
+                className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight"
               >
                 Built after a move went wrong—so yours doesn’t.
               </h1>
 
-              <p className="mt-4 text-slate-700 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl">
+              <p className="mt-4 text-white/80 text-[15px] sm:text-base leading-6 sm:leading-7 max-w-2xl">
                 GO123 Logistics plans, moves, and delivers freight across LTL, FTL, final-mile, and
                 international lanes. Our promise is simple: protect what matters and keep you
                 informed from quote to proof-of-delivery.
@@ -82,9 +99,9 @@ export default function AboutPage() {
                 {["Honest pricing", "Proactive updates", "Protected freight"].map((label) => (
                   <li
                     key={label}
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-emerald-800 ring-1 ring-emerald-100"
+                    className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-medium text-white ring-1 ring-white/15 backdrop-blur"
                   >
-                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <svg className="h-4 w-4 text-brand-green" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.586l6.543-6.543a1 1 0 011.414 0z" />
                     </svg>
                     {label}
@@ -102,7 +119,7 @@ export default function AboutPage() {
                 </Link>
                 <Link
                   href="/shipping-guide"
-                  className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 shadow-soft"
+                  className="inline-flex items-center justify-center rounded-lg bg-white/10 px-6 py-3 font-semibold text-white ring-1 ring-white/15 hover:bg-white/15 shadow-soft backdrop-blur"
                 >
                   Shipping Guide
                 </Link>
@@ -111,10 +128,47 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <div className="border-b border-slate-200/60" />
+        {/* Clean divider + green accent */}
+        <div className="h-px bg-white/10" />
+        <div className="h-1.5 bg-brand-green" />
       </section>
 
-      {/* ---------- OUR STORY (image background + gradient overlay) ---------- */}
+      {/* ---------- VALUES (MOVED UP) ---------- */}
+      <section className={shell} aria-labelledby="values-title">
+        <div className="py-10 sm:py-12 lg:py-14">
+          <h2 id="values-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
+            Values we live by
+          </h2>
+
+          <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {values.map((v, i) => (
+              <div key={i} className={`${card} p-5 md:p-6 text-center`}>
+                <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </div>
+
+                <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                  {v.t}
+                </div>
+                <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <SectionDivider />
+
+      {/* ---------- OUR STORY (MOVED AFTER VALUES) ---------- */}
       <section className="relative overflow-hidden">
         <div
           aria-hidden
@@ -202,7 +256,7 @@ export default function AboutPage() {
 
       <SectionDivider />
 
-      {/* ---------- HOW WE WORK ---------- */}
+      {/* ---------- HOW WE WORK (MOVED AFTER STORY) ---------- */}
       <section className={shell} aria-labelledby="work-title">
         <h2 id="work-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
           How we work
@@ -231,56 +285,21 @@ export default function AboutPage() {
 
       <SectionDivider />
 
-      {/* ---------- VALUES ---------- */}
-      <section className={shell} aria-labelledby="values-title">
-        <h2 id="values-title" className="text-center text-2xl md:text-3xl font-bold text-slate-900">
-          Values we live by
-        </h2>
-
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {values.map((v, i) => (
-            <div key={i} className={`${card} p-5 md:p-6 text-center`}>
-              <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
-              </div>
-
-              <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
-                {v.t}
-              </div>
-              <p className="mt-2 text-slate-700 text-[15px] leading-6">{v.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <SectionDivider />
-
-      {/* ---------- CTA (fixed pattern issue) ---------- */}
+      {/* ---------- CTA (NO STRIPES) ---------- */}
       <section className={shell} aria-labelledby="cta-title">
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-brand-dark shadow-soft">
           {/* Background glow + gradient */}
           <div
             aria-hidden
             className="absolute inset-0 z-0
-              bg-[radial-gradient(700px_420px_at_18%_20%,rgba(0,200,83,0.32),transparent_58%),linear-gradient(to_right,rgba(0,0,0,0.62),rgba(0,0,0,0.40),rgba(0,0,0,0.18))]"
+              bg-[radial-gradient(800px_460px_at_18%_20%,rgba(0,200,83,0.32),transparent_60%),linear-gradient(to_right,rgba(0,0,0,0.70),rgba(0,0,0,0.42),rgba(0,0,0,0.22))]"
           />
 
-          {/* Bottom pattern (shorter + faded so it doesn't run behind text) */}
+          {/* Subtle bottom fade (no repeating stripes) */}
           <div
             aria-hidden
-            className="absolute inset-x-0 bottom-0 z-0 h-12 opacity-[0.10]
-              bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.85)_0,rgba(255,255,255,0.85)_10px,transparent_10px,transparent_26px)]
-              [mask-image:linear-gradient(to_top,transparent,black)]
-              [-webkit-mask-image:linear-gradient(to_top,transparent,black)]"
+            className="absolute inset-x-0 bottom-0 z-0 h-24
+              bg-gradient-to-t from-black/35 via-black/10 to-transparent"
           />
 
           <div className="relative z-10 p-6 md:p-8">
